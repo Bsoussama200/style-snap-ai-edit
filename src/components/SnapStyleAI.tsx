@@ -122,16 +122,16 @@ const SnapStyleAI = () => {
       console.log('Processing images:', selectedImages.length);
       console.log('Using prompt:', finalPrompt);
 
-      // Create FormData and append the first image (main product)
+      // Create FormData and append all images
       const formData = new FormData();
-      formData.append('image', selectedImages[0]);
+      
+      // Add all images with the same field name that the backend expects
+      selectedImages.forEach((image, index) => {
+        formData.append('image', image);
+        console.log(`Added image ${index + 1}:`, image.name);
+      });
+      
       formData.append('prompt', finalPrompt);
-
-      // If multiple images, we'll need to handle them differently
-      // For now, let's process the first image as the main product
-      if (selectedImages.length > 1) {
-        console.log(`Note: Processing main image, ${selectedImages.length - 1} additional images provided`);
-      }
 
       console.log('Sending request to backend...');
 
@@ -160,7 +160,7 @@ const SnapStyleAI = () => {
         setGeneratedImage(imageUrl);
         toast({
           title: "Success!",
-          description: "Your styled image has been generated.",
+          description: `Your styled image has been generated using ${selectedImages.length} reference image${selectedImages.length > 1 ? 's' : ''}.`,
         });
       } else if (data && data.content) {
         // Handle text response case
