@@ -24,10 +24,10 @@ const styleOptions: StyleOption[] = [
   },
   {
     id: 'lifestyle',
-    name: 'Lifestyle Shot',
-    description: 'Natural home environment',
+    name: 'Natural Environment',
+    description: 'Product in natural setting',
     icon: <Home className="w-6 h-6" />,
-    prompt: "Place the exact product in a realistic home environment (indoor), natural lighting, cozy and modern furniture or background, professionally shot."
+    prompt: "Place the exact product in a natural environment that complements the product (outdoor nature, indoor space, or contextual setting), natural lighting, realistic and authentic atmosphere, professionally shot."
   },
   {
     id: 'moody',
