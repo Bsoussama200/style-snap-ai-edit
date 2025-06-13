@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -208,9 +209,12 @@ const SnapStyleAI = () => {
     <div className="min-h-screen p-4 space-y-8">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h1 className="text-4xl md:text-5xl font-bold gradient-text">
-          SnapStyle AI
-        </h1>
+        <div className="flex items-center justify-center gap-3 mb-2">
+          <Camera className="w-8 h-8 md:w-10 md:h-10 text-primary" />
+          <h1 className="text-4xl md:text-5xl font-bold gradient-text">
+            ProShot AI
+          </h1>
+        </div>
         <p className="text-muted-foreground text-lg">
           Transform your product photos with AI-powered professional styles
         </p>
