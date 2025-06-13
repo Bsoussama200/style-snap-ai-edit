@@ -3,6 +3,7 @@ import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown } 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface StyleOption {
   id: string;
@@ -63,7 +64,6 @@ const SnapStyleAI = () => {
   const [selectedStyle, setSelectedStyle] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string>('');
-  const [apiKey, setApiKey] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Convert image to PNG format
@@ -120,10 +120,10 @@ const SnapStyleAI = () => {
   };
 
   const generateStyledImage = async () => {
-    if (!selectedImage || !selectedStyle || !apiKey) {
+    if (!selectedImage || !selectedStyle) {
       toast({
         title: "Missing requirements",
-        description: "Please upload an image, select a style, and enter your API key.",
+        description: "Please upload an image and select a style.",
         variant: "destructive"
       });
       return;
@@ -144,39 +144,30 @@ const SnapStyleAI = () => {
         imageFile = await convertToPng(selectedImage);
       }
 
-      // Create FormData with parameters matching the Node.js example
+      // Create FormData for our backend
       const formData = new FormData();
       formData.append('image', imageFile);
       formData.append('prompt', selectedStyleOption.prompt);
-      formData.append('model', 'dall-e-2');
-      formData.append('n', '1');
-      formData.append('size', '1024x1024');
 
-      console.log('Sending image edit request...');
+      console.log('Sending request to backend...');
 
-      const response = await fetch('https://api.openai.com/v1/images/edits', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-        },
+      // Call our secure backend instead of OpenAI directly
+      const { data, error } = await supabase.functions.invoke('image-editor', {
         body: formData,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'Failed to generate image');
+      if (error) {
+        throw new Error(error.message);
       }
 
-      const data = await response.json();
-      
-      if (data.data && data.data[0] && data.data[0].url) {
+      if (data && data.data && data.data[0] && data.data[0].url) {
         setGeneratedImage(data.data[0].url);
         toast({
           title: "Success!",
           description: "Your styled image has been generated.",
         });
       } else {
-        throw new Error('No image data received');
+        throw new Error('No image data received from backend');
       }
     } catch (error) {
       console.error('Error generating image:', error);
@@ -222,25 +213,6 @@ const SnapStyleAI = () => {
           Transform your product photos with AI-powered professional styles
         </p>
       </div>
-
-      {/* API Key Input */}
-      <Card className="glass-card max-w-md mx-auto">
-        <CardContent className="p-4">
-          <label className="block text-sm font-medium mb-2">
-            OpenAI API Key
-          </label>
-          <input
-            type="password"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="sk-..."
-            className="w-full p-3 rounded-lg bg-input border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
-          />
-          <p className="text-xs text-muted-foreground mt-2">
-            Your API key is only used locally and never stored.
-          </p>
-        </CardContent>
-      </Card>
 
       {/* Upload Section */}
       <Card className="glass-card max-w-md mx-auto">
@@ -326,7 +298,7 @@ const SnapStyleAI = () => {
         <div className="text-center">
           <Button
             onClick={generateStyledImage}
-            disabled={isGenerating || !apiKey}
+            disabled={isGenerating}
             size="lg"
             className="px-8 py-4 text-lg font-semibold"
           >
