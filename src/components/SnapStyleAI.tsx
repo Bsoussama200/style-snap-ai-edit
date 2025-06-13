@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,7 @@ interface StyleOption {
   description: string;
   icon: React.ReactNode;
   prompt: string;
+  placeholder?: string;
 }
 
 const styleOptions: StyleOption[] = [
@@ -21,42 +21,48 @@ const styleOptions: StyleOption[] = [
     name: 'Studio White',
     description: 'Clean professional background',
     icon: <Camera className="w-6 h-6" />,
-    prompt: "Keep the exact product but make it a professional shoot with a clean white background, even lighting, soft shadows, center-framed."
+    prompt: "Keep the exact product but make it a professional shoot with a clean white background, even lighting, soft shadows, center-framed.",
+    placeholder: "/lovable-uploads/0a7a7cb6-c5fa-459e-8feb-9cf831fee713.png"
   },
   {
     id: 'lifestyle',
     name: 'Natural Environment',
     description: 'Product in natural setting',
     icon: <Home className="w-6 h-6" />,
-    prompt: "Place the exact product in a natural environment that complements the product (outdoor nature, indoor space, or contextual setting), natural lighting, realistic and authentic atmosphere, professionally shot."
+    prompt: "Place the exact product in a natural environment that complements the product (outdoor nature, indoor space, or contextual setting), natural lighting, realistic and authentic atmosphere, professionally shot.",
+    placeholder: "/lovable-uploads/a4948c83-3ad5-4331-9815-fb7bdfbb1716.png"
   },
   {
     id: 'moody',
     name: 'Dark Moody',
     description: 'Dramatic cinematic lighting',
     icon: <Moon className="w-6 h-6" />,
-    prompt: "Transform the product into a dramatic photo with moody lighting, subtle shadows, and cinematic atmosphere. Keep the product clearly visible with good detail while maintaining a sophisticated dark aesthetic."
+    prompt: "Transform the product into a dramatic photo with moody lighting, subtle shadows, and cinematic atmosphere. Keep the product clearly visible with good detail while maintaining a sophisticated dark aesthetic.",
+    placeholder: "/lovable-uploads/50ae9be2-c8e8-496a-84a7-8f1b246b3fe6.png"
   },
   {
     id: 'vibrant',
     name: 'Vibrant Ad Style',
     description: 'High-contrast commercial look',
     icon: <Zap className="w-6 h-6" />,
-    prompt: "Make the product pop with a colorful, high-contrast commercial look. Use bright lighting, dramatic shadows, glowing reflections. Like an ad banner."
+    prompt: "Make the product pop with a colorful, high-contrast commercial look. Use bright lighting, dramatic shadows, glowing reflections. Like an ad banner.",
+    placeholder: "/lovable-uploads/9b309e49-4fa8-41df-b872-274cb1f95c03.png"
   },
   {
     id: 'flatlay',
     name: 'Minimalist Flat Lay',
     description: 'Top-down aesthetic composition',
     icon: <Grid3X3 className="w-6 h-6" />,
-    prompt: "Place the product in a top-down flat lay on a solid neutral color surface (light beige or gray), clean layout, minimalist, aesthetic composition."
+    prompt: "Place the product in a top-down flat lay on a solid neutral color surface (light beige or gray), clean layout, minimalist, aesthetic composition.",
+    placeholder: "/lovable-uploads/e9c62d91-1b83-404a-892b-a87f3af9a227.png"
   },
   {
     id: 'premium',
     name: 'Premium Showroom',
     description: 'High-end elegant surroundings',
     icon: <Crown className="w-6 h-6" />,
-    prompt: "Render the product in a high-end showroom with premium materials, sleek furniture, soft natural light, elegant surroundings. For large products too."
+    prompt: "Render the product in a high-end showroom with premium materials, sleek furniture, soft natural light, elegant surroundings. For large products too.",
+    placeholder: "/lovable-uploads/55b005ec-5cd1-46e9-97e3-c6e87b3e0245.png"
   }
 ];
 
@@ -290,14 +296,25 @@ const SnapStyleAI = () => {
                 }`}
                 onClick={() => handleStyleSelect(style.id)}
               >
-                <CardContent className="p-4 text-center space-y-3">
-                  <div className="text-primary">
-                    {style.icon}
+                <CardContent className="p-4 space-y-3">
+                  {style.placeholder && (
+                    <div className="w-full h-32 rounded-lg overflow-hidden">
+                      <img 
+                        src={style.placeholder} 
+                        alt={`${style.name} example`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="text-center space-y-2">
+                    <div className="flex items-center justify-center text-primary">
+                      {style.icon}
+                    </div>
+                    <h3 className="font-semibold">{style.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {style.description}
+                    </p>
                   </div>
-                  <h3 className="font-semibold">{style.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {style.description}
-                  </p>
                 </CardContent>
               </Card>
             ))}
