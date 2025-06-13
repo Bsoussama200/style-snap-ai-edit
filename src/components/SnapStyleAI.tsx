@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -313,7 +314,7 @@ const SnapStyleAI = () => {
               <Textarea
                 value={customPrompt}
                 onChange={(e) => setCustomPrompt(e.target.value)}
-                className="w-full h-16 resize-none text-foreground"
+                className="w-full h-12 resize-none text-foreground"
               />
             </div>
           </CardContent>
