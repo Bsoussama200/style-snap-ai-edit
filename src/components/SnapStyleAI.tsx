@@ -66,6 +66,37 @@ const SnapStyleAI = () => {
   const [apiKey, setApiKey] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Convert image to PNG format
+  const convertToPng = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const pngFile = new File([blob], 'image.png', { type: 'image/png' });
+              resolve(pngFile);
+            } else {
+              reject(new Error('Failed to convert image to PNG'));
+            }
+          }, 'image/png');
+        } else {
+          reject(new Error('Failed to get canvas context'));
+        }
+      };
+      
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -106,11 +137,18 @@ const SnapStyleAI = () => {
         throw new Error('Selected style not found');
       }
 
-      // Create FormData with parameters matching your Node.js example
+      // Convert image to PNG if it's not already PNG
+      let imageFile = selectedImage;
+      if (selectedImage.type !== 'image/png') {
+        console.log('Converting image to PNG format...');
+        imageFile = await convertToPng(selectedImage);
+      }
+
+      // Create FormData with parameters matching the Node.js example
       const formData = new FormData();
-      formData.append('image', selectedImage);
+      formData.append('image', imageFile);
       formData.append('prompt', selectedStyleOption.prompt);
-      formData.append('model', 'dall-e-2'); // Use dall-e-2 instead of gpt-image-1
+      formData.append('model', 'dall-e-2');
       formData.append('n', '1');
       formData.append('size', '1024x1024');
 
