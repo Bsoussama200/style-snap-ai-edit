@@ -42,23 +42,53 @@ serve(async (req) => {
 
     console.log('Processing image edit request with prompt:', prompt);
 
-    // Call client.images.edits (matching Python pattern)
-    const response = await client.images.edit({
-      image: image,
-      prompt: prompt,
-      model: "gpt-image-1",
-      n: 1,
-      size: "1024x1024",
-      quality: "high",
-      background: "auto",
-      moderation: "auto",
+    // Create file upload (like Python's create_file function)
+    const fileUploadResponse = await client.files.create({
+      file: image,
+      purpose: "vision",
+    });
+
+    console.log('File uploaded with ID:', fileUploadResponse.id);
+
+    // Call client.responses.create (matching Python pattern)
+    const response = await client.responses.create({
+      model: "gpt-4.1",
+      input: [
+        {
+          role: "user",
+          content: [
+            { type: "input_text", text: prompt },
+            {
+              type: "input_image",
+              file_id: fileUploadResponse.id,
+            }
+          ],
+        }
+      ],
+      tools: [{ type: "image_generation" }],
     });
 
     console.log('OpenAI API response received successfully');
 
-    return new Response(JSON.stringify(response), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    // Extract image generation calls (like Python code)
+    const imageGenerationCalls = response.output.filter(
+      (output: any) => output.type === "image_generation_call"
+    );
+
+    const imageData = imageGenerationCalls.map((output: any) => output.result);
+
+    if (imageData && imageData.length > 0) {
+      // Return the base64 image data
+      return new Response(JSON.stringify({ 
+        data: [{ 
+          b64_json: imageData[0] 
+        }] 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } else {
+      throw new Error('No image data received from OpenAI');
+    }
 
   } catch (error) {
     console.error('Error in image-editor function:', error);
