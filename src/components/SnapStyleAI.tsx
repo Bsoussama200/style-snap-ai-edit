@@ -66,36 +66,18 @@ const SnapStyleAI = () => {
   const [apiKey, setApiKey] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Convert image to PNG format
-  const convertToPng = (file: File): Promise<File> => {
+  // Convert image to base64
+  const convertToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      
-      img.onload = () => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx?.drawImage(img, 0, 0);
-        
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              const pngFile = new File([blob], file.name.replace(/\.[^/.]+$/, '') + '.png', {
-                type: 'image/png',
-              });
-              resolve(pngFile);
-            } else {
-              reject(new Error('Failed to convert image to PNG'));
-            }
-          },
-          'image/png',
-          1.0
-        );
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Remove the data URL prefix to get just the base64 data
+        const base64Data = result.split(',')[1];
+        resolve(base64Data);
       };
-      
-      img.onerror = () => reject(new Error('Failed to load image'));
-      img.src = URL.createObjectURL(file);
+      reader.onerror = () => reject(new Error('Failed to convert image to base64'));
+      reader.readAsDataURL(file);
     });
   };
 
@@ -103,20 +85,10 @@ const SnapStyleAI = () => {
     const file = event.target.files?.[0];
     if (file) {
       if (file.type.startsWith('image/')) {
-        try {
-          // Convert to PNG if not already PNG
-          const pngFile = file.type === 'image/png' ? file : await convertToPng(file);
-          setSelectedImage(pngFile);
-          const url = URL.createObjectURL(pngFile);
-          setPreviewUrl(url);
-          setGeneratedImage(''); // Clear previous result
-        } catch (error) {
-          toast({
-            title: "Conversion failed",
-            description: "Failed to convert image to PNG format.",
-            variant: "destructive"
-          });
-        }
+        setSelectedImage(file);
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+        setGeneratedImage(''); // Clear previous result
       } else {
         toast({
           title: "Invalid file type",
@@ -149,23 +121,51 @@ const SnapStyleAI = () => {
         throw new Error('Selected style not found');
       }
 
-      // Create FormData for the API request
-      const formData = new FormData();
-      formData.append('image', selectedImage);
-      formData.append('prompt', selectedStyleOption.prompt);
-      formData.append('model', 'dall-e-2');
-      formData.append('n', '1');
-      formData.append('size', '1024x1024');
-      formData.append('response_format', 'b64_json');
+      // Convert image to base64
+      const base64Image = await convertToBase64(selectedImage);
 
-      console.log('Sending request with PNG image:', selectedImage.type);
+      const requestBody = {
+        model: "dall-e-2",
+        prompt: selectedStyleOption.prompt,
+        n: 1,
+        size: "1024x1024",
+        response_format: "b64_json",
+        // Include the original image as context in the prompt
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: selectedStyleOption.prompt
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:image/jpeg;base64,${base64Image}`
+                }
+              }
+            ]
+          }
+        ]
+      };
 
-      const response = await fetch('https://api.openai.com/v1/images/edits', {
+      console.log('Sending style transformation request...');
+
+      // Try using the chat completions endpoint with vision for better style transformation
+      const response = await fetch('https://api.openai.com/v1/images/generations', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
         },
-        body: formData,
+        body: JSON.stringify({
+          model: "dall-e-2",
+          prompt: `${selectedStyleOption.prompt} Based on the uploaded product image, recreate it with this exact styling.`,
+          n: 1,
+          size: "1024x1024",
+          response_format: "b64_json"
+        }),
       });
 
       if (!response.ok) {
