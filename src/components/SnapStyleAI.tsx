@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -66,21 +67,6 @@ const SnapStyleAI = () => {
   const [apiKey, setApiKey] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Convert image to base64
-  const convertToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        // Remove the data URL prefix to get just the base64 data
-        const base64Data = result.split(',')[1];
-        resolve(base64Data);
-      };
-      reader.onerror = () => reject(new Error('Failed to convert image to base64'));
-      reader.readAsDataURL(file);
-    });
-  };
-
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -121,51 +107,23 @@ const SnapStyleAI = () => {
         throw new Error('Selected style not found');
       }
 
-      // Convert image to base64
-      const base64Image = await convertToBase64(selectedImage);
+      // Create FormData for the API request
+      const formData = new FormData();
+      formData.append('image', selectedImage);
+      formData.append('prompt', selectedStyleOption.prompt);
+      formData.append('model', 'dall-e-2');
+      formData.append('n', '1');
+      formData.append('size', '1024x1024');
+      formData.append('response_format', 'b64_json');
 
-      const requestBody = {
-        model: "dall-e-2",
-        prompt: selectedStyleOption.prompt,
-        n: 1,
-        size: "1024x1024",
-        response_format: "b64_json",
-        // Include the original image as context in the prompt
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: selectedStyleOption.prompt
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:image/jpeg;base64,${base64Image}`
-                }
-              }
-            ]
-          }
-        ]
-      };
+      console.log('Sending image edit request...');
 
-      console.log('Sending style transformation request...');
-
-      // Try using the chat completions endpoint with vision for better style transformation
-      const response = await fetch('https://api.openai.com/v1/images/generations', {
+      const response = await fetch('https://api.openai.com/v1/images/edits', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          model: "dall-e-2",
-          prompt: `${selectedStyleOption.prompt} Based on the uploaded product image, recreate it with this exact styling.`,
-          n: 1,
-          size: "1024x1024",
-          response_format: "b64_json"
-        }),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -265,7 +223,7 @@ const SnapStyleAI = () => {
                   Click to upload your product image
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Supports JPG, JPEG, PNG (will be converted to PNG)
+                  Supports JPG, JPEG, PNG
                 </p>
               </div>
             ) : (
