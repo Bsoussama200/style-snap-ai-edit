@@ -1,9 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown, Info } from 'lucide-react';
+import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -207,197 +206,182 @@ const SnapStyleAI = () => {
   };
 
   return (
-    <TooltipProvider>
-      <div className="min-h-screen p-4 space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <Camera className="w-8 h-8 md:w-10 md:h-10 text-primary" />
-            <h1 className="text-4xl md:text-5xl font-bold gradient-text">
-              ProShot AI
-            </h1>
-          </div>
-          <p className="text-muted-foreground text-lg">
-            Transform your product photos with AI-powered professional styles
-          </p>
+    <div className="min-h-screen p-4 space-y-8">
+      {/* Header */}
+      <div className="text-center space-y-2">
+        <div className="flex items-center justify-center gap-3 mb-2">
+          <Camera className="w-8 h-8 md:w-10 md:h-10 text-primary" />
+          <h1 className="text-4xl md:text-5xl font-bold gradient-text">
+            ProShot AI
+          </h1>
         </div>
+        <p className="text-muted-foreground text-lg">
+          Transform your product photos with AI-powered professional styles
+        </p>
+      </div>
 
-        {/* Upload Section */}
-        <Card className="glass-card max-w-md mx-auto">
+      {/* Upload Section */}
+      <Card className="glass-card max-w-md mx-auto">
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Upload Product Images</h2>
+            
+            {previewUrls.length === 0 ? (
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
+              >
+                <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">
+                  Click to upload your product images
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Supports JPG, JPEG, PNG (multiple files allowed)
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-2">
+                  {previewUrls.map((url, index) => (
+                    <img 
+                      key={index}
+                      src={url} 
+                      alt={`Preview ${index + 1}`} 
+                      className="w-full h-24 object-cover rounded-lg"
+                    />
+                  ))}
+                </div>
+                <Button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full"
+                >
+                  Change Images
+                </Button>
+              </div>
+            )}
+            
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".jpg,.jpeg,.png"
+              multiple
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Style Selection */}
+      {previewUrls.length > 0 && (
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-semibold text-center mb-6">
+            Choose Your Style
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {styleOptions.map((style) => (
+              <Card
+                key={style.id}
+                className={`glass-card cursor-pointer hover-lift transition-all ${
+                  selectedStyle === style.id 
+                    ? 'ring-2 ring-primary bg-primary/10' 
+                    : 'hover:bg-card/70'
+                }`}
+                onClick={() => handleStyleSelect(style.id)}
+              >
+                <CardContent className="p-4 text-center space-y-3">
+                  <div className="text-primary">
+                    {style.icon}
+                  </div>
+                  <h3 className="font-semibold">{style.name}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {style.description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Custom Prompt Section */}
+      {previewUrls.length > 0 && (
+        <Card className="glass-card max-w-2xl mx-auto">
           <CardContent className="p-6">
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold">Upload Product Images</h2>
-              
-              {previewUrls.length === 0 ? (
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
-                >
-                  <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">
-                    Click to upload your product images
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Supports JPG, JPEG, PNG (multiple files allowed)
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-2">
-                    {previewUrls.map((url, index) => (
-                      <img 
-                        key={index}
-                        src={url} 
-                        alt={`Preview ${index + 1}`} 
-                        className="w-full h-24 object-cover rounded-lg"
-                      />
-                    ))}
-                  </div>
-                  <Button 
-                    onClick={() => fileInputRef.current?.click()}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    Change Images
-                  </Button>
-                </div>
-              )}
-              
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".jpg,.jpeg,.png"
-                multiple
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Style Selection */}
-        {previewUrls.length > 0 && (
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-semibold text-center mb-6">
-              Choose Your Style
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {styleOptions.map((style) => (
-                <Card
-                  key={style.id}
-                  className={`glass-card cursor-pointer hover-lift transition-all ${
-                    selectedStyle === style.id 
-                      ? 'ring-2 ring-primary bg-primary/10' 
-                      : 'hover:bg-card/70'
-                  }`}
-                  onClick={() => handleStyleSelect(style.id)}
-                >
-                  <CardContent className="p-4 text-center space-y-3">
-                    <div className="text-primary">
-                      {style.icon}
-                    </div>
-                    <h3 className="font-semibold">{style.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {style.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Custom Prompt Section */}
-        {previewUrls.length > 0 && (
-          <Card className="glass-card max-w-2xl mx-auto">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <h2 className="text-xl font-semibold">Custom Prompt (Optional)</h2>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button className="p-1 rounded-full hover:bg-muted transition-colors">
-                        <Info className="w-4 h-4 text-muted-foreground" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Enter your custom styling instructions here (leave empty to use selected style)</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+              <h2 className="text-xl font-semibold">Custom Prompt (Optional)</h2>
               <Textarea
                 value={customPrompt}
                 onChange={(e) => setCustomPrompt(e.target.value)}
                 className="w-full h-16 resize-none text-foreground"
               />
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-        {/* Generate Button */}
-        {previewUrls.length > 0 && (
-          <div className="text-center">
-            <Button
-              onClick={generateStyledImage}
-              disabled={isGenerating}
-              size="lg"
-              className="px-8 py-4 text-lg font-semibold"
-            >
-              {isGenerating ? (
-                <>
-                  <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
-                  Creating your styled image...
-                </>
-              ) : (
-                'Generate Styled Image'
-              )}
-            </Button>
-          </div>
-        )}
+      {/* Generate Button */}
+      {previewUrls.length > 0 && (
+        <div className="text-center">
+          <Button
+            onClick={generateStyledImage}
+            disabled={isGenerating}
+            size="lg"
+            className="px-8 py-4 text-lg font-semibold"
+          >
+            {isGenerating ? (
+              <>
+                <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
+                Creating your styled image...
+              </>
+            ) : (
+              'Generate Styled Image'
+            )}
+          </Button>
+        </div>
+      )}
 
-        {/* Result Section */}
-        {generatedImage && (
-          <Card className="glass-card max-w-2xl mx-auto">
-            <CardContent className="p-6 space-y-4">
-              <h2 className="text-2xl font-semibold text-center">
-                Your Styled Image
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">Original</p>
-                  <img 
-                    src={previewUrls[0]} 
-                    alt="Original" 
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">Styled</p>
-                  <img 
-                    src={generatedImage} 
-                    alt="Generated" 
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
-                </div>
+      {/* Result Section */}
+      {generatedImage && (
+        <Card className="glass-card max-w-2xl mx-auto">
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-2xl font-semibold text-center">
+              Your Styled Image
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">Original</p>
+                <img 
+                  src={previewUrls[0]} 
+                  alt="Original" 
+                  className="w-full h-48 object-cover rounded-lg"
+                />
               </div>
-              
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button onClick={downloadImage} className="flex-1">
-                  <Download className="w-4 h-4 mr-2" />
-                  Download Image
-                </Button>
-                <Button onClick={resetApp} variant="outline" className="flex-1">
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Try Another
-                </Button>
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">Styled</p>
+                <img 
+                  src={generatedImage} 
+                  alt="Generated" 
+                  className="w-full h-48 object-cover rounded-lg"
+                />
               </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    </TooltipProvider>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button onClick={downloadImage} className="flex-1">
+                <Download className="w-4 h-4 mr-2" />
+                Download Image
+              </Button>
+              <Button onClick={resetApp} variant="outline" className="flex-1">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Try Another
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
 
