@@ -1,6 +1,7 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import OpenAI from "https://esm.sh/openai@4.52.7";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,6 +20,11 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
+    // Initialize OpenAI client
+    const openai = new OpenAI({
+      apiKey: openaiApiKey,
+    });
+
     // Parse form data from the request
     const formData = await req.formData();
     const image = formData.get('image') as File;
@@ -36,33 +42,21 @@ serve(async (req) => {
 
     console.log('Processing image edit request with prompt:', prompt);
 
-    // Create FormData for OpenAI API call
-    const openaiFormData = new FormData();
-    openaiFormData.append('image', image);
-    openaiFormData.append('prompt', prompt);
-    openaiFormData.append('model', 'dall-e-2'); // Using dall-e-2 as it's more stable
-    openaiFormData.append('n', '1');
-    openaiFormData.append('size', '1024x1024');
-
-    // Call OpenAI API
-    const response = await fetch('https://api.openai.com/v1/images/edits', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-      },
-      body: openaiFormData,
+    // Call OpenAI images.edits API using the SDK
+    const response = await openai.images.edit({
+      image: image,
+      prompt: prompt,
+      model: "gpt-image-1",
+      n: 1,
+      size: "1024x1024",
+      quality: "high",
+      background: "auto",
+      moderation: "auto",
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('OpenAI API error:', errorData);
-      throw new Error(errorData.error?.message || 'Failed to generate image');
-    }
-
-    const data = await response.json();
     console.log('OpenAI API response received successfully');
 
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
