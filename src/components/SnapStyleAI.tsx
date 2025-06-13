@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -67,14 +66,57 @@ const SnapStyleAI = () => {
   const [apiKey, setApiKey] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Convert image to PNG format
+  const convertToPng = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx?.drawImage(img, 0, 0);
+        
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const pngFile = new File([blob], file.name.replace(/\.[^/.]+$/, '') + '.png', {
+                type: 'image/png',
+              });
+              resolve(pngFile);
+            } else {
+              reject(new Error('Failed to convert image to PNG'));
+            }
+          },
+          'image/png',
+          1.0
+        );
+      };
+      
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       if (file.type.startsWith('image/')) {
-        setSelectedImage(file);
-        const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
-        setGeneratedImage(''); // Clear previous result
+        try {
+          // Convert to PNG if not already PNG
+          const pngFile = file.type === 'image/png' ? file : await convertToPng(file);
+          setSelectedImage(pngFile);
+          const url = URL.createObjectURL(pngFile);
+          setPreviewUrl(url);
+          setGeneratedImage(''); // Clear previous result
+        } catch (error) {
+          toast({
+            title: "Conversion failed",
+            description: "Failed to convert image to PNG format.",
+            variant: "destructive"
+          });
+        }
       } else {
         toast({
           title: "Invalid file type",
@@ -107,7 +149,7 @@ const SnapStyleAI = () => {
         throw new Error('Selected style not found');
       }
 
-      // Convert image to base64 for API
+      // Create FormData for the API request
       const formData = new FormData();
       formData.append('image', selectedImage);
       formData.append('prompt', selectedStyleOption.prompt);
@@ -115,6 +157,8 @@ const SnapStyleAI = () => {
       formData.append('n', '1');
       formData.append('size', '1024x1024');
       formData.append('response_format', 'b64_json');
+
+      console.log('Sending request with PNG image:', selectedImage.type);
 
       const response = await fetch('https://api.openai.com/v1/images/edits', {
         method: 'POST',
@@ -221,7 +265,7 @@ const SnapStyleAI = () => {
                   Click to upload your product image
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Supports JPG, JPEG, PNG
+                  Supports JPG, JPEG, PNG (will be converted to PNG)
                 </p>
               </div>
             ) : (
