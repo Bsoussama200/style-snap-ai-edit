@@ -270,26 +270,11 @@ const SnapStyleAI = () => {
         </CardContent>
       </Card>
 
-      {/* Custom Prompt Section */}
-      {previewUrls.length > 0 && (
-        <Card className="glass-card max-w-2xl mx-auto">
-          <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Custom Prompt (Optional)</h2>
-            <textarea
-              value={customPrompt}
-              onChange={(e) => setCustomPrompt(e.target.value)}
-              placeholder="Enter your custom styling instructions here... (leave empty to use selected style)"
-              className="w-full h-24 p-3 border rounded-lg resize-none"
-            />
-          </CardContent>
-        </Card>
-      )}
-
       {/* Style Selection */}
       {previewUrls.length > 0 && (
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-semibold text-center mb-6">
-            Choose Your Style (or use custom prompt above)
+            Choose Your Style
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {styleOptions.map((style) => (
@@ -315,6 +300,21 @@ const SnapStyleAI = () => {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Custom Prompt Section */}
+      {previewUrls.length > 0 && (
+        <Card className="glass-card max-w-2xl mx-auto">
+          <CardContent className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Custom Prompt (Optional)</h2>
+            <textarea
+              value={customPrompt}
+              onChange={(e) => setCustomPrompt(e.target.value)}
+              placeholder="Enter your custom styling instructions here... (leave empty to use selected style)"
+              className="w-full h-24 p-3 border rounded-lg resize-none"
+            />
+          </CardContent>
+        </Card>
       )}
 
       {/* Generate Button */}
