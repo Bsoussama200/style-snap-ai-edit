@@ -20,8 +20,8 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    // Initialize OpenAI client
-    const openai = new OpenAI({
+    // Initialize OpenAI client (like Python's client = OpenAI())
+    const client = new OpenAI({
       apiKey: openaiApiKey,
     });
 
@@ -42,8 +42,8 @@ serve(async (req) => {
 
     console.log('Processing image edit request with prompt:', prompt);
 
-    // Call OpenAI images.edits API using the SDK
-    const response = await openai.images.edit({
+    // Call client.images.edits (matching Python pattern)
+    const response = await client.images.edit({
       image: image,
       prompt: prompt,
       model: "gpt-image-1",
