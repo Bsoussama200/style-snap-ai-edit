@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -59,60 +60,33 @@ const styleOptions: StyleOption[] = [
 ];
 
 const SnapStyleAI = () => {
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [selectedStyle, setSelectedStyle] = useState<string>('');
+  const [customPrompt, setCustomPrompt] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Convert image to PNG format
-  const convertToPng = (file: File): Promise<File> => {
-    return new Promise((resolve, reject) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      
-      img.onload = () => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        
-        if (ctx) {
-          ctx.drawImage(img, 0, 0);
-          canvas.toBlob((blob) => {
-            if (blob) {
-              const pngFile = new File([blob], 'image.png', { type: 'image/png' });
-              resolve(pngFile);
-            } else {
-              reject(new Error('Failed to convert image to PNG'));
-            }
-          }, 'image/png');
-        } else {
-          reject(new Error('Failed to get canvas context'));
-        }
-      };
-      
-      img.onerror = () => reject(new Error('Failed to load image'));
-      img.src = URL.createObjectURL(file);
-    });
-  };
-
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.type.startsWith('image/')) {
-        setSelectedImage(file);
-        const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
-        setGeneratedImage(''); // Clear previous result
-      } else {
-        toast({
-          title: "Invalid file type",
-          description: "Please upload a JPG, JPEG, or PNG image.",
-          variant: "destructive"
-        });
-      }
+    const files = Array.from(event.target.files || []);
+    const validFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    if (validFiles.length === 0) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload JPG, JPEG, or PNG images.",
+        variant: "destructive"
+      });
+      return;
     }
+
+    setSelectedImages(validFiles);
+    
+    // Create preview URLs for all images
+    const urls = validFiles.map(file => URL.createObjectURL(file));
+    setPreviewUrls(urls);
+    setGeneratedImage(''); // Clear previous result
   };
 
   const handleStyleSelect = (styleId: string) => {
@@ -120,10 +94,19 @@ const SnapStyleAI = () => {
   };
 
   const generateStyledImage = async () => {
-    if (!selectedImage || !selectedStyle) {
+    if (selectedImages.length === 0) {
       toast({
         title: "Missing requirements",
-        description: "Please upload an image and select a style.",
+        description: "Please upload at least one image.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!selectedStyle && !customPrompt.trim()) {
+      toast({
+        title: "Missing requirements",
+        description: "Please select a style or enter a custom prompt.",
         variant: "destructive"
       });
       return;
@@ -132,26 +115,26 @@ const SnapStyleAI = () => {
     setIsGenerating(true);
     
     try {
+      // Use the selected style prompt or custom prompt
       const selectedStyleOption = styleOptions.find(style => style.id === selectedStyle);
-      if (!selectedStyleOption) {
-        throw new Error('Selected style not found');
-      }
+      const finalPrompt = customPrompt.trim() || selectedStyleOption?.prompt || '';
 
-      // Convert image to PNG if it's not already PNG
-      let imageFile = selectedImage;
-      if (selectedImage.type !== 'image/png') {
-        console.log('Converting image to PNG format...');
-        imageFile = await convertToPng(selectedImage);
-      }
+      console.log('Processing images:', selectedImages.length);
+      console.log('Using prompt:', finalPrompt);
 
-      // Create FormData for our backend
+      // Create FormData and append the first image (main product)
       const formData = new FormData();
-      formData.append('image', imageFile);
-      formData.append('prompt', selectedStyleOption.prompt);
+      formData.append('image', selectedImages[0]);
+      formData.append('prompt', finalPrompt);
+
+      // If multiple images, we'll need to handle them differently
+      // For now, let's process the first image as the main product
+      if (selectedImages.length > 1) {
+        console.log(`Note: Processing main image, ${selectedImages.length - 1} additional images provided`);
+      }
 
       console.log('Sending request to backend...');
 
-      // Call our secure backend instead of OpenAI directly
       const { data, error } = await supabase.functions.invoke('image-editor', {
         body: formData,
       });
@@ -160,11 +143,30 @@ const SnapStyleAI = () => {
         throw new Error(error.message);
       }
 
-      if (data && data.data && data.data[0] && data.data[0].url) {
-        setGeneratedImage(data.data[0].url);
+      console.log('Backend response:', data);
+
+      if (data && data.data && data.data[0] && data.data[0].b64_json) {
+        // Convert base64 to blob URL for display
+        const base64Data = data.data[0].b64_json;
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'image/png' });
+        const imageUrl = URL.createObjectURL(blob);
+        
+        setGeneratedImage(imageUrl);
         toast({
           title: "Success!",
           description: "Your styled image has been generated.",
+        });
+      } else if (data && data.content) {
+        // Handle text response case
+        toast({
+          title: "Response received",
+          description: data.content,
         });
       } else {
         throw new Error('No image data received from backend');
@@ -185,7 +187,7 @@ const SnapStyleAI = () => {
     if (generatedImage) {
       const link = document.createElement('a');
       link.href = generatedImage;
-      link.download = `snapstyle-ai-${selectedStyle}-${Date.now()}.png`;
+      link.download = `snapstyle-ai-${selectedStyle || 'custom'}-${Date.now()}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -193,9 +195,10 @@ const SnapStyleAI = () => {
   };
 
   const resetApp = () => {
-    setSelectedImage(null);
-    setPreviewUrl('');
+    setSelectedImages([]);
+    setPreviewUrls([]);
     setSelectedStyle('');
+    setCustomPrompt('');
     setGeneratedImage('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -218,34 +221,39 @@ const SnapStyleAI = () => {
       <Card className="glass-card max-w-md mx-auto">
         <CardContent className="p-6">
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Upload Product Image</h2>
+            <h2 className="text-xl font-semibold">Upload Product Images</h2>
             
-            {!previewUrl ? (
+            {previewUrls.length === 0 ? (
               <div 
                 onClick={() => fileInputRef.current?.click()}
                 className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
               >
                 <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-muted-foreground">
-                  Click to upload your product image
+                  Click to upload your product images
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Supports JPG, JPEG, PNG
+                  Supports JPG, JPEG, PNG (multiple files allowed)
                 </p>
               </div>
             ) : (
               <div className="space-y-4">
-                <img 
-                  src={previewUrl} 
-                  alt="Preview" 
-                  className="w-full h-48 object-cover rounded-lg"
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  {previewUrls.map((url, index) => (
+                    <img 
+                      key={index}
+                      src={url} 
+                      alt={`Preview ${index + 1}`} 
+                      className="w-full h-24 object-cover rounded-lg"
+                    />
+                  ))}
+                </div>
                 <Button 
                   onClick={() => fileInputRef.current?.click()}
                   variant="outline"
                   className="w-full"
                 >
-                  Change Image
+                  Change Images
                 </Button>
               </div>
             )}
@@ -254,6 +262,7 @@ const SnapStyleAI = () => {
               ref={fileInputRef}
               type="file"
               accept=".jpg,.jpeg,.png"
+              multiple
               onChange={handleImageUpload}
               className="hidden"
             />
@@ -261,11 +270,26 @@ const SnapStyleAI = () => {
         </CardContent>
       </Card>
 
+      {/* Custom Prompt Section */}
+      {previewUrls.length > 0 && (
+        <Card className="glass-card max-w-2xl mx-auto">
+          <CardContent className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Custom Prompt (Optional)</h2>
+            <textarea
+              value={customPrompt}
+              onChange={(e) => setCustomPrompt(e.target.value)}
+              placeholder="Enter your custom styling instructions here... (leave empty to use selected style)"
+              className="w-full h-24 p-3 border rounded-lg resize-none"
+            />
+          </CardContent>
+        </Card>
+      )}
+
       {/* Style Selection */}
-      {previewUrl && (
+      {previewUrls.length > 0 && (
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-semibold text-center mb-6">
-            Choose Your Style
+            Choose Your Style (or use custom prompt above)
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {styleOptions.map((style) => (
@@ -294,7 +318,7 @@ const SnapStyleAI = () => {
       )}
 
       {/* Generate Button */}
-      {previewUrl && selectedStyle && (
+      {previewUrls.length > 0 && (
         <div className="text-center">
           <Button
             onClick={generateStyledImage}
@@ -326,7 +350,7 @@ const SnapStyleAI = () => {
               <div>
                 <p className="text-sm text-muted-foreground mb-2">Original</p>
                 <img 
-                  src={previewUrl} 
+                  src={previewUrls[0]} 
                   alt="Original" 
                   className="w-full h-48 object-cover rounded-lg"
                 />
