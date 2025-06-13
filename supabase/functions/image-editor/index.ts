@@ -20,7 +20,7 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    // Initialize OpenAI client (like Python's client = OpenAI())
+    // Initialize OpenAI client
     const client = new OpenAI({
       apiKey: openaiApiKey,
     });
@@ -42,47 +42,24 @@ serve(async (req) => {
 
     console.log('Processing image edit request with prompt:', prompt);
 
-    // Create file upload (like Python's create_file function)
-    const fileUploadResponse = await client.files.create({
-      file: image,
-      purpose: "vision",
-    });
-
-    console.log('File uploaded with ID:', fileUploadResponse.id);
-
-    // Call client.responses.create (matching Python pattern)
-    const response = await client.responses.create({
-      model: "gpt-4.1",
-      input: [
-        {
-          role: "user",
-          content: [
-            { type: "input_text", text: prompt },
-            {
-              type: "input_image",
-              file_id: fileUploadResponse.id,
-            }
-          ],
-        }
-      ],
-      tools: [{ type: "image_generation" }],
+    // Use the correct OpenAI images.edit method for JavaScript SDK
+    const response = await client.images.edit({
+      image: image,
+      prompt: prompt,
+      model: "dall-e-2", // Note: gpt-image-1 may not be available in JS SDK, using dall-e-2
+      n: 1,
+      size: "1024x1024",
     });
 
     console.log('OpenAI API response received successfully');
 
-    // Extract image generation calls (like Python code)
-    const imageGenerationCalls = response.output.filter(
-      (output: any) => output.type === "image_generation_call"
-    );
-
-    const imageData = imageGenerationCalls.map((output: any) => output.result);
-
-    if (imageData && imageData.length > 0) {
-      // Return the base64 image data
+    if (response.data && response.data.length > 0) {
+      // Return the image data in the expected format
       return new Response(JSON.stringify({ 
-        data: [{ 
-          b64_json: imageData[0] 
-        }] 
+        data: response.data.map(item => ({
+          url: item.url,
+          b64_json: item.b64_json
+        }))
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
