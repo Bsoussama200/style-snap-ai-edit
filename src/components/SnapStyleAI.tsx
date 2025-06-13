@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -261,6 +262,7 @@ const SnapStyleAI = () => {
                 <Button 
                   onClick={() => fileInputRef.current?.click()}
                   className="w-full"
+                  size="lg"
                 >
                   Change Images
                 </Button>
@@ -298,7 +300,7 @@ const SnapStyleAI = () => {
               >
                 <CardContent className="p-4 space-y-3">
                   {style.placeholder && (
-                    <div className="w-full h-32 rounded-lg overflow-hidden">
+                    <div className="w-full h-32 rounded-lg overflow-hidden border border-border">
                       <img 
                         src={style.placeholder} 
                         alt={`${style.name} example`}
