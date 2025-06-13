@@ -313,19 +313,23 @@ const SnapStyleAI = () => {
             <CardContent className="p-6">
               <div className="flex items-center gap-2 mb-4">
                 <h2 className="text-xl font-semibold">Custom Prompt (Optional)</h2>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Enter your custom styling instructions here... (leave empty to use selected style)</p>
-                  </TooltipContent>
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button className="p-1 rounded-full hover:bg-muted transition-colors">
+                        <Info className="w-4 h-4 text-muted-foreground" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Enter your custom styling instructions here (leave empty to use selected style)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <Textarea
                 value={customPrompt}
                 onChange={(e) => setCustomPrompt(e.target.value)}
-                className="w-full h-20 resize-none"
+                className="w-full h-16 resize-none text-foreground"
               />
             </CardContent>
           </Card>
