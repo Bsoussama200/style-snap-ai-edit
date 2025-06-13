@@ -111,7 +111,7 @@ const SnapStyleAI = () => {
       const formData = new FormData();
       formData.append('image', selectedImage);
       formData.append('prompt', selectedStyleOption.prompt);
-      formData.append('model', 'dall-e-2');
+      formData.append('model', 'gpt-image-1');
       formData.append('n', '1');
       formData.append('size', '1024x1024');
       formData.append('response_format', 'b64_json');
