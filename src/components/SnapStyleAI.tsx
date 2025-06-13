@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -107,14 +106,13 @@ const SnapStyleAI = () => {
         throw new Error('Selected style not found');
       }
 
-      // Create FormData for the API request
+      // Create FormData with parameters matching your Node.js example
       const formData = new FormData();
       formData.append('image', selectedImage);
       formData.append('prompt', selectedStyleOption.prompt);
-      formData.append('model', 'gpt-image-1');
+      formData.append('model', 'dall-e-2'); // Use dall-e-2 instead of gpt-image-1
       formData.append('n', '1');
       formData.append('size', '1024x1024');
-      formData.append('response_format', 'b64_json');
 
       console.log('Sending image edit request...');
 
@@ -133,9 +131,8 @@ const SnapStyleAI = () => {
 
       const data = await response.json();
       
-      if (data.data && data.data[0] && data.data[0].b64_json) {
-        const base64Image = `data:image/png;base64,${data.data[0].b64_json}`;
-        setGeneratedImage(base64Image);
+      if (data.data && data.data[0] && data.data[0].url) {
+        setGeneratedImage(data.data[0].url);
         toast({
           title: "Success!",
           description: "Your styled image has been generated.",
