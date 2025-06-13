@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -34,7 +33,7 @@ const styleOptions: StyleOption[] = [
     name: 'Dark Moody',
     description: 'Dramatic cinematic lighting',
     icon: <Moon className="w-6 h-6" />,
-    prompt: "Transform the product into a dramatic photo with low light, deep shadows, contrast, and cinematic lighting. Background dark and smooth."
+    prompt: "Transform the product into a dramatic photo with moody lighting, subtle shadows, and cinematic atmosphere. Keep the product clearly visible with good detail while maintaining a sophisticated dark aesthetic."
   },
   {
     id: 'vibrant',
