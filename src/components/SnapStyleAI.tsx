@@ -1,9 +1,11 @@
+
 import React, { useState, useRef } from 'react';
-import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown } from 'lucide-react';
+import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -74,6 +76,7 @@ const SnapStyleAI = () => {
   const [customPrompt, setCustomPrompt] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string>('');
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -383,7 +386,8 @@ const SnapStyleAI = () => {
                 <img 
                   src={generatedImage} 
                   alt="Generated" 
-                  className="w-full h-48 object-cover rounded-lg"
+                  className="w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => setIsImageModalOpen(true)}
                 />
               </div>
             </div>
@@ -401,6 +405,30 @@ const SnapStyleAI = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Image Modal */}
+      <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
+        <DialogContent className="max-w-4xl w-full p-0 bg-transparent border-none">
+          <DialogClose className="absolute right-4 top-4 z-50 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 bg-background/80 backdrop-blur-sm">
+            <X className="h-6 w-6" />
+            <span className="sr-only">Close</span>
+          </DialogClose>
+          <div className="relative">
+            <img 
+              src={generatedImage} 
+              alt="Generated Image Full Size" 
+              className="w-full h-auto max-h-[90vh] object-contain rounded-lg"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Footer */}
+      <footer className="text-center py-8 mt-16 border-t border-border/20">
+        <p className="text-muted-foreground">
+          Powered by <span className="font-semibold text-primary">Vision.AI</span>
+        </p>
+      </footer>
     </div>
   );
 };
