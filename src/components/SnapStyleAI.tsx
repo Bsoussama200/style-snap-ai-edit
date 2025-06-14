@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -62,7 +61,7 @@ const styleOptions: StyleOption[] = [
     name: 'Premium Showroom',
     description: 'High-end elegant surroundings',
     icon: <Crown className="w-6 h-6" />,
-    prompt: "Render the product in a high-end showroom with premium materials, sleek furniture, soft natural light, elegant surroundings. For large products too.",
+    prompt: "Render the product in a high-end showroom with premium materials, soft natural light, elegant surroundings. For large products too.",
     placeholder: "/lovable-uploads/55b005ec-5cd1-46e9-97e3-c6e87b3e0245.png"
   }
 ];
