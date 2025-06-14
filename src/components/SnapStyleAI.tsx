@@ -37,7 +37,7 @@ const styleOptions: StyleOption[] = [
     name: 'Dark Moody',
     description: 'Dramatic cinematic lighting',
     icon: <Moon className="w-6 h-6" />,
-    prompt: "Transform the product into a dramatic photo with moody lighting, subtle shadows, and cinematic atmosphere. Keep the product clearly visible with good detail while maintaining a sophisticated dark aesthetic.",
+    prompt: "Transform the product into a dramatic photo with darker background, subtle shadows, and cinematic atmosphere. Keep the full product clearly visible with good detail while maintaining a sophisticated aesthetic.",
     placeholder: "/lovable-uploads/50ae9be2-c8e8-496a-84a7-8f1b246b3fe6.png"
   },
   {
