@@ -30,7 +30,7 @@ const styleOptions: StyleOption[] = [
     name: 'Natural Environment',
     description: 'Product in natural setting',
     icon: <Home className="w-6 h-6" />,
-    prompt: "Place the exact product in a natural environment that complements the product (outdoor nature, indoor space, or contextual setting), natural lighting, realistic and authentic atmosphere, professionally shot.",
+    prompt: "Place the exact product in a natural environment that complements the product (outdoor nature, urban space, workplace, sports arena, indoor space, or contextual setting), natural lighting, realistic and authentic atmosphere, professionally shot.",
     placeholder: "/lovable-uploads/a4948c83-3ad5-4331-9815-fb7bdfbb1716.png"
   },
   {
