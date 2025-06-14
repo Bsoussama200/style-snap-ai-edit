@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -312,9 +311,6 @@ const SnapStyleAI = () => {
                     </AspectRatio>
                   )}
                   <div className="text-center space-y-2">
-                    <div className="flex items-center justify-center text-primary">
-                      {style.icon}
-                    </div>
                     <h3 className="font-semibold">{style.name}</h3>
                     <p className="text-sm text-muted-foreground">
                       {style.description}
