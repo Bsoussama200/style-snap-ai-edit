@@ -1,5 +1,3 @@
-
-
 import React, { useState, useRef } from 'react';
 import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,7 +22,7 @@ const styleOptions: StyleOption[] = [
     name: 'Studio White',
     description: 'Clean professional background',
     icon: <Camera className="w-6 h-6" />,
-    prompt: "Keep the exact product but make it a professional shoot with a clean white background, even lighting, soft shadows, center-framed.",
+    prompt: "KEEP THE EXACT PRODUCT UNCHANGED - do not modify, alter, or change the product in any way. Only change the background to a professional studio setup with clean white background, even lighting, soft shadows, center-framed. The product must remain exactly identical.",
     placeholder: "/lovable-uploads/264fc9d5-4f5e-45f0-af14-28b55062a246.png"
   },
   {
@@ -32,7 +30,7 @@ const styleOptions: StyleOption[] = [
     name: 'Natural Environment',
     description: 'Product in natural setting',
     icon: <Home className="w-6 h-6" />,
-    prompt: "Place the exact product in a natural environment that complements the product (outdoor nature, urban space, workplace, sports arena, indoor space, or contextual setting), natural lighting, realistic and authentic atmosphere, professionally shot.",
+    prompt: "KEEP THE EXACT PRODUCT UNCHANGED - do not modify, alter, or change the product in any way. Only place the identical product in a natural environment that complements it (outdoor nature, urban space, workplace, sports arena, indoor space, or contextual setting), natural lighting, realistic and authentic atmosphere, professionally shot. The product must remain exactly identical.",
     placeholder: "/lovable-uploads/e0bcb7bf-4ce5-44cb-8c66-ebbd40fbfb0e.png"
   },
   {
@@ -40,7 +38,7 @@ const styleOptions: StyleOption[] = [
     name: 'Dark Moody',
     description: 'Dramatic cinematic lighting',
     icon: <Moon className="w-6 h-6" />,
-    prompt: "Transform the product into a dramatic photo with darker background, subtle shadows, and cinematic atmosphere. Keep the full product clearly visible with good detail while maintaining a sophisticated aesthetic.",
+    prompt: "KEEP THE EXACT PRODUCT UNCHANGED - do not modify, alter, or change the product in any way. Only transform the background and lighting to a dramatic photo with darker background, subtle shadows, and cinematic atmosphere. Keep the full product clearly visible with good detail while maintaining a sophisticated aesthetic. The product must remain exactly identical.",
     placeholder: "/lovable-uploads/bc2620ab-04d8-447a-b004-96d10f242bb3.png"
   },
   {
@@ -48,7 +46,7 @@ const styleOptions: StyleOption[] = [
     name: 'Vibrant Ad Style',
     description: 'High-contrast commercial look',
     icon: <Zap className="w-6 h-6" />,
-    prompt: "Make the product pop with a colorful, high-contrast commercial look. Use bright lighting, dramatic shadows, glowing reflections. Like an ad banner.",
+    prompt: "KEEP THE EXACT PRODUCT UNCHANGED - do not modify, alter, or change the product in any way. Only change the background and lighting to make the product pop with a colorful, high-contrast commercial look. Use bright lighting, dramatic shadows, glowing reflections. Like an ad banner. The product must remain exactly identical.",
     placeholder: "/lovable-uploads/5a434678-e8ff-400f-8d13-968962695509.png"
   },
   {
@@ -56,7 +54,7 @@ const styleOptions: StyleOption[] = [
     name: 'Minimalist Flat Lay',
     description: 'Top-down aesthetic composition',
     icon: <Grid3X3 className="w-6 h-6" />,
-    prompt: "Place the product in a top-down flat lay on a solid neutral color surface (light beige or gray), clean layout, minimalist, aesthetic composition.",
+    prompt: "KEEP THE EXACT PRODUCT UNCHANGED - do not modify, alter, or change the product in any way. Only place the identical product in a top-down flat lay on a solid neutral color surface (light beige or gray), clean layout, minimalist, aesthetic composition. The product must remain exactly identical.",
     placeholder: "/lovable-uploads/b6f1f958-b012-4f41-ae3a-0eda0fddf98a.png"
   },
   {
@@ -64,7 +62,7 @@ const styleOptions: StyleOption[] = [
     name: 'Premium Showroom',
     description: 'High-end elegant surroundings',
     icon: <Crown className="w-6 h-6" />,
-    prompt: "Render the product in a high-end showroom with premium materials, soft natural light, elegant surroundings. For large products too.",
+    prompt: "KEEP THE EXACT PRODUCT UNCHANGED - do not modify, alter, or change the product in any way. Only render the identical product in a high-end showroom with premium materials, soft natural light, elegant surroundings. For large products too. The product must remain exactly identical.",
     placeholder: "/lovable-uploads/95e2ef73-1a3d-4e27-b5d5-e76a67891f3c.png"
   }
 ];
@@ -408,4 +406,3 @@ const SnapStyleAI = () => {
 };
 
 export default SnapStyleAI;
-
