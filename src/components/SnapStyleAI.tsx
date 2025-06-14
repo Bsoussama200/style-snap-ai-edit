@@ -1,8 +1,10 @@
+
 import React, { useState, useRef } from 'react';
 import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -299,13 +301,13 @@ const SnapStyleAI = () => {
               >
                 <CardContent className="p-4 space-y-3">
                   {style.placeholder && (
-                    <div className="w-full h-32 rounded-lg overflow-hidden border border-border">
+                    <AspectRatio ratio={16 / 9} className="w-full rounded-lg overflow-hidden border border-border">
                       <img 
                         src={style.placeholder} 
                         alt={`${style.name} example`}
                         className="w-full h-full object-cover"
                       />
-                    </div>
+                    </AspectRatio>
                   )}
                   <div className="text-center space-y-2">
                     <div className="flex items-center justify-center text-primary">
