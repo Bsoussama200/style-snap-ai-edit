@@ -22,7 +22,7 @@ const styleOptions: StyleOption[] = [
     description: 'Clean professional background',
     icon: <Camera className="w-6 h-6" />,
     prompt: "Keep the exact product but make it a professional shoot with a clean white background, even lighting, soft shadows, center-framed.",
-    placeholder: "/lovable-uploads/0a7a7cb6-c5fa-459e-8feb-9cf831fee713.png"
+    placeholder: "/lovable-uploads/264fc9d5-4f5e-45f0-af14-28b55062a246.png"
   },
   {
     id: 'lifestyle',
@@ -30,7 +30,7 @@ const styleOptions: StyleOption[] = [
     description: 'Product in natural setting',
     icon: <Home className="w-6 h-6" />,
     prompt: "Place the exact product in a natural environment that complements the product (outdoor nature, urban space, workplace, sports arena, indoor space, or contextual setting), natural lighting, realistic and authentic atmosphere, professionally shot.",
-    placeholder: "/lovable-uploads/a4948c83-3ad5-4331-9815-fb7bdfbb1716.png"
+    placeholder: "/lovable-uploads/e0bcb7bf-4ce5-44cb-8c66-ebbd40fbfb0e.png"
   },
   {
     id: 'moody',
@@ -38,7 +38,7 @@ const styleOptions: StyleOption[] = [
     description: 'Dramatic cinematic lighting',
     icon: <Moon className="w-6 h-6" />,
     prompt: "Transform the product into a dramatic photo with darker background, subtle shadows, and cinematic atmosphere. Keep the full product clearly visible with good detail while maintaining a sophisticated aesthetic.",
-    placeholder: "/lovable-uploads/50ae9be2-c8e8-496a-84a7-8f1b246b3fe6.png"
+    placeholder: "/lovable-uploads/bc2620ab-04d8-447a-b004-96d10f242bb3.png"
   },
   {
     id: 'vibrant',
@@ -46,7 +46,7 @@ const styleOptions: StyleOption[] = [
     description: 'High-contrast commercial look',
     icon: <Zap className="w-6 h-6" />,
     prompt: "Make the product pop with a colorful, high-contrast commercial look. Use bright lighting, dramatic shadows, glowing reflections. Like an ad banner.",
-    placeholder: "/lovable-uploads/9b309e49-4fa8-41df-b872-274cb1f95c03.png"
+    placeholder: "/lovable-uploads/5a434678-e8ff-400f-8d13-968962695509.png"
   },
   {
     id: 'flatlay',
@@ -54,7 +54,7 @@ const styleOptions: StyleOption[] = [
     description: 'Top-down aesthetic composition',
     icon: <Grid3X3 className="w-6 h-6" />,
     prompt: "Place the product in a top-down flat lay on a solid neutral color surface (light beige or gray), clean layout, minimalist, aesthetic composition.",
-    placeholder: "/lovable-uploads/e9c62d91-1b83-404a-892b-a87f3af9a227.png"
+    placeholder: "/lovable-uploads/b6f1f958-b012-4f41-ae3a-0eda0fddf98a.png"
   },
   {
     id: 'premium',
@@ -62,7 +62,7 @@ const styleOptions: StyleOption[] = [
     description: 'High-end elegant surroundings',
     icon: <Crown className="w-6 h-6" />,
     prompt: "Render the product in a high-end showroom with premium materials, soft natural light, elegant surroundings. For large products too.",
-    placeholder: "/lovable-uploads/55b005ec-5cd1-46e9-97e3-c6e87b3e0245.png"
+    placeholder: "/lovable-uploads/95e2ef73-1a3d-4e27-b5d5-e76a67891f3c.png"
   }
 ];
 
