@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef } from 'react';
 import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -301,7 +302,7 @@ const SnapStyleAI = () => {
               >
                 <CardContent className="p-4 space-y-3">
                   {style.placeholder && (
-                    <AspectRatio ratio={16 / 9} className="w-full rounded-lg overflow-hidden border border-border">
+                    <AspectRatio ratio={1} className="w-full rounded-lg overflow-hidden border border-border">
                       <img 
                         src={style.placeholder} 
                         alt={`${style.name} example`}
@@ -407,3 +408,4 @@ const SnapStyleAI = () => {
 };
 
 export default SnapStyleAI;
+
