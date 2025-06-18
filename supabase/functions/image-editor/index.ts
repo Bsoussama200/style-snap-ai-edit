@@ -14,15 +14,11 @@ serve(async (req) => {
   }
 
   try {
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openaiApiKey) {
-      throw new Error('OpenAI API key not configured');
-    }
-
     // Parse form data from the request
     const formData = await req.formData();
     const images = formData.getAll('image') as File[];
     const prompt = formData.get('prompt') as string;
+    const apiKey = formData.get('apiKey') as string;
 
     if (!images || images.length === 0) {
       return new Response(
@@ -37,6 +33,16 @@ serve(async (req) => {
     if (!prompt) {
       return new Response(
         JSON.stringify({ error: 'Prompt is required' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({ error: 'OpenAI API key is required' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -59,11 +65,11 @@ serve(async (req) => {
 
     console.log('Sending request to OpenAI /images/edits endpoint...');
 
-    // Call OpenAI's /images/edits endpoint
+    // Call OpenAI's /images/edits endpoint using the provided API key
     const response = await fetch('https://api.openai.com/v1/images/edits', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: openaiFormData,
     });
