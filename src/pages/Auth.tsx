@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Camera, Mail, Lock, User, LogIn, AlertCircle } from 'lucide-react';
+import { Camera, Mail, Lock, User, LogIn } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -99,63 +99,9 @@ const Auth = () => {
     }
   };
 
-  // Pre-fill test account credentials
-  const fillTestAccount = () => {
-    setEmail('admin@test.local');
-    setPassword('password123');
-    setIsLogin(true);
-  };
-
-  // Create and auto-confirm test account
-  const createTestAccount = async () => {
-    setLoading(true);
-    try {
-      console.log('Attempting to create test account...');
-      
-      // First try to sign out any existing session
-      await supabase.auth.signOut();
-      
-      // Try to create the account with auto-confirm
-      const { data, error } = await supabase.auth.signUp({
-        email: 'admin@test.local',
-        password: 'password123',
-        options: {
-          data: {
-            full_name: 'Test Admin User',
-          },
-          emailRedirectTo: `${window.location.origin}/`
-        }
-      });
-
-      console.log('Test account creation result:', { data, error });
-
-      if (error) {
-        if (error.message.includes('already registered') || error.message.includes('already been registered')) {
-          toast({
-            title: "Account exists!",
-            description: "Test account already exists. You can now log in with it.",
-          });
-          fillTestAccount();
-        } else {
-          throw error;
-        }
-      } else {
-        toast({
-          title: "Test account created!",
-          description: "Test account has been created. You can now log in.",
-        });
-        fillTestAccount();
-      }
-    } catch (error: any) {
-      console.error('Test account creation error:', error);
-      toast({
-        title: "Error creating test account",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
+  const handleSkipAuth = () => {
+    // Navigate directly to the app for testing with state
+    navigate('/', { state: { skipAuth: true } });
   };
 
   return (
@@ -244,33 +190,17 @@ const Auth = () => {
             </Button>
           </div>
 
-          {/* Test Account Helper */}
+          {/* Skip Auth for Testing */}
           <div className="pt-4 border-t">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertCircle className="w-4 h-4 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">
-                For testing purposes:
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Button
-                variant="ghost"
-                onClick={createTestAccount}
-                className="w-full text-xs"
-                disabled={loading}
-              >
-                Create Test Account (admin@test.local)
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={fillTestAccount}
-                className="w-full text-xs"
-              >
-                Fill Test Login Details
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              onClick={handleSkipAuth}
+              className="w-full text-sm"
+            >
+              Skip Auth (Testing)
+            </Button>
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              Email: admin@test.local | Password: password123
+              Access the app directly without authentication
             </p>
           </div>
         </CardContent>
