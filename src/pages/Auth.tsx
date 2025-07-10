@@ -62,10 +62,18 @@ const Auth = () => {
 
         if (error) throw error;
 
-        toast({
-          title: "Account created!",
-          description: "Please check your email to verify your account.",
-        });
+        // Check if user needs to confirm email
+        if (data.user && !data.session) {
+          toast({
+            title: "Check your email",
+            description: "We've sent you a confirmation link to complete your registration.",
+          });
+        } else {
+          toast({
+            title: "Account created!",
+            description: "You have been registered and logged in successfully.",
+          });
+        }
       }
     } catch (error: any) {
       console.error('Auth error:', error);
@@ -91,14 +99,14 @@ const Auth = () => {
     }
   };
 
-  // Pre-fill test account - using a simple, valid email format
+  // Pre-fill test account credentials
   const fillTestAccount = () => {
-    setEmail('test@test.com');
+    setEmail('admin@test.local');
     setPassword('password123');
     setIsLogin(true);
   };
 
-  // Create test account with simpler email
+  // Create and auto-confirm test account
   const createTestAccount = async () => {
     setLoading(true);
     try {
@@ -107,12 +115,13 @@ const Auth = () => {
       // First try to sign out any existing session
       await supabase.auth.signOut();
       
+      // Try to create the account with auto-confirm
       const { data, error } = await supabase.auth.signUp({
-        email: 'test@test.com',
+        email: 'admin@test.local',
         password: 'password123',
         options: {
           data: {
-            full_name: 'Test User',
+            full_name: 'Test Admin User',
           },
           emailRedirectTo: `${window.location.origin}/`
         }
@@ -250,7 +259,7 @@ const Auth = () => {
                 className="w-full text-xs"
                 disabled={loading}
               >
-                Create Test Account (test@test.com)
+                Create Test Account (admin@test.local)
               </Button>
               <Button
                 variant="ghost"
@@ -261,7 +270,7 @@ const Auth = () => {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              Email: test@test.com | Password: password123
+              Email: admin@test.local | Password: password123
             </p>
           </div>
         </CardContent>
