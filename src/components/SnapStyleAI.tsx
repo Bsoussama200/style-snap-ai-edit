@@ -1,6 +1,5 @@
-
-import React, { useState, useRef } from 'react';
-import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown, X, Key } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown, X, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,6 +8,7 @@ import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface StyleOption {
   id: string;
@@ -71,6 +71,7 @@ const styleOptions: StyleOption[] = [
 ];
 
 const SnapStyleAI = () => {
+  const { user } = useAuth();
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [selectedStyle, setSelectedStyle] = useState<string>('');
@@ -79,7 +80,32 @@ const SnapStyleAI = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string>('');
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [tokenBalance, setTokenBalance] = useState<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const TOKENS_PER_GENERATION = 1; // Configurable token cost
+
+  useEffect(() => {
+    if (user) {
+      fetchTokenBalance();
+    }
+  }, [user]);
+
+  const fetchTokenBalance = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_tokens')
+        .select('balance')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (error) throw error;
+      setTokenBalance(data.balance);
+    } catch (error) {
+      console.error('Error fetching token balance:', error);
+      setTokenBalance(0);
+    }
+  };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -107,6 +133,15 @@ const SnapStyleAI = () => {
   };
 
   const generateStyledImage = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to generate images.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (selectedImages.length === 0) {
       toast({
         title: "Missing requirements",
@@ -134,6 +169,15 @@ const SnapStyleAI = () => {
       return;
     }
 
+    if (tokenBalance < TOKENS_PER_GENERATION) {
+      toast({
+        title: "Insufficient tokens",
+        description: "You need at least 1 token to generate an image. Please purchase more tokens.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsGenerating(true);
     
     try {
@@ -147,7 +191,6 @@ const SnapStyleAI = () => {
       // Create FormData and append all images
       const formData = new FormData();
       
-      // Add all images with the same field name that the backend expects
       selectedImages.forEach((image, index) => {
         formData.append('image', image);
         console.log(`Added image ${index + 1}:`, image.name);
@@ -155,6 +198,7 @@ const SnapStyleAI = () => {
       
       formData.append('prompt', finalPrompt);
       formData.append('apiKey', openaiApiKey);
+      formData.append('userId', user.id);
 
       console.log('Sending request to backend...');
 
@@ -181,12 +225,15 @@ const SnapStyleAI = () => {
         const imageUrl = URL.createObjectURL(blob);
         
         setGeneratedImage(imageUrl);
+        
+        // Update token balance
+        await fetchTokenBalance();
+        
         toast({
           title: "Success!",
           description: `Your styled image has been generated using ${selectedImages.length} reference image${selectedImages.length > 1 ? 's' : ''}.`,
         });
       } else if (data && data.content) {
-        // Handle text response case
         toast({
           title: "Response received",
           description: data.content,
@@ -241,6 +288,15 @@ const SnapStyleAI = () => {
         <p className="text-muted-foreground text-lg">
           Transform your product photos with AI-powered professional styles
         </p>
+        
+        {/* Token Balance Display */}
+        <div className="flex items-center justify-center gap-2 mt-4">
+          <Coins className="w-5 h-5 text-primary" />
+          <span className="text-lg font-semibold">{tokenBalance} tokens</span>
+          <span className="text-sm text-muted-foreground">
+            ({TOKENS_PER_GENERATION} token per generation)
+          </span>
+        </div>
       </div>
 
       {/* API Key Section */}
@@ -379,7 +435,7 @@ const SnapStyleAI = () => {
         <div className="text-center">
           <Button
             onClick={generateStyledImage}
-            disabled={isGenerating}
+            disabled={isGenerating || tokenBalance < TOKENS_PER_GENERATION}
             size="lg"
             className="px-8 py-4 text-lg font-semibold"
           >
@@ -388,8 +444,15 @@ const SnapStyleAI = () => {
                 <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
                 Creating your styled image...
               </>
+            ) : tokenBalance < TOKENS_PER_GENERATION ? (
+              <>
+                <Coins className="w-5 h-5 mr-2" />
+                Insufficient tokens
+              </>
             ) : (
-              'Generate Styled Image'
+              <>
+                Generate Styled Image ({TOKENS_PER_GENERATION} token)
+              </>
             )}
           </Button>
         </div>

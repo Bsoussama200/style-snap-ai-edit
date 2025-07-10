@@ -1,6 +1,7 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,12 +14,19 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Create Supabase client with service role key for database operations
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+
   try {
     // Parse form data from the request
     const formData = await req.formData();
     const images = formData.getAll('image') as File[];
     const prompt = formData.get('prompt') as string;
     const apiKey = formData.get('apiKey') as string;
+    const userId = formData.get('userId') as string;
 
     if (!images || images.length === 0) {
       return new Response(
@@ -43,6 +51,33 @@ serve(async (req) => {
     if (!apiKey) {
       return new Response(
         JSON.stringify({ error: 'OpenAI API key is required' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: 'User ID is required' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // Check user's token balance
+    const { data: tokenData, error: tokenError } = await supabase
+      .from('user_tokens')
+      .select('balance')
+      .eq('user_id', userId)
+      .single();
+
+    if (tokenError || !tokenData || tokenData.balance < 1) {
+      return new Response(
+        JSON.stringify({ error: 'Insufficient token balance' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -84,6 +119,37 @@ serve(async (req) => {
     console.log('OpenAI response received successfully');
 
     if (data && data.data && data.data.length > 0) {
+      // Deduct token from user's balance
+      const { error: transactionError } = await supabase
+        .from('token_transactions')
+        .insert({
+          user_id: userId,
+          transaction_type: 'consumption',
+          amount: -1, // Negative for consumption
+          description: 'AI image generation',
+        });
+
+      if (transactionError) {
+        console.error('Error creating token transaction:', transactionError);
+        // Continue anyway, don't fail the image generation
+      }
+
+      // Record the image generation
+      const { error: generationError } = await supabase
+        .from('image_generations')
+        .insert({
+          user_id: userId,
+          tokens_consumed: 1,
+          style_type: 'custom', // You could extract this from the prompt
+          prompt: prompt,
+          // image_url would be set here if you store the image
+        });
+
+      if (generationError) {
+        console.error('Error recording image generation:', generationError);
+        // Continue anyway, don't fail the image generation
+      }
+
       // Return the response in the same format as before for frontend compatibility
       return new Response(JSON.stringify({ 
         data: data.data.map(item => ({ 
