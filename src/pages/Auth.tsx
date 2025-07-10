@@ -32,10 +32,12 @@ const Auth = () => {
     try {
       if (isLogin) {
         // Login
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
+
+        console.log('Login attempt:', { email, error, data });
 
         if (error) throw error;
 
@@ -45,7 +47,7 @@ const Auth = () => {
         });
       } else {
         // Sign up
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -56,6 +58,8 @@ const Auth = () => {
           }
         });
 
+        console.log('Signup attempt:', { email, error, data });
+
         if (error) throw error;
 
         toast({
@@ -64,6 +68,7 @@ const Auth = () => {
         });
       }
     } catch (error: any) {
+      console.error('Auth error:', error);
       toast({
         title: "Authentication Error",
         description: error.message,
@@ -86,19 +91,24 @@ const Auth = () => {
     }
   };
 
-  // Pre-fill test account - using a more realistic email format
+  // Pre-fill test account - using a simple, valid email format
   const fillTestAccount = () => {
-    setEmail('testuser@example.com');
+    setEmail('test@test.com');
     setPassword('password123');
     setIsLogin(true);
   };
 
-  // Create test account
+  // Create test account with simpler email
   const createTestAccount = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({
-        email: 'testuser@example.com',
+      console.log('Attempting to create test account...');
+      
+      // First try to sign out any existing session
+      await supabase.auth.signOut();
+      
+      const { data, error } = await supabase.auth.signUp({
+        email: 'test@test.com',
         password: 'password123',
         options: {
           data: {
@@ -108,8 +118,10 @@ const Auth = () => {
         }
       });
 
+      console.log('Test account creation result:', { data, error });
+
       if (error) {
-        if (error.message.includes('already registered')) {
+        if (error.message.includes('already registered') || error.message.includes('already been registered')) {
           toast({
             title: "Account exists!",
             description: "Test account already exists. You can now log in with it.",
@@ -126,6 +138,7 @@ const Auth = () => {
         fillTestAccount();
       }
     } catch (error: any) {
+      console.error('Test account creation error:', error);
       toast({
         title: "Error creating test account",
         description: error.message,
@@ -237,7 +250,7 @@ const Auth = () => {
                 className="w-full text-xs"
                 disabled={loading}
               >
-                Create Test Account (testuser@example.com)
+                Create Test Account (test@test.com)
               </Button>
               <Button
                 variant="ghost"
@@ -248,7 +261,7 @@ const Auth = () => {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              Email: testuser@example.com | Password: password123
+              Email: test@test.com | Password: password123
             </p>
           </div>
         </CardContent>
