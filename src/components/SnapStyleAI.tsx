@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown, X, Coins } from 'lucide-react';
+import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown, X, Coins, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';

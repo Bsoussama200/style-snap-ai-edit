@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { CreditCard, Smartphone, Building } from 'lucide-react';
+import type { Database } from '@/integrations/supabase/types';
 
 interface TokenPackage {
   id: string;
@@ -23,7 +24,14 @@ const tokenPackages: TokenPackage[] = [
   { id: 'enterprise', tokens: 100, price: 30.00 }
 ];
 
-const paymentMethods = [
+type PaymentMethod = Database['public']['Enums']['payment_method'];
+
+const paymentMethods: Array<{
+  id: PaymentMethod;
+  name: string;
+  icon: React.ComponentType<any>;
+  description: string;
+}> = [
   { id: 'flouci', name: 'Flouci', icon: Smartphone, description: 'Mobile payment' },
   { id: 'd17', name: 'D17', icon: Building, description: 'Bank transfer' },
   { id: 'credit_card', name: 'Credit Card', icon: CreditCard, description: 'Visa/Mastercard' }
@@ -32,7 +40,7 @@ const paymentMethods = [
 export const TokenPurchase = () => {
   const { user } = useAuth();
   const [selectedPackage, setSelectedPackage] = useState<string>('');
-  const [selectedPayment, setSelectedPayment] = useState<string>('');
+  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | ''>('');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handlePurchase = async () => {
@@ -50,15 +58,15 @@ export const TokenPurchase = () => {
       const packageData = tokenPackages.find(pkg => pkg.id === selectedPackage);
       if (!packageData) throw new Error('Invalid package selected');
 
-      // Create purchase record
+      // Create purchase record with proper typing
       const { data: purchase, error: purchaseError } = await supabase
         .from('purchases')
         .insert({
           user_id: user.id,
           amount: packageData.price,
           tokens_purchased: packageData.tokens,
-          payment_method: selectedPayment,
-          payment_status: 'pending'
+          payment_method: selectedPayment as PaymentMethod,
+          payment_status: 'pending' as const
         })
         .select()
         .single();
@@ -71,7 +79,7 @@ export const TokenPurchase = () => {
           // Update purchase status to completed
           await supabase
             .from('purchases')
-            .update({ payment_status: 'completed' })
+            .update({ payment_status: 'completed' as const })
             .eq('id', purchase.id);
 
           // Add token transaction
@@ -154,7 +162,7 @@ export const TokenPurchase = () => {
         {/* Payment Methods */}
         <div>
           <h3 className="font-semibold mb-3">Payment Method</h3>
-          <RadioGroup value={selectedPayment} onValueChange={setSelectedPayment}>
+          <RadioGroup value={selectedPayment} onValueChange={(value) => setSelectedPayment(value as PaymentMethod)}>
             <div className="space-y-2">
               {paymentMethods.map((method) => (
                 <div key={method.id}>
