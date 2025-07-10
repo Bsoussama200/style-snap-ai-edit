@@ -1,10 +1,17 @@
 
 import React from 'react';
-import { LoginButton } from '@/components/auth/LoginButton';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Camera, Zap, Shield, Coins } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const LandingPage = () => {
+  const navigate = useNavigate();
+
+  const handleTryProShot = () => {
+    navigate('/auth');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20">
       <div className="container mx-auto px-4 py-16">
@@ -18,7 +25,9 @@ export const LandingPage = () => {
             Transform your product photos with AI-powered professional styles. 
             Get studio-quality images in seconds with our advanced AI technology.
           </p>
-          <LoginButton />
+          <Button onClick={handleTryProShot} size="lg" className="text-lg px-8 py-3">
+            Try ProShot
+          </Button>
         </div>
 
         {/* Features Grid */}
