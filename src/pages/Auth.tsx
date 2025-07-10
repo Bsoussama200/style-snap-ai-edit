@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Camera, Mail, Lock, User, LogIn } from 'lucide-react';
+import { Camera, Mail, Lock, User, LogIn, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -91,6 +91,49 @@ const Auth = () => {
     setEmail('user1@test.com');
     setPassword('qqqqqqqq');
     setIsLogin(true);
+  };
+
+  // Create test account
+  const createTestAccount = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: 'user1@test.com',
+        password: 'qqqqqqqq',
+        options: {
+          data: {
+            full_name: 'Test User',
+          },
+          emailRedirectTo: `${window.location.origin}/`
+        }
+      });
+
+      if (error) {
+        if (error.message.includes('already registered')) {
+          toast({
+            title: "Account exists!",
+            description: "Test account already exists. You can now log in with it.",
+          });
+          fillTestAccount();
+        } else {
+          throw error;
+        }
+      } else {
+        toast({
+          title: "Test account created!",
+          description: "Test account has been created. You can now log in.",
+        });
+        fillTestAccount();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error creating test account",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -181,16 +224,29 @@ const Auth = () => {
 
           {/* Test Account Helper */}
           <div className="pt-4 border-t">
-            <p className="text-xs text-muted-foreground text-center mb-2">
-              For testing purposes:
-            </p>
-            <Button
-              variant="ghost"
-              onClick={fillTestAccount}
-              className="w-full text-xs"
-            >
-              Use Test Account (user1 / qqqqqqqq)
-            </Button>
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle className="w-4 h-4 text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">
+                For testing purposes:
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Button
+                variant="ghost"
+                onClick={createTestAccount}
+                className="w-full text-xs"
+                disabled={loading}
+              >
+                Create Test Account (user1@test.com)
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={fillTestAccount}
+                className="w-full text-xs"
+              >
+                Fill Test Login Details
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
