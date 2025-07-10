@@ -86,10 +86,10 @@ const Auth = () => {
     }
   };
 
-  // Pre-fill test account
+  // Pre-fill test account - using a more realistic email format
   const fillTestAccount = () => {
-    setEmail('user1@test.com');
-    setPassword('qqqqqqqq');
+    setEmail('testuser@example.com');
+    setPassword('password123');
     setIsLogin(true);
   };
 
@@ -98,8 +98,8 @@ const Auth = () => {
     setLoading(true);
     try {
       const { error } = await supabase.auth.signUp({
-        email: 'user1@test.com',
-        password: 'qqqqqqqq',
+        email: 'testuser@example.com',
+        password: 'password123',
         options: {
           data: {
             full_name: 'Test User',
@@ -237,7 +237,7 @@ const Auth = () => {
                 className="w-full text-xs"
                 disabled={loading}
               >
-                Create Test Account (user1@test.com)
+                Create Test Account (testuser@example.com)
               </Button>
               <Button
                 variant="ghost"
@@ -247,6 +247,9 @@ const Auth = () => {
                 Fill Test Login Details
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              Email: testuser@example.com | Password: password123
+            </p>
           </div>
         </CardContent>
       </Card>
