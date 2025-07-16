@@ -60,8 +60,10 @@ serve(async (req) => {
       const mimeType = images[i].type || 'image/png';
       
       imageContents.push({
-        type: "input_image",
-        image_url: `data:${mimeType};base64,${base64Image}`
+        type: "image_url",
+        image_url: {
+          url: `data:${mimeType};base64,${base64Image}`
+        }
       });
       
       console.log(`Converted image ${i + 1}: ${images[i].name || 'unnamed'} (${images[i].size} bytes)`);
@@ -74,7 +76,7 @@ serve(async (req) => {
         {
           role: "user",
           content: [
-            { type: "input_text", text: prompt },
+            { type: "text", text: prompt },
             ...imageContents
           ]
         }
