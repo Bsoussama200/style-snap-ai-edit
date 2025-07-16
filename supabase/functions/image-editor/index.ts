@@ -69,62 +69,76 @@ serve(async (req) => {
       console.log(`Converted image ${i + 1}: ${images[i].name || 'unnamed'} (${images[i].size} bytes)`);
     }
 
-    // Use chat completions endpoint with image generation tool for all cases
-    const requestBody = {
+    // First, analyze the image and get styling instructions using vision model
+    const analysisPrompt = `Analyze the product in the provided image(s) and then generate a new styled image based on this request: "${prompt}". 
+
+Please provide detailed instructions for generating a new image that transforms the background and styling while keeping the exact product unchanged. Focus on lighting, environment, and atmosphere changes only.`;
+
+    const analysisRequestBody = {
       model: "gpt-4o",
       messages: [
         {
           role: "user",
           content: [
-            { type: "text", text: prompt },
+            { type: "text", text: analysisPrompt },
             ...imageContents
           ]
         }
       ],
-      tools: [
-        {
-          type: "image_generation",
-          input_fidelity: "high"
-        }
-      ]
+      max_tokens: 500
     };
 
-    console.log('Sending request to OpenAI /chat/completions endpoint with image generation tool...');
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    console.log('Analyzing image with GPT-4o vision...');
+    const analysisResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify(analysisRequestBody),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
-      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+    if (!analysisResponse.ok) {
+      const errorText = await analysisResponse.text();
+      console.error('OpenAI Analysis API error:', analysisResponse.status, errorText);
+      throw new Error(`OpenAI Analysis API error: ${analysisResponse.status} - ${errorText}`);
     }
 
-    const data = await response.json();
-    console.log('OpenAI response received successfully');
+    const analysisData = await analysisResponse.json();
+    const detailedPrompt = analysisData.choices[0].message.content;
+    console.log('Analysis complete, generating image...');
 
-    // Check if we have tool calls with image generation
-    if (data.choices[0].message.tool_calls && data.choices[0].message.tool_calls.length > 0) {
-      const toolCall = data.choices[0].message.tool_calls[0];
-      if (toolCall.type === 'image_generation' && toolCall.image_generation) {
-        const base64Image = toolCall.image_generation.b64_json;
-        return new Response(JSON.stringify({ 
-          data: [{ b64_json: base64Image }]
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+    // Now generate the image using DALL-E 3 with the detailed prompt
+    const imageGenerationBody = {
+      model: "dall-e-3",
+      prompt: detailedPrompt,
+      n: 1,
+      size: "1024x1024",
+      quality: "hd",
+      response_format: "b64_json"
+    };
+
+    console.log('Generating image with DALL-E 3...');
+    const imageResponse = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(imageGenerationBody),
+    });
+
+    if (!imageResponse.ok) {
+      const errorText = await imageResponse.text();
+      console.error('OpenAI Image Generation API error:', imageResponse.status, errorText);
+      throw new Error(`OpenAI Image Generation API error: ${imageResponse.status} - ${errorText}`);
     }
 
-    // If no image generation tool call, return the text content
+    const imageData = await imageResponse.json();
+    console.log('Image generation completed successfully');
+
     return new Response(JSON.stringify({ 
-      content: data.choices[0].message.content
+      data: imageData.data
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
