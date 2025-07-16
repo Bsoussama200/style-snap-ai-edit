@@ -52,114 +52,80 @@ serve(async (req) => {
 
     console.log(`Processing ${images.length} images with prompt:`, prompt);
 
-    // For multiple images with gpt-image-1, we need to use the /chat/completions endpoint
-    if (images.length > 1) {
-      const imageContents = [];
-      for (let i = 0; i < images.length; i++) {
-        const imageBytes = await images[i].arrayBuffer();
-        const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBytes)));
-        const mimeType = images[i].type || 'image/png';
-        
-        imageContents.push({
-          type: "image_url",
-          image_url: {
-            url: `data:${mimeType};base64,${base64Image}`
-          }
-        });
-        
-        console.log(`Converted image ${i + 1}: ${images[i].name || 'unnamed'} (${images[i].size} bytes)`);
-      }
-
-      // Use chat completions endpoint for multiple images
-      const requestBody = {
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: prompt },
-              ...imageContents
-            ]
-          }
-        ],
-        max_tokens: 1000
-      };
-
-      console.log('Sending request to OpenAI /chat/completions endpoint for multiple images...');
-
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('OpenAI API error:', response.status, errorText);
-        throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
-      }
-
-      const data = await response.json();
-      console.log('OpenAI chat response received successfully');
-
-      // Return a text response for multi-image processing
-      return new Response(JSON.stringify({ 
-        content: data.choices[0].message.content
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-
-    } else {
-      // For single image, use the traditional /images/generations endpoint
-      const imageBytes = await images[0].arrayBuffer();
+    // Convert all images to base64
+    const imageContents = [];
+    for (let i = 0; i < images.length; i++) {
+      const imageBytes = await images[i].arrayBuffer();
       const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBytes)));
+      const mimeType = images[i].type || 'image/png';
       
-      console.log(`Converted single image: ${images[0].name || 'unnamed'} (${images[0].size} bytes)`);
-
-      // Prepare the request body for single image generation
-      const requestBody = {
-        model: "dall-e-3",
-        prompt: prompt,
-        n: 1,
-        size: "1024x1024",
-        response_format: "b64_json"
-      };
-
-      console.log('Sending request to OpenAI /images/generations endpoint...');
-
-      const response = await fetch('https://api.openai.com/v1/images/generations', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
+      imageContents.push({
+        type: "input_image",
+        image_url: `data:${mimeType};base64,${base64Image}`
       });
+      
+      console.log(`Converted image ${i + 1}: ${images[i].name || 'unnamed'} (${images[i].size} bytes)`);
+    }
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('OpenAI API error:', response.status, errorText);
-        throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
-      }
+    // Use chat completions endpoint with image generation tool for all cases
+    const requestBody = {
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "input_text", text: prompt },
+            ...imageContents
+          ]
+        }
+      ],
+      tools: [
+        {
+          type: "image_generation",
+          input_fidelity: "high"
+        }
+      ]
+    };
 
-      const data = await response.json();
-      console.log('OpenAI response received successfully');
+    console.log('Sending request to OpenAI /chat/completions endpoint with image generation tool...');
 
-      if (data && data.data && data.data.length > 0) {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenAI API error:', response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('OpenAI response received successfully');
+
+    // Check if we have tool calls with image generation
+    if (data.choices[0].message.tool_calls && data.choices[0].message.tool_calls.length > 0) {
+      const toolCall = data.choices[0].message.tool_calls[0];
+      if (toolCall.type === 'image_generation' && toolCall.image_generation) {
+        const base64Image = toolCall.image_generation.b64_json;
         return new Response(JSON.stringify({ 
-          data: data.data.map(item => ({ 
-            b64_json: item.b64_json 
-          }))
+          data: [{ b64_json: base64Image }]
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
-      } else {
-        throw new Error('No image data received from OpenAI');
       }
     }
+
+    // If no image generation tool call, return the text content
+    return new Response(JSON.stringify({ 
+      content: data.choices[0].message.content
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
 
   } catch (error) {
     console.error('Error in image-editor function:', error);
