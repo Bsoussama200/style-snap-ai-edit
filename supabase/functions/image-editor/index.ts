@@ -52,70 +52,113 @@ serve(async (req) => {
 
     console.log(`Processing ${images.length} images with prompt:`, prompt);
 
-    // Convert images to base64 for the new API format
-    const imageContents = [];
-    for (let i = 0; i < images.length; i++) {
-      const imageBytes = await images[i].arrayBuffer();
-      const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBytes)));
-      const mimeType = images[i].type || 'image/png';
-      
-      imageContents.push({
-        type: "input_image",
-        image_url: `data:${mimeType};base64,${base64Image}`
+    // For multiple images with gpt-image-1, we need to use the /chat/completions endpoint
+    if (images.length > 1) {
+      const imageContents = [];
+      for (let i = 0; i < images.length; i++) {
+        const imageBytes = await images[i].arrayBuffer();
+        const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBytes)));
+        const mimeType = images[i].type || 'image/png';
+        
+        imageContents.push({
+          type: "image_url",
+          image_url: {
+            url: `data:${mimeType};base64,${base64Image}`
+          }
+        });
+        
+        console.log(`Converted image ${i + 1}: ${images[i].name || 'unnamed'} (${images[i].size} bytes)`);
+      }
+
+      // Use chat completions endpoint for multiple images
+      const requestBody = {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: prompt },
+              ...imageContents
+            ]
+          }
+        ],
+        max_tokens: 1000
+      };
+
+      console.log('Sending request to OpenAI /chat/completions endpoint for multiple images...');
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
       });
-      
-      console.log(`Converted image ${i + 1}: ${images[i].name || 'unnamed'} (${images[i].size} bytes)`);
-    }
 
-    // Prepare the request body for the new gpt-image-1 format
-    const requestBody = {
-      model: "gpt-image-1",
-      input: [
-        {
-          role: "user",
-          content: [
-            { type: "input_text", text: prompt },
-            ...imageContents
-          ]
-        }
-      ],
-      tools: [{ type: "image_generation", input_fidelity: "high" }],
-      n: 1,
-      size: "1024x1024"
-    };
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('OpenAI API error:', response.status, errorText);
+        throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+      }
 
-    console.log('Sending request to OpenAI /images/generations endpoint with high fidelity...');
+      const data = await response.json();
+      console.log('OpenAI chat response received successfully');
 
-    // Call OpenAI's /images/generations endpoint using the new format
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
-      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
-    }
-
-    const data = await response.json();
-    console.log('OpenAI response received successfully');
-
-    if (data && data.data && data.data.length > 0) {
-      // Return the response in the same format as before for frontend compatibility
+      // Return a text response for multi-image processing
       return new Response(JSON.stringify({ 
-        data: data.data.map(item => ({ 
-          b64_json: item.b64_json 
-        }))
+        content: data.choices[0].message.content
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+
     } else {
-      throw new Error('No image data received from OpenAI');
+      // For single image, use the traditional /images/generations endpoint
+      const imageBytes = await images[0].arrayBuffer();
+      const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBytes)));
+      
+      console.log(`Converted single image: ${images[0].name || 'unnamed'} (${images[0].size} bytes)`);
+
+      // Prepare the request body for single image generation
+      const requestBody = {
+        model: "dall-e-3",
+        prompt: prompt,
+        n: 1,
+        size: "1024x1024",
+        response_format: "b64_json"
+      };
+
+      console.log('Sending request to OpenAI /images/generations endpoint...');
+
+      const response = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('OpenAI API error:', response.status, errorText);
+        throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('OpenAI response received successfully');
+
+      if (data && data.data && data.data.length > 0) {
+        return new Response(JSON.stringify({ 
+          data: data.data.map(item => ({ 
+            b64_json: item.b64_json 
+          }))
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } else {
+        throw new Error('No image data received from OpenAI');
+      }
     }
 
   } catch (error) {
