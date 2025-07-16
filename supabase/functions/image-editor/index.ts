@@ -52,26 +52,48 @@ serve(async (req) => {
 
     console.log(`Processing ${images.length} images with prompt:`, prompt);
 
-    // Create FormData for OpenAI API
-    const openaiFormData = new FormData();
-    openaiFormData.append('model', 'gpt-image-1');
-    openaiFormData.append('prompt', prompt);
-    
-    // Add all images to the form data
+    // Convert images to base64 for the new API format
+    const imageContents = [];
     for (let i = 0; i < images.length; i++) {
-      openaiFormData.append('image[]', images[i]);
-      console.log(`Added image ${i + 1}: ${images[i].name || 'unnamed'} (${images[i].size} bytes)`);
+      const imageBytes = await images[i].arrayBuffer();
+      const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBytes)));
+      const mimeType = images[i].type || 'image/png';
+      
+      imageContents.push({
+        type: "input_image",
+        image_url: `data:${mimeType};base64,${base64Image}`
+      });
+      
+      console.log(`Converted image ${i + 1}: ${images[i].name || 'unnamed'} (${images[i].size} bytes)`);
     }
 
-    console.log('Sending request to OpenAI /images/edits endpoint...');
+    // Prepare the request body for the new gpt-image-1 format
+    const requestBody = {
+      model: "gpt-image-1",
+      input: [
+        {
+          role: "user",
+          content: [
+            { type: "input_text", text: prompt },
+            ...imageContents
+          ]
+        }
+      ],
+      tools: [{ type: "image_generation", input_fidelity: "high" }],
+      n: 1,
+      size: "1024x1024"
+    };
 
-    // Call OpenAI's /images/edits endpoint using the provided API key
-    const response = await fetch('https://api.openai.com/v1/images/edits', {
+    console.log('Sending request to OpenAI /images/generations endpoint with high fidelity...');
+
+    // Call OpenAI's /images/generations endpoint using the new format
+    const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
       },
-      body: openaiFormData,
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
