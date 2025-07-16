@@ -52,96 +52,49 @@ serve(async (req) => {
 
     console.log(`Processing ${images.length} images with prompt:`, prompt);
 
-    // Convert all images to base64
-    const imageContents = [];
+    // Create FormData for OpenAI API
+    const openaiFormData = new FormData();
+    openaiFormData.append('model', 'gpt-image-1');
+    openaiFormData.append('prompt', prompt);
+    
+    // Add all images to the form data
     for (let i = 0; i < images.length; i++) {
-      const imageBytes = await images[i].arrayBuffer();
-      const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBytes)));
-      const mimeType = images[i].type || 'image/png';
-      
-      imageContents.push({
-        type: "image_url",
-        image_url: {
-          url: `data:${mimeType};base64,${base64Image}`
-        }
+      openaiFormData.append('image[]', images[i]);
+      console.log(`Added image ${i + 1}: ${images[i].name || 'unnamed'} (${images[i].size} bytes)`);
+    }
+
+    console.log('Sending request to OpenAI /images/edits endpoint...');
+
+    // Call OpenAI's /images/edits endpoint using the provided API key
+    const response = await fetch('https://api.openai.com/v1/images/edits', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: openaiFormData,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenAI API error:', response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('OpenAI response received successfully');
+
+    if (data && data.data && data.data.length > 0) {
+      // Return the response in the same format as before for frontend compatibility
+      return new Response(JSON.stringify({ 
+        data: data.data.map(item => ({ 
+          b64_json: item.b64_json 
+        }))
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
-      
-      console.log(`Converted image ${i + 1}: ${images[i].name || 'unnamed'} (${images[i].size} bytes)`);
+    } else {
+      throw new Error('No image data received from OpenAI');
     }
-
-    // First, analyze the image and get styling instructions using vision model
-    const analysisPrompt = `Analyze the product in the provided image(s) and then generate a new styled image based on this request: "${prompt}". 
-
-Please provide detailed instructions for generating a new image that transforms the background and styling while keeping the exact product unchanged. Focus on lighting, environment, and atmosphere changes only.`;
-
-    const analysisRequestBody = {
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: analysisPrompt },
-            ...imageContents
-          ]
-        }
-      ],
-      max_tokens: 500
-    };
-
-    console.log('Analyzing image with GPT-4o vision...');
-    const analysisResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(analysisRequestBody),
-    });
-
-    if (!analysisResponse.ok) {
-      const errorText = await analysisResponse.text();
-      console.error('OpenAI Analysis API error:', analysisResponse.status, errorText);
-      throw new Error(`OpenAI Analysis API error: ${analysisResponse.status} - ${errorText}`);
-    }
-
-    const analysisData = await analysisResponse.json();
-    const detailedPrompt = analysisData.choices[0].message.content;
-    console.log('Analysis complete, generating image...');
-
-    // Now generate the image using DALL-E 3 with the detailed prompt
-    const imageGenerationBody = {
-      model: "dall-e-3",
-      prompt: detailedPrompt,
-      n: 1,
-      size: "1024x1024",
-      quality: "hd",
-      response_format: "b64_json"
-    };
-
-    console.log('Generating image with DALL-E 3...');
-    const imageResponse = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(imageGenerationBody),
-    });
-
-    if (!imageResponse.ok) {
-      const errorText = await imageResponse.text();
-      console.error('OpenAI Image Generation API error:', imageResponse.status, errorText);
-      throw new Error(`OpenAI Image Generation API error: ${imageResponse.status} - ${errorText}`);
-    }
-
-    const imageData = await imageResponse.json();
-    console.log('Image generation completed successfully');
-
-    return new Response(JSON.stringify({ 
-      data: imageData.data
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
 
   } catch (error) {
     console.error('Error in image-editor function:', error);
