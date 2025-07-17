@@ -1,14 +1,39 @@
 
 import React from 'react';
 import { Camera } from 'lucide-react';
-import { categories } from '@/data/categories';
+import { useCategories } from '@/hooks/useCategories';
 import CategoryCard from './CategoryCard';
+import { RefreshCw } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 
 interface CategoryLandingProps {
   onCategorySelect: (categoryId: string) => void;
 }
 
 const CategoryLanding: React.FC<CategoryLandingProps> = ({ onCategorySelect }) => {
+  const { data: categories, isLoading, error } = useCategories();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading categories...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600">Error loading categories: {error.message}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen p-4 space-y-8">
       {/* Header */}
@@ -29,15 +54,30 @@ const CategoryLanding: React.FC<CategoryLandingProps> = ({ onCategorySelect }) =
         <h2 className="text-2xl font-semibold text-center mb-8">
           Choose Your Category
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categories.map((category) => (
-            <CategoryCard
-              key={category.id}
-              {...category}
-              onClick={() => onCategorySelect(category.id)}
-            />
-          ))}
-        </div>
+        {categories && categories.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {categories.map((category) => {
+              // Get the icon component from lucide-react
+              const IconComponent = (LucideIcons as any)[category.icon_name || 'Package'] || LucideIcons.Package;
+              
+              return (
+                <CategoryCard
+                  key={category.id}
+                  id={category.id}
+                  name={category.name}
+                  description={category.description || ''}
+                  icon={IconComponent}
+                  imageUrl={category.image_url || '/placeholder.svg'}
+                  onClick={() => onCategorySelect(category.id)}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">No categories available.</p>
+          </div>
+        )}
       </div>
 
       {/* Footer */}
