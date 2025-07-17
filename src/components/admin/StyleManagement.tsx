@@ -13,10 +13,10 @@ import { useStyles, useDeleteStyle, DatabaseStyle } from '@/hooks/useStyles';
 const StyleManagement = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingStyle, setEditingStyle] = useState<DatabaseStyle | null>(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
   
   const { data: categories } = useCategories();
-  const { data: styles, isLoading, error } = useStyles(selectedCategoryId || undefined);
+  const { data: styles, isLoading, error } = useStyles(selectedCategoryId === 'all' ? undefined : selectedCategoryId);
   const deleteStyle = useDeleteStyle();
 
   const handleDelete = (id: string) => {
@@ -65,7 +65,7 @@ const StyleManagement = () => {
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 {categories?.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
@@ -75,7 +75,7 @@ const StyleManagement = () => {
             </Select>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2" disabled={!selectedCategoryId}>
+                <Button className="gap-2" disabled={selectedCategoryId === 'all'}>
                   <Plus className="w-4 h-4" />
                   Add Style
                 </Button>
