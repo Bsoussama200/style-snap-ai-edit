@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Upload, Download, RefreshCw, Camera, Home, Moon, Zap, Grid3X3, Crown, X, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -235,7 +234,7 @@ const SnapStyleAI = () => {
         <div className="flex items-center justify-center gap-3 mb-2">
           <Camera className="w-8 h-8 md:w-10 md:h-10 text-primary" />
           <h1 className="text-4xl md:text-5xl font-bold gradient-text">
-            ProShot AI
+            Taswira AI
           </h1>
         </div>
         <p className="text-muted-foreground text-lg">
