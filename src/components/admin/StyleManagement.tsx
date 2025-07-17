@@ -19,6 +19,15 @@ const StyleManagement = () => {
   const { data: styles, isLoading, error } = useStyles(selectedCategoryId === 'all' ? undefined : selectedCategoryId);
   const deleteStyle = useDeleteStyle();
 
+  console.log('StyleManagement Debug:', {
+    selectedCategoryId,
+    stylesCount: styles?.length || 0,
+    styles,
+    categories,
+    isLoading,
+    error
+  });
+
   const handleDelete = (id: string) => {
     if (window.confirm('Are you sure you want to delete this style?')) {
       deleteStyle.mutate(id);
@@ -94,61 +103,78 @@ const StyleManagement = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Image</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {styles?.map((style) => {
-              const category = categories?.find(cat => cat.id === style.category_id);
-              return (
-                <TableRow key={style.id}>
-                  <TableCell>
-                    {style.placeholder && (
-                      <img 
-                        src={style.placeholder} 
-                        alt={style.name}
-                        className="w-12 h-12 object-cover rounded"
-                      />
-                    )}
-                  </TableCell>
-                  <TableCell className="font-medium">{style.name}</TableCell>
-                  <TableCell className="max-w-xs truncate">{style.description}</TableCell>
-                  <TableCell>{category?.name}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(style)}
-                        className="gap-1"
-                      >
-                        <Edit className="w-3 h-3" />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(style.id)}
-                        disabled={deleteStyle.isPending}
-                        className="gap-1 text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                        Delete
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+        {!styles || styles.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground mb-4">
+              {selectedCategoryId === 'all' 
+                ? 'No styles found. Create your first style by selecting a category and clicking "Add Style".'
+                : `No styles found for ${selectedCategory?.name || 'this category'}. Click "Add Style" to create one.`
+              }
+            </p>
+            {selectedCategoryId !== 'all' && (
+              <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Create First Style
+              </Button>
+            )}
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Image</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {styles.map((style) => {
+                const category = categories?.find(cat => cat.id === style.category_id);
+                return (
+                  <TableRow key={style.id}>
+                    <TableCell>
+                      {style.placeholder && (
+                        <img 
+                          src={style.placeholder} 
+                          alt={style.name}
+                          className="w-12 h-12 object-cover rounded"
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell className="font-medium">{style.name}</TableCell>
+                    <TableCell className="max-w-xs truncate">{style.description}</TableCell>
+                    <TableCell>{category?.name}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(style)}
+                          className="gap-1"
+                        >
+                          <Edit className="w-3 h-3" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(style.id)}
+                          disabled={deleteStyle.isPending}
+                          className="gap-1 text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Delete
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
 
         {editingStyle && (
           <Dialog open={!!editingStyle} onOpenChange={closeEditDialog}>
