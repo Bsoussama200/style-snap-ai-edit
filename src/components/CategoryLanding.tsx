@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Camera } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
@@ -40,25 +41,15 @@ const CategoryLanding: React.FC<CategoryLandingProps> = ({ onCategorySelect }) =
     <div className="min-h-screen p-4 space-y-8">
       {/* Header */}
       <div className="text-center space-y-2 relative">
-        {/* Navigation buttons */}
-        <div className="absolute top-0 right-0 flex gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/')}
-            className="text-xs text-muted-foreground hover:text-foreground"
-          >
-            User ?
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/admin')}
-            className="text-xs text-muted-foreground hover:text-foreground"
-          >
-            Admin ?
-          </Button>
-        </div>
+        {/* Admin button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/admin')}
+          className="absolute top-0 right-0 text-xs text-muted-foreground hover:text-foreground"
+        >
+          Admin ?
+        </Button>
         
         <div className="flex items-center justify-center gap-3 mb-2">
           <Camera className="w-8 h-8 md:w-10 md:h-10 text-primary" />
@@ -71,6 +62,7 @@ const CategoryLanding: React.FC<CategoryLandingProps> = ({ onCategorySelect }) =
         </p>
       </div>
 
+      {/* Categories Grid */}
       <div className="max-w-6xl mx-auto">
         <h2 className="text-2xl font-semibold text-center mb-8">
           Choose Your Category
