@@ -5,11 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Upload } from 'lucide-react';
-import { StyleOption } from '@/data/categories';
+import { useCreateStyle, useUpdateStyle, DatabaseStyle } from '@/hooks/useStyles';
 
 interface StyleFormProps {
   categoryId: string;
-  style?: StyleOption;
+  style?: DatabaseStyle;
   onClose: () => void;
 }
 
@@ -21,21 +21,33 @@ const StyleForm: React.FC<StyleFormProps> = ({ categoryId, style, onClose }) => 
     placeholder: style?.placeholder || '',
   });
 
+  const createStyle = useCreateStyle();
+  const updateStyle = useUpdateStyle();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement save functionality
-    console.log('Save style:', { categoryId, ...formData });
-    onClose();
+    
+    if (style) {
+      updateStyle.mutate({ id: style.id, ...formData }, {
+        onSuccess: () => onClose()
+      });
+    } else {
+      createStyle.mutate({ ...formData, category_id: categoryId }, {
+        onSuccess: () => onClose()
+      });
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // TODO: Implement image upload
+      // TODO: Implement actual image upload to Supabase Storage
       const imageUrl = URL.createObjectURL(file);
       setFormData(prev => ({ ...prev, placeholder: imageUrl }));
     }
   };
+
+  const isLoading = createStyle.isPending || updateStyle.isPending;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -106,8 +118,8 @@ const StyleForm: React.FC<StyleFormProps> = ({ categoryId, style, onClose }) => 
         <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button type="submit">
-          {style ? 'Update' : 'Create'} Style
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Saving...' : (style ? 'Update' : 'Create')} Style
         </Button>
       </div>
     </form>
