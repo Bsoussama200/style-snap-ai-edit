@@ -6,6 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Upload } from 'lucide-react';
 import { useCreateStyle, useUpdateStyle, DatabaseStyle } from '@/hooks/useStyles';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface StyleFormProps {
   categoryId: string;
@@ -20,9 +22,12 @@ const StyleForm: React.FC<StyleFormProps> = ({ categoryId, style, onClose }) => 
     prompt: style?.prompt || '',
     placeholder: style?.placeholder || '',
   });
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string>(style?.placeholder || '');
 
   const createStyle = useCreateStyle();
   const updateStyle = useUpdateStyle();
+  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,16 +43,75 @@ const StyleForm: React.FC<StyleFormProps> = ({ categoryId, style, onClose }) => 
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // TODO: Implement actual image upload to Supabase Storage
-      const imageUrl = URL.createObjectURL(file);
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file (JPG, PNG, etc.)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      // Create a unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `styles/${fileName}`;
+
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('style-images')
+        .upload(filePath, file);
+
+      if (error) {
+        throw error;
+      }
+
+      // Get the public URL
+      const { data: publicUrlData } = supabase.storage
+        .from('style-images')
+        .getPublicUrl(filePath);
+
+      const imageUrl = publicUrlData.publicUrl;
+
+      // Update form data and preview
       setFormData(prev => ({ ...prev, placeholder: imageUrl }));
+      setPreviewUrl(imageUrl);
+
+      toast({
+        title: "Success",
+        description: "Image uploaded successfully",
+      });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
     }
   };
 
-  const isLoading = createStyle.isPending || updateStyle.isPending;
+  const isLoading = createStyle.isPending || updateStyle.isPending || uploading;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -94,19 +158,21 @@ const StyleForm: React.FC<StyleFormProps> = ({ categoryId, style, onClose }) => 
             accept="image/*"
             onChange={handleImageUpload}
             className="hidden"
+            disabled={uploading}
           />
           <Button
             type="button"
             variant="outline"
             onClick={() => document.getElementById('image')?.click()}
             className="gap-2"
+            disabled={uploading}
           >
             <Upload className="w-4 h-4" />
-            Upload Image
+            {uploading ? 'Uploading...' : 'Upload Image'}
           </Button>
-          {formData.placeholder && (
+          {previewUrl && (
             <img 
-              src={formData.placeholder} 
+              src={previewUrl} 
               alt="Preview" 
               className="w-16 h-16 object-cover rounded"
             />
