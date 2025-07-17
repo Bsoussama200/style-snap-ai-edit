@@ -9,7 +9,8 @@ import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { categories, Category } from '@/data/categories';
+import { useCategories } from '@/hooks/useCategories';
+import { useStyles } from '@/hooks/useStyles';
 import { X } from 'lucide-react';
 
 interface StyleSelectorProps {
@@ -28,7 +29,11 @@ const StyleSelector: React.FC<StyleSelectorProps> = ({ categoryId, onBack }) => 
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const category = categories.find(cat => cat.id === categoryId);
+  // Use database queries instead of hardcoded data
+  const { data: categories } = useCategories();
+  const { data: styles } = useStyles(categoryId);
+
+  const category = categories?.find(cat => cat.id === categoryId);
 
   if (!category) {
     return <div>Category not found</div>;
@@ -89,7 +94,7 @@ const StyleSelector: React.FC<StyleSelectorProps> = ({ categoryId, onBack }) => 
     setIsGenerating(true);
     
     try {
-      const selectedStyleOption = category.styles.find(style => style.id === selectedStyle);
+      const selectedStyleOption = styles?.find(style => style.id === selectedStyle);
       const finalPrompt = customPrompt.trim() || selectedStyleOption?.prompt || '';
 
       const formData = new FormData();
@@ -257,13 +262,13 @@ const StyleSelector: React.FC<StyleSelectorProps> = ({ categoryId, onBack }) => 
       </Card>
 
       {/* Style Selection */}
-      {previewUrls.length > 0 && (
+      {previewUrls.length > 0 && styles && styles.length > 0 && (
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-semibold text-center mb-6">
             Choose Your Style
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {category.styles.map((style) => (
+            {styles.map((style) => (
               <Card
                 key={style.id}
                 className={`glass-card cursor-pointer hover-lift transition-all ${
@@ -276,7 +281,7 @@ const StyleSelector: React.FC<StyleSelectorProps> = ({ categoryId, onBack }) => 
                 <CardContent className="p-4 space-y-3">
                   <AspectRatio ratio={1} className="w-full rounded-lg overflow-hidden border border-border">
                     <img 
-                      src={style.placeholder} 
+                      src={style.placeholder || '/placeholder.svg'} 
                       alt={`${style.name} example`}
                       className="w-full h-full object-cover"
                     />
