@@ -41,17 +41,19 @@ const CategoryLanding: React.FC<CategoryLandingProps> = ({ onCategorySelect }) =
     <div className="min-h-screen p-4 space-y-8">
       {/* Header */}
       <div className="text-center space-y-2 relative">
-        {/* Admin button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/admin')}
-          className="absolute top-0 right-0 text-xs text-muted-foreground hover:text-foreground"
-        >
-          Admin ?
-        </Button>
+        {/* Admin button - positioned better for mobile */}
+        <div className="absolute top-0 right-0 z-10">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/admin')}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            Admin ?
+          </Button>
+        </div>
         
-        <div className="flex items-center justify-center gap-3 mb-2">
+        <div className="flex items-center justify-center gap-3 mb-2 pt-8 md:pt-0">
           <Camera className="w-8 h-8 md:w-10 md:h-10 text-primary" />
           <h1 className="text-4xl md:text-5xl font-bold gradient-text">
             Taswira AI
