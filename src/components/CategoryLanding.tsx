@@ -5,6 +5,8 @@ import { useCategories } from '@/hooks/useCategories';
 import CategoryCard from './CategoryCard';
 import { RefreshCw } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 interface CategoryLandingProps {
   onCategorySelect: (categoryId: string) => void;
@@ -12,6 +14,7 @@ interface CategoryLandingProps {
 
 const CategoryLanding: React.FC<CategoryLandingProps> = ({ onCategorySelect }) => {
   const { data: categories, isLoading, error } = useCategories();
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -37,7 +40,17 @@ const CategoryLanding: React.FC<CategoryLandingProps> = ({ onCategorySelect }) =
   return (
     <div className="min-h-screen p-4 space-y-8">
       {/* Header */}
-      <div className="text-center space-y-2">
+      <div className="text-center space-y-2 relative">
+        {/* Admin button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/admin')}
+          className="absolute top-0 right-0 text-xs text-muted-foreground hover:text-foreground"
+        >
+          Admin ?
+        </Button>
+        
         <div className="flex items-center justify-center gap-3 mb-2">
           <Camera className="w-8 h-8 md:w-10 md:h-10 text-primary" />
           <h1 className="text-4xl md:text-5xl font-bold gradient-text">
