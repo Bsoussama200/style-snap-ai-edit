@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Upload } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 import { useCreateCategory, useUpdateCategory, DatabaseCategory } from '@/hooks/useCategories';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface CategoryFormProps {
   category?: DatabaseCategory;
@@ -19,19 +21,77 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ category, onClose }) => {
     image_url: category?.image_url || '',
     icon_name: category?.icon_name || 'Package',
   });
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const createCategory = useCreateCategory();
   const updateCategory = useUpdateCategory();
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      setUploading(true);
+      
+      // Create a unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `categories/${fileName}`;
+
+      // Upload file to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('style-images')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data } = supabase.storage
+        .from('style-images')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Upload Error",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    let finalImageUrl = formData.image_url;
+
+    // Upload new image if one was selected
+    if (selectedFile) {
+      const uploadedUrl = await uploadImage(selectedFile);
+      if (uploadedUrl) {
+        finalImageUrl = uploadedUrl;
+      } else {
+        // Don't submit if image upload failed
+        return;
+      }
+    }
+
+    const submitData = {
+      ...formData,
+      image_url: finalImageUrl,
+    };
+    
     if (category) {
-      updateCategory.mutate({ id: category.id, ...formData }, {
+      updateCategory.mutate({ id: category.id, ...submitData }, {
         onSuccess: () => onClose()
       });
     } else {
-      createCategory.mutate(formData, {
+      createCategory.mutate(submitData, {
         onSuccess: () => onClose()
       });
     }
@@ -40,13 +100,22 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ category, onClose }) => {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // TODO: Implement actual image upload to Supabase Storage
-      const imageUrl = URL.createObjectURL(file);
-      setFormData(prev => ({ ...prev, image_url: imageUrl }));
+      setSelectedFile(file);
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setFormData(prev => ({ ...prev, image_url: previewUrl }));
     }
   };
 
-  const isLoading = createCategory.isPending || updateCategory.isPending;
+  const removeImage = () => {
+    setSelectedFile(null);
+    setFormData(prev => ({ ...prev, image_url: '' }));
+    // Reset file input
+    const fileInput = document.getElementById('image') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+  };
+
+  const isLoading = createCategory.isPending || updateCategory.isPending || uploading;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -91,24 +160,42 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ category, onClose }) => {
             accept="image/*"
             onChange={handleImageUpload}
             className="hidden"
+            disabled={uploading}
           />
           <Button
             type="button"
             variant="outline"
             onClick={() => document.getElementById('image')?.click()}
             className="gap-2"
+            disabled={uploading}
           >
             <Upload className="w-4 h-4" />
-            Upload Image
+            {uploading ? 'Uploading...' : 'Upload Image'}
           </Button>
           {formData.image_url && (
-            <img 
-              src={formData.image_url} 
-              alt="Preview" 
-              className="w-16 h-16 object-cover rounded"
-            />
+            <div className="relative">
+              <img 
+                src={formData.image_url} 
+                alt="Preview" 
+                className="w-16 h-16 object-cover rounded"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                className="absolute -top-2 -right-2 w-6 h-6 rounded-full p-0"
+                onClick={removeImage}
+              >
+                <X className="w-3 h-3" />
+              </Button>
+            </div>
           )}
         </div>
+        {selectedFile && (
+          <p className="text-sm text-muted-foreground">
+            New image selected: {selectedFile.name}
+          </p>
+        )}
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
@@ -116,7 +203,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ category, onClose }) => {
           Cancel
         </Button>
         <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Saving...' : (category ? 'Update' : 'Create')} Category
+          {uploading ? 'Uploading...' : isLoading ? 'Saving...' : (category ? 'Update' : 'Create')} Category
         </Button>
       </div>
     </form>
