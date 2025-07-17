@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Upload, Download, RefreshCw, ArrowLeft, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,13 +29,35 @@ const StyleSelector: React.FC<StyleSelectorProps> = ({ categoryId, onBack }) => 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Use database queries instead of hardcoded data
-  const { data: categories } = useCategories();
-  const { data: styles } = useStyles(categoryId);
+  const { data: categories, isLoading: categoriesLoading } = useCategories();
+  const { data: styles, isLoading: stylesLoading } = useStyles(categoryId);
 
   const category = categories?.find(cat => cat.id === categoryId);
 
+  // Show loading state while data is being fetched
+  if (categoriesLoading || stylesLoading) {
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading category and styles...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!category) {
-    return <div>Category not found</div>;
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <p className="text-muted-foreground">Category not found</p>
+          <Button onClick={onBack} variant="outline" className="gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Categories
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
