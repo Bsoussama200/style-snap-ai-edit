@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { navItems } from "./nav-items";
 import Admin from "./pages/Admin";
+import Pay from "./pages/Pay";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ const App = () => (
             <Route key={to} path={to} element={page} />
           ))}
           <Route path="/admin" element={<Admin />} />
+          <Route path="/pay" element={<Pay />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
