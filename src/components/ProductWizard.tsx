@@ -209,27 +209,45 @@ const ProductWizard: React.FC = () => {
       toast({ title: 'Missing image', description: 'Please confirm the generated image first.', variant: 'destructive' });
       return;
     }
-    setStep('video_generating');
+
     try {
-      // Fetch the image file back to send to the edge function
-      const blob = await fetch(finalImageUrl).then(r => r.blob());
-      const file = new File([blob], 'final.png', { type: 'image/png' });
-      const form = new FormData();
-      form.append('image', file);
-      form.append('width', '720');
-      form.append('height', '1280');
-      form.append('durationSeconds', '5');
-      if (videoPrompt?.trim()) form.append('prompt', videoPrompt.trim());
+      // Start KIE Runway generation to obtain a taskId
+      const start = await supabase.functions.invoke('kie-runway-generate', {
+        body: {
+          prompt: (videoPrompt || '').trim(),
+          image_url: finalImageUrl,
+          quality: '720p',
+          duration: 5,
+          aspectRatio: '9:16',
+        },
+      });
+      if (start.error) throw new Error(start.error.message);
+      const taskId = start.data?.taskId as string | undefined;
+      if (!taskId) throw new Error('No taskId returned from KIE');
 
-      const { data, error } = await supabase.functions.invoke('image-to-video', { body: form });
-      if (error) throw new Error(error.message);
+      setStep('video_generating');
 
-      const url = data?.video_url as string | undefined;
-      if (!url) throw new Error('No video URL returned');
-
-      setVideoUrl(url);
-      toast({ title: 'Video ready', description: 'Preview your animated video.' });
-      setStep('video_ready');
+      // Poll status until success
+      let attempts = 0;
+      const maxAttempts = 90; // up to ~3 minutes
+      while (attempts < maxAttempts) {
+        attempts++;
+        const statusRes = await supabase.functions.invoke('kie-runway-status', { body: { taskId } });
+        if (statusRes.error) throw new Error(statusRes.error.message);
+        const state = (statusRes.data?.state as string) || 'pending';
+        const outUrl = (statusRes.data?.videoUrl as string | undefined) || undefined;
+        if (state === 'success' && outUrl) {
+          setVideoUrl(outUrl);
+          toast({ title: 'Video ready', description: 'Preview your animated video.' });
+          setStep('video_ready');
+          return;
+        }
+        if (state === 'fail' || state === 'error') {
+          throw new Error('Video generation failed');
+        }
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+      throw new Error('Video generation timed out');
     } catch (err) {
       console.error(err);
       toast({ title: 'Video failed', description: err instanceof Error ? err.message : 'Try again.', variant: 'destructive' });

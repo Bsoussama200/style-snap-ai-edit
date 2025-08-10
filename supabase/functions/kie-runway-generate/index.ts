@@ -1,0 +1,90 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const KIE_API_KEY = Deno.env.get('KIE_AI_API_KEY');
+
+serve(async (req) => {
+  // CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
+  try {
+    if (!KIE_API_KEY) {
+      return new Response(JSON.stringify({ error: 'Server missing KIE_AI_API_KEY' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Accept JSON body
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch {
+      // ignore
+    }
+
+    const prompt: string = (body?.prompt ?? '').toString();
+    const imageUrl: string = (body?.image_url || body?.imageUrl || '').toString();
+    const duration: number = Number(body?.duration ?? body?.durationSeconds ?? 5);
+    const quality: string = (body?.quality || '720p').toString();
+    const aspectRatio: string = (body?.aspectRatio || '9:16').toString();
+
+    if (!prompt || !imageUrl) {
+      return new Response(JSON.stringify({ error: 'prompt and image_url are required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const payload = {
+      prompt,
+      quality,
+      duration,
+      aspectRatio,
+      imageUrl,
+    };
+
+    const res = await fetch('https://api.kie.ai/api/v1/runway/generate', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${KIE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const json = await res.json();
+    if (!res.ok || json?.code !== 200) {
+      console.error('KIE generate error:', res.status, json);
+      return new Response(JSON.stringify({ error: json?.msg || 'KIE generate failed', details: json }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const taskId = json?.data?.taskId;
+    if (!taskId) {
+      return new Response(JSON.stringify({ error: 'KIE generate missing taskId' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify({ taskId }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (e) {
+    console.error('Error in kie-runway-generate:', e);
+    return new Response(JSON.stringify({ error: (e as Error).message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});
