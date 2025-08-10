@@ -34,6 +34,7 @@ serve(async (req) => {
     const imageUrl = (formData.get('image_url') as string | null) || null;
     const productName = (formData.get('productName') as string | null) || null;
     const mode = (formData.get('mode') as string | null) || 'analysis';
+    const optionsContext = (formData.get('options_context') as string | null) || null;
 
     if (!imageUrl) {
       return new Response(JSON.stringify({ error: 'image_url is required' }), {
@@ -43,14 +44,23 @@ serve(async (req) => {
     }
 
     if (mode === 'motion') {
+      // Build system prompt based on whether we have options context
+      const systemPrompt = optionsContext 
+        ? `You are an AI video prompt generator. Based on the provided image and specific user requirements, create a concise, production-ready prompt for animating this still image into a 5-second portrait 9:16 video. The user has specified particular camera movements and visual effects they want. Incorporate their requirements naturally into a cohesive motion prompt. Return JSON strictly as {"prompt": string} (<= 220 chars). No extra text.`
+        : `You craft short, production-ready prompts to animate a still image into a simple 5-second portrait 9:16 video with tasteful camera motion (e.g., slow dolly-in, parallax, slight rack focus) and subtle effects (e.g., soft glow, vignette). Return JSON strictly as {"prompt": string} (<= 220 chars). No extra text.`;
+
+      const userPrompt = optionsContext 
+        ? `User requirements: ${optionsContext}\n\nGenerate a motion prompt for 5 sec, 720x1280, 9:16 that incorporates these specific requirements.`
+        : 'Generate a short motion/effects prompt for 5 sec, 720x1280, 9:16.';
+
       const body = {
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'You craft short, production-ready prompts to animate a still image into a simple 5-second portrait 9:16 video with tasteful camera motion (e.g., slow dolly-in, parallax, slight rack focus) and subtle effects (e.g., soft glow, vignette). Return JSON strictly as {"prompt": string} (<= 220 chars). No extra text.' },
+          { role: 'system', content: systemPrompt },
           {
             role: 'user',
             content: [
-              { type: 'text', text: 'Generate a short motion/effects prompt for 5 sec, 720x1280, 9:16.' },
+              { type: 'text', text: userPrompt },
               { type: 'image_url', image_url: { url: imageUrl } }
             ]
           }
