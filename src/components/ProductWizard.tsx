@@ -235,8 +235,9 @@ const ProductWizard: React.FC = () => {
       const motion = (motionRes.data?.prompt as string) || '';
       setMotionSuggestion(motion.trim());
 
-      // Go to options so user can choose movement/effects before composing the prompt
-      setStep('video_options');
+      // Go to prompt first so user can edit, then choose options
+      setVideoPrompt(motion.trim());
+      setStep('video_prompt');
     } catch (err) {
       console.error(err);
       toast({ title: 'Prompt generation failed', description: err instanceof Error ? err.message : 'Try again.', variant: 'destructive' });
@@ -263,9 +264,17 @@ const ProductWizard: React.FC = () => {
       return;
     }
 
+    // Compose options at send-time (do not affect the prompt editing step)
+    const optionParts: string[] = [];
+    if (selectedCamera) optionParts.push(`Camera movement: ${selectedCamera}.`);
+    if (selectedEffects.length) optionParts.push(`Visual effects: ${selectedEffects.join(', ')}.`);
+    if (productInUse) optionParts.push('Show the product in use naturally (hands or person), while keeping the product as the primary focus.');
+    const combinedPrompt = [ (videoPrompt || '').trim(), optionParts.join(' ') ].filter(Boolean).join('\n');
+
     setStep('video_generating');
     try {
-      const promptToSend = `${(videoPrompt || '').trim()}\n${(focusSuffixPrompt?.content || 'Focus: Keep attention and camera movement centered on the main product or primary subject. Avoid background distractions. Smooth, subtle motion that highlights the product.')}`.trim();
+      const focus = (focusSuffixPrompt?.content || 'Focus: Keep attention and camera movement centered on the main product or primary subject. Avoid background distractions. Smooth, subtle motion that highlights the product.');
+      const promptToSend = `${combinedPrompt}\n${focus}`.trim();
       const start = await supabase.functions.invoke('kie-runway-generate', {
         body: {
           prompt: promptToSend,
@@ -522,8 +531,8 @@ const ProductWizard: React.FC = () => {
             </div>
 
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep('confirm')} className="gap-2"><ArrowLeft className="w-4 h-4" />Back</Button>
-              <Button className="flex-1" onClick={generatePromptFromOptions}>Generate Video Prompt</Button>
+              <Button variant="outline" onClick={() => setStep('video_prompt')} className="gap-2"><ArrowLeft className="w-4 h-4" />Back</Button>
+              <Button className="flex-1" onClick={generateVideoFromPrompt}><Play className="w-4 h-4 mr-2" />Generate Video</Button>
             </div>
           </CardContent>
         </Card>
@@ -537,7 +546,7 @@ const ProductWizard: React.FC = () => {
             <Textarea value={videoPrompt} onChange={(e) => setVideoPrompt(e.target.value)} className="w-full min-h-[120px] text-foreground" />
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setStep('confirm')} className="gap-2"><ArrowLeft className="w-4 h-4" />Back</Button>
-              <Button onClick={generateVideoFromPrompt} className="flex-1"><Play className="w-4 h-4 mr-2" />Generate Video</Button>
+              <Button onClick={() => setStep('video_options')} className="flex-1">Next: Video Options</Button>
             </div>
           </CardContent>
         </Card>
