@@ -7,6 +7,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -18,7 +20,7 @@ serve(async (req) => {
     const formData = await req.formData();
     const images = formData.getAll('image') as File[];
     const prompt = formData.get('prompt') as string;
-    const apiKey = formData.get('apiKey') as string;
+    
 
     if (!images || images.length === 0) {
       return new Response(
@@ -40,13 +42,11 @@ serve(async (req) => {
       );
     }
 
-    if (!apiKey) {
+
+    if (!openAIApiKey) {
       return new Response(
-        JSON.stringify({ error: 'OpenAI API key is required' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        JSON.stringify({ error: 'Server missing OPENAI_API_KEY' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -69,7 +69,7 @@ serve(async (req) => {
     const response = await fetch('https://api.openai.com/v1/images/edits', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${openAIApiKey}`,
       },
       body: openaiFormData,
     });

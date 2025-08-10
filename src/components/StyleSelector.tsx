@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Download, RefreshCw, ArrowLeft, Key } from 'lucide-react';
+import { Upload, Download, RefreshCw, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
+
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
@@ -22,7 +22,7 @@ const StyleSelector: React.FC<StyleSelectorProps> = ({ categoryId, onBack }) => 
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [selectedStyle, setSelectedStyle] = useState<string>('');
   const [customPrompt, setCustomPrompt] = useState<string>('');
-  const [openaiApiKey, setOpenaiApiKey] = useState<string>('');
+  
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string>('');
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -103,14 +103,6 @@ const StyleSelector: React.FC<StyleSelectorProps> = ({ categoryId, onBack }) => 
       return;
     }
 
-    if (!openaiApiKey.trim()) {
-      toast({
-        title: "Missing API Key",
-        description: "Please enter your OpenAI API key to generate images.",
-        variant: "destructive"
-      });
-      return;
-    }
 
     setIsGenerating(true);
     
@@ -125,7 +117,7 @@ const StyleSelector: React.FC<StyleSelectorProps> = ({ categoryId, onBack }) => 
       });
       
       formData.append('prompt', finalPrompt);
-      formData.append('apiKey', openaiApiKey);
+      
 
       const { data, error } = await supabase.functions.invoke('image-editor', {
         body: formData,
@@ -207,27 +199,6 @@ const StyleSelector: React.FC<StyleSelectorProps> = ({ categoryId, onBack }) => 
         <div className="w-32"></div> {/* Spacer for center alignment */}
       </div>
 
-      {/* API Key Section */}
-      <Card className="glass-card max-w-md mx-auto">
-        <CardContent className="p-6">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Key className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold">OpenAI API Key</h2>
-            </div>
-            <Input
-              type="password"
-              placeholder="Enter your OpenAI API key"
-              value={openaiApiKey}
-              onChange={(e) => setOpenaiApiKey(e.target.value)}
-              className="w-full"
-            />
-            <p className="text-sm text-muted-foreground">
-              Your API key is required for image generation and is only used for this session.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Upload Section */}
       <Card className="glass-card max-w-md mx-auto">
