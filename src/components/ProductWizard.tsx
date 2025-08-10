@@ -242,7 +242,7 @@ const ProductWizard: React.FC = () => {
         if (state === 'success' && outUrl) {
           setVideoUrl(outUrl);
           toast({ title: 'Video ready', description: 'Preview your animated video.' });
-          setStep('confirm');
+          setStep('video_ready');
           return;
         }
         if (state === 'fail' || state === 'error') {
