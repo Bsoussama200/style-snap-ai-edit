@@ -191,7 +191,8 @@ const ProductWizard: React.FC = () => {
       const motionRes = await supabase.functions.invoke('analyze-product', { body: motionForm });
       if (motionRes.error) throw new Error(motionRes.error.message);
       const motion = (motionRes.data?.prompt as string) || '';
-      setVideoPrompt(motion);
+      const focusSuffix = 'Focus: Keep attention and camera movement centered on the main product or primary subject. Avoid background distractions. Smooth, subtle motion that highlights the product.';
+      setVideoPrompt(`${motion}\n${focusSuffix}`.trim());
 
       // Let user review/edit the prompt before generating the video
       setStep('video_prompt');
@@ -212,9 +213,11 @@ const ProductWizard: React.FC = () => {
 
     try {
       // Start KIE Runway generation to obtain a taskId
+      const focusSuffix = 'Focus: Keep attention and camera movement centered on the main product or primary subject. Avoid background distractions. Smooth, subtle motion that highlights the product.';
+      const promptToSend = `${(videoPrompt || '').trim()}\n${focusSuffix}`.trim();
       const start = await supabase.functions.invoke('kie-runway-generate', {
         body: {
-          prompt: (videoPrompt || '').trim(),
+          prompt: promptToSend,
           image_url: finalImageUrl,
           quality: '720p',
           duration: 5,
@@ -239,7 +242,7 @@ const ProductWizard: React.FC = () => {
         if (state === 'success' && outUrl) {
           setVideoUrl(outUrl);
           toast({ title: 'Video ready', description: 'Preview your animated video.' });
-          setStep('video_ready');
+          setStep('confirm');
           return;
         }
         if (state === 'fail' || state === 'error') {
@@ -386,14 +389,22 @@ const ProductWizard: React.FC = () => {
         <Card className="glass-card max-w-3xl mx-auto">
           <CardContent className="p-6 space-y-4">
             <h2 className="text-xl font-semibold">Review and Confirm</h2>
-            <img src={generatedImage} alt="Generated" className="w-full rounded-lg" />
+            <img src={generatedImage} alt="Generated product image" className="w-full rounded-lg" />
+            {videoUrl && (
+              <div className="space-y-2">
+                <video controls className="w-full rounded-lg" src={videoUrl} />
+              </div>
+            )}
             <div className="flex flex-col sm:flex-row gap-3">
               <Button onClick={() => setStep('style')} variant="outline" className="flex-1"><RefreshCw className="w-4 h-4 mr-2" />Regenerate</Button>
               <Button onClick={() => downloadBlobUrl(generatedImage, `product-image-${Date.now()}.png`)} className="flex-1"><Download className="w-4 h-4 mr-2" />Download Image</Button>
-              {mode === 'photovideo' && (
+              {mode === 'photovideo' && !videoUrl && (
                 <Button onClick={confirmAndMaybeCreateVideo} disabled={isFetchingMotion} className="flex-1">
                   {isFetchingMotion ? (<><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Preparing prompt...</>) : (<><Play className="w-4 h-4 mr-2" />Confirm & Create Video</>)}
                 </Button>
+              )}
+              {mode === 'photovideo' && videoUrl && (
+                <Button onClick={() => window.open(videoUrl, '_blank')} className="flex-1"><Download className="w-4 h-4 mr-2" />Download Video</Button>
               )}
             </div>
           </CardContent>
