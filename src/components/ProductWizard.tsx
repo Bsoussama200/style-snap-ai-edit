@@ -48,6 +48,7 @@ const ProductWizard: React.FC = () => {
   const [finalImageUrl, setFinalImageUrl] = useState<string>('');
   const [videoPrompt, setVideoPrompt] = useState<string>('');
   const [isFetchingMotion, setIsFetchingMotion] = useState<boolean>(false);
+  const [videoProvider, setVideoProvider] = useState<'runway' | 'veo3'>('runway');
 
   // Video options data and selections
   const CAMERA_MOVEMENTS = [
@@ -277,7 +278,7 @@ const ProductWizard: React.FC = () => {
   };
 
   const generateVideoFromPrompt = async () => {
-    if (!finalImageUrl) {
+    if (!finalImageUrl && videoProvider === 'runway') {
       toast({ title: 'Missing image', description: 'Please confirm the generated image first.', variant: 'destructive' });
       return;
     }
@@ -285,47 +286,80 @@ const ProductWizard: React.FC = () => {
     setStep('video_generating');
     try {
       const focus = (focusSuffixPrompt?.content || 'Focus: Keep attention and camera movement centered on the main product or primary subject. Avoid background distractions. Smooth, subtle motion that highlights the product.');
-      
-      // Use the AI-generated prompt that already incorporates the options
+
       const base = (videoPrompt || '').trim();
       const promptToSend = `${base}\n${focus}`.trim();
-      
-      const start = await supabase.functions.invoke('kie-runway-generate', {
-        body: {
-          prompt: promptToSend,
-          image_url: finalImageUrl,
-          quality: '720p',
-          duration: 5,
-          aspectRatio: '9:16',
-        },
-      });
-      if (start.error) throw new Error(start.error.message);
-      const taskId = start.data?.taskId as string | undefined;
-      if (!taskId) throw new Error('No taskId returned from KIE');
 
-      setStep('video_generating');
+      if (videoProvider === 'veo3') {
+        const start = await supabase.functions.invoke('kie-veo-generate', {
+          body: {
+            prompt: promptToSend,
+            model: 'veo3_fast',
+            aspectRatio: '9:16',
+            enableFallback: false,
+          },
+        });
+        if (start.error) throw new Error(start.error.message);
+        const taskId = start.data?.taskId as string | undefined;
+        if (!taskId) throw new Error('No taskId returned from KIE VEO');
 
-      // Poll status until success
-      let attempts = 0;
-      const maxAttempts = 90; // up to ~3 minutes
-      while (attempts < maxAttempts) {
-        attempts++;
-        const statusRes = await supabase.functions.invoke('kie-runway-status', { body: { taskId } });
-        if (statusRes.error) throw new Error(statusRes.error.message);
-        const state = (statusRes.data?.state as string) || 'pending';
-        const outUrl = (statusRes.data?.videoUrl as string | undefined) || undefined;
-        if (state === 'success' && outUrl) {
-          setVideoUrl(outUrl);
-          toast({ title: 'Video ready', description: 'Preview your animated video.' });
-          setStep('video_ready');
-          return;
+        let attempts = 0;
+        const maxAttempts = 90;
+        while (attempts < maxAttempts) {
+          attempts++;
+          const statusRes = await supabase.functions.invoke('kie-veo-status', { body: { taskId } });
+          if (statusRes.error) throw new Error(statusRes.error.message);
+          const state = (statusRes.data?.state as string) || 'pending';
+          const outUrl = (statusRes.data?.videoUrl as string | undefined) || undefined;
+          if (state === 'success' && outUrl) {
+            setVideoUrl(outUrl);
+            toast({ title: 'Video ready', description: 'Preview your animated video.' });
+            setStep('video_ready');
+            return;
+          }
+          if (state === 'fail' || state === 'error') {
+            throw new Error('Video generation failed');
+          }
+          await new Promise((r) => setTimeout(r, 2000));
         }
-        if (state === 'fail' || state === 'error') {
-          throw new Error('Video generation failed');
+        throw new Error('Video generation timed out');
+      } else {
+        const start = await supabase.functions.invoke('kie-runway-generate', {
+          body: {
+            prompt: promptToSend,
+            image_url: finalImageUrl,
+            quality: '720p',
+            duration: 5,
+            aspectRatio: '9:16',
+          },
+        });
+        if (start.error) throw new Error(start.error.message);
+        const taskId = start.data?.taskId as string | undefined;
+        if (!taskId) throw new Error('No taskId returned from KIE');
+
+        setStep('video_generating');
+
+        let attempts = 0;
+        const maxAttempts = 90; // up to ~3 minutes
+        while (attempts < maxAttempts) {
+          attempts++;
+          const statusRes = await supabase.functions.invoke('kie-runway-status', { body: { taskId } });
+          if (statusRes.error) throw new Error(statusRes.error.message);
+          const state = (statusRes.data?.state as string) || 'pending';
+          const outUrl = (statusRes.data?.videoUrl as string | undefined) || undefined;
+          if (state === 'success' && outUrl) {
+            setVideoUrl(outUrl);
+            toast({ title: 'Video ready', description: 'Preview your animated video.' });
+            setStep('video_ready');
+            return;
+          }
+          if (state === 'fail' || state === 'error') {
+            throw new Error('Video generation failed');
+          }
+          await new Promise((r) => setTimeout(r, 2000));
         }
-        await new Promise((r) => setTimeout(r, 2000));
+        throw new Error('Video generation timed out');
       }
-      throw new Error('Video generation timed out');
     } catch (err) {
       console.error(err);
       toast({ title: 'Video failed', description: err instanceof Error ? err.message : 'Try again.', variant: 'destructive' });
@@ -504,7 +538,26 @@ const ProductWizard: React.FC = () => {
         <Card className="glass-card max-w-3xl mx-auto">
           <CardContent className="p-6 space-y-6">
             <h2 className="text-xl font-semibold">Video Options</h2>
-
+            <div className="space-y-2">
+              <h3 className="font-medium">Generator</h3>
+              <div className="flex gap-2">
+                <Button
+                  variant={videoProvider === 'runway' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setVideoProvider('runway')}
+                >
+                  Runway
+                </Button>
+                <Button
+                  variant={videoProvider === 'veo3' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setVideoProvider('veo3')}
+                >
+                  VEO 3
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Runway animates your uploaded image. VEO 3 creates video from the prompt.</p>
+            </div>
             <div className="space-y-3">
               <h3 className="font-medium">Camera movement</h3>
               <div className="grid gap-2">

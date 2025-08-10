@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.image-to-video]
 verify_jwt = false
+
+[functions.kie-veo-generate]
+verify_jwt = false
+
+[functions.kie-veo-status]
+verify_jwt = false
