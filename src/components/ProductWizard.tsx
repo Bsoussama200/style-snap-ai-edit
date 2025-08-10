@@ -216,6 +216,7 @@ const ProductWizard: React.FC = () => {
       return;
     }
 
+    setStep('video_generating');
     try {
       // Start KIE Runway generation to obtain a taskId
       const focusSuffix = 'Focus: Keep attention and camera movement centered on the main product or primary subject. Avoid background distractions. Smooth, subtle motion that highlights the product.';
