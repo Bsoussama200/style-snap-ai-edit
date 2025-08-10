@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { navItems } from "./nav-items";
 import Admin from "./pages/Admin";
 import Pay from "./pages/Pay";
+import Build from "./pages/Build";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
           ))}
           <Route path="/admin" element={<Admin />} />
           <Route path="/pay" element={<Pay />} />
+          <Route path="/build" element={<Build />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
