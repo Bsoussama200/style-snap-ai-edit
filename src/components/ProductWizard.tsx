@@ -267,7 +267,14 @@ const ProductWizard: React.FC = () => {
     setStep('video_generating');
     try {
       const focus = (focusSuffixPrompt?.content || 'Focus: Keep attention and camera movement centered on the main product or primary subject. Avoid background distractions. Smooth, subtle motion that highlights the product.');
-      const promptToSend = `${(videoPrompt || '').trim()}\n${focus}`.trim();
+      const optionParts: string[] = [];
+      if (selectedCamera) optionParts.push(`Camera movement: ${selectedCamera}.`);
+      if (selectedEffects.length) optionParts.push(`Visual effects: ${selectedEffects.join(', ')}.`);
+      if (productInUse) optionParts.push('Show the product in use naturally (hands or person), while keeping the product as the primary focus.');
+      const optionsText = optionParts.join(' ');
+      const base = (videoPrompt || '').trim();
+      const combinedPrompt = [base, optionsText].filter(Boolean).join('\n').trim();
+      const promptToSend = `${combinedPrompt}\n${focus}`.trim();
       const start = await supabase.functions.invoke('kie-runway-generate', {
         body: {
           prompt: promptToSend,
