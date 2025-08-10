@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CategoryManagement from '@/components/admin/CategoryManagement';
 import StyleManagement from '@/components/admin/StyleManagement';
+import PromptsManagement from '@/components/admin/PromptsManagement';
 import AdminLogin from '@/components/admin/AdminLogin';
 
 const Admin = () => {
@@ -44,9 +45,10 @@ const Admin = () => {
         </div>
         
         <Tabs defaultValue="categories" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="styles">Styles</TabsTrigger>
+            <TabsTrigger value="prompts">Prompts</TabsTrigger>
           </TabsList>
           
           <TabsContent value="categories">
@@ -55,6 +57,10 @@ const Admin = () => {
           
           <TabsContent value="styles">
             <StyleManagement />
+          </TabsContent>
+
+          <TabsContent value="prompts">
+            <PromptsManagement />
           </TabsContent>
         </Tabs>
       </div>

@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCategories } from '@/hooks/useCategories';
 import { useStyles } from '@/hooks/useStyles';
 import { Upload, RefreshCw, Download, Play, ArrowLeft } from 'lucide-react';
+import { usePrompt } from '@/hooks/usePrompts';
 
 interface AnalysisResult {
   analysis: string;
@@ -51,6 +52,7 @@ const ProductWizard: React.FC = () => {
 
   const { data: categories } = useCategories();
   const stylesQuery = useStyles(categoryId);
+  const { data: focusSuffixPrompt } = usePrompt('video_focus_suffix');
 
   const selectedCategory = useMemo(() => categories?.find(c => c.id === categoryId) || null, [categories, categoryId]);
   const styles = stylesQuery.data || [];
@@ -196,7 +198,7 @@ const ProductWizard: React.FC = () => {
       const motionRes = await supabase.functions.invoke('analyze-product', { body: motionForm });
       if (motionRes.error) throw new Error(motionRes.error.message);
       const motion = (motionRes.data?.prompt as string) || '';
-      const focusSuffix = 'Focus: Keep attention and camera movement centered on the main product or primary subject. Avoid background distractions. Smooth, subtle motion that highlights the product.';
+      const focusSuffix = (focusSuffixPrompt?.content || 'Focus: Keep attention and camera movement centered on the main product or primary subject. Avoid background distractions. Smooth, subtle motion that highlights the product.');
       setVideoPrompt(`${motion}\n${focusSuffix}`.trim());
 
       // Let user review/edit the prompt before generating the video
@@ -218,9 +220,7 @@ const ProductWizard: React.FC = () => {
 
     setStep('video_generating');
     try {
-      // Start KIE Runway generation to obtain a taskId
-      const focusSuffix = 'Focus: Keep attention and camera movement centered on the main product or primary subject. Avoid background distractions. Smooth, subtle motion that highlights the product.';
-      const promptToSend = `${(videoPrompt || '').trim()}\n${focusSuffix}`.trim();
+      const promptToSend = `${(videoPrompt || '').trim()}\n${(focusSuffixPrompt?.content || 'Focus: Keep attention and camera movement centered on the main product or primary subject. Avoid background distractions. Smooth, subtle motion that highlights the product.')}`.trim();
       const start = await supabase.functions.invoke('kie-runway-generate', {
         body: {
           prompt: promptToSend,
