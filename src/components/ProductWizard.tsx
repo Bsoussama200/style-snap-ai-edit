@@ -41,6 +41,8 @@ const ProductWizard: React.FC = () => {
   const [generatedImage, setGeneratedImage] = useState<string>('');
   const [videoUrl, setVideoUrl] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [sourceImageUrl, setSourceImageUrl] = useState<string>('');
+  const [finalImageUrl, setFinalImageUrl] = useState<string>('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -49,6 +51,18 @@ const ProductWizard: React.FC = () => {
 
   const selectedCategory = useMemo(() => categories?.find(c => c.id === categoryId) || null, [categories, categoryId]);
   const styles = stylesQuery.data || [];
+
+  const uploadToStorage = async (file: File, prefix: string) => {
+    const ext = (file.name.split('.').pop() || (file.type.split('/')[1])) || 'png';
+    const path = `${prefix}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from('style-images').upload(path, file, {
+      contentType: file.type || 'image/png',
+      upsert: true,
+    });
+    if (error) throw new Error(error.message);
+    const { data: pub } = supabase.storage.from('style-images').getPublicUrl(path);
+    return pub.publicUrl;
+  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -74,9 +88,14 @@ const ProductWizard: React.FC = () => {
 
     setIsAnalyzing(true);
     try {
+      // Upload source image to storage and get a public URL
+      const url = await uploadToStorage(uploadedImage, 'inputs');
+      setSourceImageUrl(url);
+
       const form = new FormData();
-      form.append('image', uploadedImage);
+      form.append('image_url', url);
       form.append('productName', productName.trim());
+
       const { data, error } = await supabase.functions.invoke('analyze-product', { body: form });
       if (error) throw new Error(error.message);
       const result = data as AnalysisResult;
@@ -156,26 +175,68 @@ const ProductWizard: React.FC = () => {
     setStep('video_generating');
 
     try {
+      // Upload generated image to storage to get a public URL
       const blob = await fetch(generatedImage).then(r => r.blob());
       const file = new File([blob], 'generated.png', { type: 'image/png' });
-      const form = new FormData();
-      form.append('image', file);
-      form.append('durationSeconds', '5');
-      form.append('width', '720');
-      form.append('height', '1280');
+      const finalUrl = await uploadToStorage(file, 'outputs');
+      setFinalImageUrl(finalUrl);
 
-      const { data, error } = await supabase.functions.invoke('image-to-video', { body: form });
-      if (error) throw new Error(error.message);
+      // Ask AI for motion/effects prompt based on the final image
+      const motionForm = new FormData();
+      motionForm.append('mode', 'motion');
+      motionForm.append('image_url', finalUrl);
+      const motionRes = await supabase.functions.invoke('analyze-product', { body: motionForm });
+      if (motionRes.error) throw new Error(motionRes.error.message);
+      const motionPrompt = (motionRes.data?.prompt as string) || '';
 
-      if (data?.video_url) {
-        setVideoUrl(data.video_url);
+      // Start Runway video generation
+      const startRes = await supabase.functions.invoke('generate-videos-runway', {
+        body: {
+          image_url: finalUrl,
+          prompt: motionPrompt,
+          width: 720,
+          height: 1280,
+          durationSeconds: 5,
+        }
+      });
+      if (startRes.error) throw new Error(startRes.error.message);
+
+      const jobId = startRes.data?.id || startRes.data?.job_id || startRes.data?.runway_id;
+      const directUrl = startRes.data?.video_url || startRes.data?.output_url;
+
+      if (directUrl) {
+        setVideoUrl(directUrl);
         toast({ title: 'Video ready', description: 'Preview your animated video.' });
         setStep('video_ready');
-      } else if (data?.error) {
-        throw new Error(data.error);
-      } else {
-        throw new Error('Video generation failed');
+        return;
       }
+
+      if (!jobId) throw new Error('Missing job id from Runway response');
+
+      // Poll status until ready
+      let attempts = 0;
+      const maxAttempts = 60;
+      while (attempts < maxAttempts) {
+        attempts++;
+        const statusRes = await supabase.functions.invoke('check-runway-status', {
+          body: { id: jobId }
+        });
+        if (statusRes.error) throw new Error(statusRes.error.message);
+        const status = statusRes.data?.status || statusRes.data?.state;
+        const outUrl = statusRes.data?.video_url || statusRes.data?.output_url || statusRes.data?.url;
+        if (status === 'succeeded' || status === 'completed') {
+          if (!outUrl) throw new Error('Video completed but no URL returned');
+          setVideoUrl(outUrl);
+          toast({ title: 'Video ready', description: 'Preview your animated video.' });
+          setStep('video_ready');
+          return;
+        }
+        if (status === 'failed' || status === 'error') {
+          throw new Error('Video generation failed');
+        }
+        await new Promise(r => setTimeout(r, 2000));
+      }
+      throw new Error('Video generation timed out');
     } catch (err) {
       console.error(err);
       toast({ title: 'Video failed', description: err instanceof Error ? err.message : 'Try again.', variant: 'destructive' });

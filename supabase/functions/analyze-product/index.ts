@@ -31,12 +31,61 @@ serve(async (req) => {
     }
 
     const formData = await req.formData();
-    const image = formData.get('image') as File | null;
-    const productName = formData.get('productName') as string | null;
+    const imageUrl = (formData.get('image_url') as string | null) || null;
+    const productName = (formData.get('productName') as string | null) || null;
+    const mode = (formData.get('mode') as string | null) || 'analysis';
 
-    if (!image) {
-      return new Response(JSON.stringify({ error: 'Image is required' }), {
+    if (!imageUrl) {
+      return new Response(JSON.stringify({ error: 'image_url is required' }), {
         status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (mode === 'motion') {
+      const body = {
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'You craft short, production-ready prompts to animate a still image into a simple 5-second portrait 9:16 video with tasteful camera motion (e.g., slow dolly-in, parallax, slight rack focus) and subtle effects (e.g., soft glow, vignette). Return JSON strictly as {"prompt": string} (<= 220 chars). No extra text.' },
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: 'Generate a short motion/effects prompt for 5 sec, 720x1280, 9:16.' },
+              { type: 'image_url', image_url: { url: imageUrl } }
+            ]
+          }
+        ],
+        temperature: 0.4
+      } as const;
+
+      const aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!aiRes.ok) {
+        const txt = await aiRes.text();
+        console.error('OpenAI motion prompt error', aiRes.status, txt);
+        return new Response(JSON.stringify({ error: 'Failed to generate motion prompt' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const aiData = await aiRes.json();
+      const content: string = aiData.choices?.[0]?.message?.content || '{}';
+      let prompt = '';
+      try {
+        prompt = JSON.parse(content).prompt || '';
+      } catch {
+        prompt = content.slice(0, 220);
+      }
+
+      return new Response(JSON.stringify({ prompt }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -63,11 +112,6 @@ serve(async (req) => {
       });
     }
 
-    // Convert image to base64 data URL for OpenAI vision
-    const arrayBuffer = await image.arrayBuffer();
-    const base64Image = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-    const dataUrl = `data:${image.type || 'image/png'};base64,${base64Image}`;
-
     const systemPrompt = `You are a product analyst AI. Analyze the product image and the provided product name.
 Return a concise analysis covering: key visual features, materials, primary use case, target audience, and notable selling points.
 From the provided categories, select the single best matching category ID. Output strict JSON only with keys:
@@ -90,7 +134,7 @@ Make sure suggested_category_id is one of the provided IDs.`;
           role: 'user',
           content: [
             { type: 'text', text: `Product name: ${productName}\n\nAvailable categories (ID | Name: Description):\n${categoriesSummary}\n\nReturn JSON only.` },
-            { type: 'image_url', image_url: { url: dataUrl } }
+            { type: 'image_url', image_url: { url: imageUrl } }
           ]
         }
       ],
