@@ -1,8 +1,8 @@
 
-import SnapStyleAI from '@/components/SnapStyleAI';
+import ProductWizard from '@/components/ProductWizard';
 
 const Index = () => {
-  return <SnapStyleAI />;
+  return <ProductWizard />;
 };
 
 export default Index;

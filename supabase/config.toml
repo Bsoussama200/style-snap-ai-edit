@@ -1,1 +1,10 @@
 project_id = "zbctynfnnrlhpatoateb"
+
+[functions.image-editor]
+verify_jwt = false
+
+[functions.analyze-product]
+verify_jwt = false
+
+[functions.image-to-video]
+verify_jwt = false
