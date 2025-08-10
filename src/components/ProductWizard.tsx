@@ -24,6 +24,7 @@ type Step =
   | 'style'
   | 'generating'
   | 'confirm'
+  | 'video_prompt'
   | 'video_generating'
   | 'video_ready';
 
@@ -43,6 +44,8 @@ const ProductWizard: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [sourceImageUrl, setSourceImageUrl] = useState<string>('');
   const [finalImageUrl, setFinalImageUrl] = useState<string>('');
+  const [videoPrompt, setVideoPrompt] = useState<string>('');
+  const [isFetchingMotion, setIsFetchingMotion] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -172,10 +175,10 @@ const ProductWizard: React.FC = () => {
     }
 
     if (!generatedImage) return;
-    setStep('video_generating');
 
+    setIsFetchingMotion(true);
     try {
-      // Upload generated image to storage to get a public URL
+      // Upload generated image to storage to get a stable public URL
       const blob = await fetch(generatedImage).then(r => r.blob());
       const file = new File([blob], 'generated.png', { type: 'image/png' });
       const finalUrl = await uploadToStorage(file, 'outputs');
@@ -187,63 +190,53 @@ const ProductWizard: React.FC = () => {
       motionForm.append('image_url', finalUrl);
       const motionRes = await supabase.functions.invoke('analyze-product', { body: motionForm });
       if (motionRes.error) throw new Error(motionRes.error.message);
-      const motionPrompt = (motionRes.data?.prompt as string) || '';
+      const motion = (motionRes.data?.prompt as string) || '';
+      setVideoPrompt(motion);
 
-      // Start Runway video generation
-      const startRes = await supabase.functions.invoke('generate-videos-runway', {
-        body: {
-          image_url: finalUrl,
-          prompt: motionPrompt,
-          width: 720,
-          height: 1280,
-          durationSeconds: 5,
-        }
-      });
-      if (startRes.error) throw new Error(startRes.error.message);
+      // Let user review/edit the prompt before generating the video
+      setStep('video_prompt');
+    } catch (err) {
+      console.error(err);
+      toast({ title: 'Prompt generation failed', description: err instanceof Error ? err.message : 'Try again.', variant: 'destructive' });
+      setStep('confirm');
+    } finally {
+      setIsFetchingMotion(false);
+    }
+  };
+  
+  const generateVideoFromPrompt = async () => {
+    if (!finalImageUrl) {
+      toast({ title: 'Missing image', description: 'Please confirm the generated image first.', variant: 'destructive' });
+      return;
+    }
+    setStep('video_generating');
+    try {
+      // Fetch the image file back to send to the edge function
+      const blob = await fetch(finalImageUrl).then(r => r.blob());
+      const file = new File([blob], 'final.png', { type: 'image/png' });
+      const form = new FormData();
+      form.append('image', file);
+      form.append('width', '720');
+      form.append('height', '1280');
+      form.append('durationSeconds', '5');
+      if (videoPrompt?.trim()) form.append('prompt', videoPrompt.trim());
 
-      const jobId = startRes.data?.id || startRes.data?.job_id || startRes.data?.runway_id;
-      const directUrl = startRes.data?.video_url || startRes.data?.output_url;
+      const { data, error } = await supabase.functions.invoke('image-to-video', { body: form });
+      if (error) throw new Error(error.message);
 
-      if (directUrl) {
-        setVideoUrl(directUrl);
-        toast({ title: 'Video ready', description: 'Preview your animated video.' });
-        setStep('video_ready');
-        return;
-      }
+      const url = data?.video_url as string | undefined;
+      if (!url) throw new Error('No video URL returned');
 
-      if (!jobId) throw new Error('Missing job id from Runway response');
-
-      // Poll status until ready
-      let attempts = 0;
-      const maxAttempts = 60;
-      while (attempts < maxAttempts) {
-        attempts++;
-        const statusRes = await supabase.functions.invoke('check-runway-status', {
-          body: { id: jobId }
-        });
-        if (statusRes.error) throw new Error(statusRes.error.message);
-        const status = statusRes.data?.status || statusRes.data?.state;
-        const outUrl = statusRes.data?.video_url || statusRes.data?.output_url || statusRes.data?.url;
-        if (status === 'succeeded' || status === 'completed') {
-          if (!outUrl) throw new Error('Video completed but no URL returned');
-          setVideoUrl(outUrl);
-          toast({ title: 'Video ready', description: 'Preview your animated video.' });
-          setStep('video_ready');
-          return;
-        }
-        if (status === 'failed' || status === 'error') {
-          throw new Error('Video generation failed');
-        }
-        await new Promise(r => setTimeout(r, 2000));
-      }
-      throw new Error('Video generation timed out');
+      setVideoUrl(url);
+      toast({ title: 'Video ready', description: 'Preview your animated video.' });
+      setStep('video_ready');
     } catch (err) {
       console.error(err);
       toast({ title: 'Video failed', description: err instanceof Error ? err.message : 'Try again.', variant: 'destructive' });
       setStep('confirm');
     }
   };
-
+  
   const downloadBlobUrl = (url: string, filename: string) => {
     const a = document.createElement('a');
     a.href = url;
@@ -364,6 +357,13 @@ const ProductWizard: React.FC = () => {
         </Card>
       )}
 
+      {step === 'generating' && (
+        <div className="max-w-xl mx-auto text-center p-8">
+          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Generating your image...</p>
+        </div>
+      )}
+
       {step === 'confirm' && generatedImage && (
         <Card className="glass-card max-w-3xl mx-auto">
           <CardContent className="p-6 space-y-4">
@@ -373,8 +373,24 @@ const ProductWizard: React.FC = () => {
               <Button onClick={() => setStep('style')} variant="outline" className="flex-1"><RefreshCw className="w-4 h-4 mr-2" />Regenerate</Button>
               <Button onClick={() => downloadBlobUrl(generatedImage, `product-image-${Date.now()}.png`)} className="flex-1"><Download className="w-4 h-4 mr-2" />Download Image</Button>
               {mode === 'photovideo' && (
-                <Button onClick={confirmAndMaybeCreateVideo} className="flex-1"><Play className="w-4 h-4 mr-2" />Confirm & Create Video</Button>
+                <Button onClick={confirmAndMaybeCreateVideo} disabled={isFetchingMotion} className="flex-1">
+                  {isFetchingMotion ? (<><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Preparing prompt...</>) : (<><Play className="w-4 h-4 mr-2" />Confirm & Create Video</>)}
+                </Button>
               )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {step === 'video_prompt' && (
+        <Card className="glass-card max-w-3xl mx-auto">
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-xl font-semibold">Review Video Prompt</h2>
+            <p className="text-sm text-muted-foreground">Edit the motion/effects prompt for a 5s 720x1280 video.</p>
+            <Textarea value={videoPrompt} onChange={(e) => setVideoPrompt(e.target.value)} className="w-full min-h-[120px] text-foreground" />
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setStep('confirm')} className="gap-2"><ArrowLeft className="w-4 h-4" />Back</Button>
+              <Button onClick={generateVideoFromPrompt} className="flex-1"><Play className="w-4 h-4 mr-2" />Generate Video</Button>
             </div>
           </CardContent>
         </Card>

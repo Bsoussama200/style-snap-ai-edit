@@ -28,6 +28,7 @@ serve(async (req) => {
     const duration = Number(form.get('durationSeconds') || 5)
     const width = Number(form.get('width') || 720)
     const height = Number(form.get('height') || 1280)
+    const promptOverride = (form.get('prompt') as string | null) || null
 
     if (!image) {
       return new Response(JSON.stringify({ error: 'Image is required' }), {
@@ -60,41 +61,45 @@ serve(async (req) => {
     const { data: pub } = supabase.storage.from('style-images').getPublicUrl(path)
     const imageUrl = pub.publicUrl
 
-    // Step 1: Create a concise motion/effects prompt based on the generated image
-    const promptBody = {
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: 'You craft short, production-ready prompts to animate a still image into a simple 5-second portrait 9:16 video with tasteful camera motion (e.g., slow dolly-in, parallax, slight rack focus) and subtle effects (e.g., soft glow, vignette). Return JSON: {"prompt": string} with a single concise prompt (max 220 chars). No extra text.' },
-        { role: 'user', content: [
-          { type: 'text', text: 'Generate a short motion/effects prompt for 5 sec, 720x1280, 9:16.' },
-          { type: 'image_url', image_url: { url: imageUrl } }
-        ] }
-      ],
-      temperature: 0.4
-    } as const
-
-    const promptRes = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(promptBody)
-    })
-
-    if (!promptRes.ok) {
-      const t = await promptRes.text()
-      console.error('Prompt generation error:', t)
-      throw new Error('Failed to generate motion prompt')
-    }
-
-    const promptJson = await promptRes.json()
-    const content: string = promptJson.choices?.[0]?.message?.content || '{}'
+    // Step 1: Determine motion/effects prompt (use override if provided)
     let motion = ''
-    try {
-      motion = JSON.parse(content).prompt || ''
-    } catch {
-      motion = content.slice(0, 220)
+    if (promptOverride && (promptOverride as string).trim().length > 0) {
+      motion = (promptOverride as string).trim().slice(0, 220)
+    } else {
+      const promptBody = {
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'You craft short, production-ready prompts to animate a still image into a simple 5-second portrait 9:16 video with tasteful camera motion (e.g., slow dolly-in, parallax, slight rack focus) and subtle effects (e.g., soft glow, vignette). Return JSON: {"prompt": string} with a single concise prompt (max 220 chars). No extra text.' },
+          { role: 'user', content: [
+            { type: 'text', text: 'Generate a short motion/effects prompt for 5 sec, 720x1280, 9:16.' },
+            { type: 'image_url', image_url: { url: imageUrl } }
+          ] }
+        ],
+        temperature: 0.4
+      } as const
+
+      const promptRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(promptBody)
+      })
+
+      if (!promptRes.ok) {
+        const t = await promptRes.text()
+        console.error('Prompt generation error:', t)
+        throw new Error('Failed to generate motion prompt')
+      }
+
+      const promptJson = await promptRes.json()
+      const content: string = promptJson.choices?.[0]?.message?.content || '{}'
+      try {
+        motion = JSON.parse(content).prompt || ''
+      } catch {
+        motion = content.slice(0, 220)
+      }
     }
 
     if (!REPLICATE_API_KEY) {
