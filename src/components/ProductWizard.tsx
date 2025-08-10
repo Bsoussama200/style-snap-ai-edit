@@ -6,7 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCategories } from '@/hooks/useCategories';
 import { useStyles } from '@/hooks/useStyles';
-import { Upload, RefreshCw, Download, Play, ArrowLeft } from 'lucide-react';
+import { Upload, RefreshCw, Download, Play, ArrowLeft, Video, MessageSquare, Sparkles } from 'lucide-react';
 import { usePrompt } from '@/hooks/usePrompts';
 
 interface AnalysisResult {
@@ -344,17 +344,35 @@ const ProductWizard: React.FC = () => {
 
   return (
     <div className="min-h-screen p-4 space-y-8">
-      <div className="flex items-center justify-between">
-        <div />
-        <div className="text-center">
-          <h1 className="text-2xl md:text-3xl font-bold gradient-text">Create Product Visuals</h1>
-          <p className="text-muted-foreground">Upload, analyze, select style, generate image, and optionally animate.</p>
+        <header className="flex items-center justify-between py-2">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-md bg-gradient-to-br from-primary to-accent grid place-items-center">
+              <Video className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <span className="font-semibold">Product Content Generator</span>
+          </div>
+          <nav className="flex items-center gap-2">
+            <Button variant="secondary" size="sm" className="hidden sm:inline-flex">Motion Generator</Button>
+            <Button variant="outline" size="sm" className="hidden sm:inline-flex">AI Chat</Button>
+            <a href="/admin" className="text-sm text-muted-foreground hover:text-foreground">admin ?</a>
+          </nav>
+        </header>
+
+        <div className="text-center space-y-3">
+          <span className="inline-flex items-center gap-2 text-xs px-3 py-1 rounded-full bg-secondary text-secondary-foreground">
+            <Sparkles className="h-3 w-3" /> AI-Powered Video Creation
+          </span>
+          <h1 className="text-3xl md:text-5xl font-extrabold leading-tight">
+            Turn Your Simple Product Photos into
+            <span className="block gradient-text">Viral Video Content</span>
+          </h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Upload a product image and our AI will analyze it, craft a compelling prompt, and generate a professional video in minutes.
+          </p>
         </div>
-        <div className="w-32" />
-      </div>
 
       {step === 'upload' && (
-        <Card className="glass-card max-w-2xl mx-auto">
+        <Card className="glass-card max-w-3xl mx-auto">
           <CardContent className="p-6 space-y-4">
             <h2 className="text-xl font-semibold">Upload Product Image</h2>
             <div
