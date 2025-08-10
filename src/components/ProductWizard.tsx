@@ -629,6 +629,26 @@ const ProductWizard: React.FC = () => {
           <CardContent className="p-6 space-y-4">
             <h2 className="text-xl font-semibold">Review Video Prompt</h2>
             <p className="text-sm text-muted-foreground">Edit the motion/effects prompt for a 5s 720x1280 video.</p>
+            <div className="space-y-2">
+              <h3 className="font-medium">Generator</h3>
+              <div className="flex gap-2">
+                <Button
+                  variant={videoProvider === 'runway' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setVideoProvider('runway')}
+                >
+                  Runway
+                </Button>
+                <Button
+                  variant={videoProvider === 'veo3' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setVideoProvider('veo3')}
+                >
+                  VEO 3
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Choose which provider to use for this video.</p>
+            </div>
             <Textarea value={videoPrompt} onChange={(e) => setVideoPrompt(e.target.value)} className="w-full min-h-[120px] text-foreground" />
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setStep('video_options')} className="gap-2"><ArrowLeft className="w-4 h-4" />Back</Button>
