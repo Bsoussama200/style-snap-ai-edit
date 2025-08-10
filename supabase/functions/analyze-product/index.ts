@@ -112,19 +112,12 @@ serve(async (req) => {
       });
     }
 
-    const systemPrompt = `You are a product analyst AI. Analyze the product image and the provided product name.
-Return a concise analysis covering: key visual features, materials, primary use case, target audience, and notable selling points.
-From the provided categories, select the single best matching category ID. Output strict JSON only with keys:
-{
-  "analysis": string,
-  "suggested_category_id": string,
-  "confidence": number // 0-1
-}
-Make sure suggested_category_id is one of the provided IDs.`;
+    const systemPrompt = `You are a product analyst AI. Analyze the product image and the provided product name.\nReturn a concise analysis covering: key visual features, materials, primary use case, target audience, and notable selling points.\nFrom the provided categories, select the single best matching category ID. Output strict JSON only (no markdown, no code fences) with keys:\n{\n  "analysis": string,\n  "suggested_category_id": string,\n  "confidence": number // 0-1\n}\nMake sure suggested_category_id is one of the provided IDs.`;
 
     const categoriesSummary = (categories || [])
       .map((c: any) => `- ${c.id} | ${c.name}${c.description ? `: ${c.description}` : ''}`)
       .join('\n');
+    const categoriesJson = JSON.stringify((categories || []).map((c: any) => ({ id: c.id, name: c.name, description: c.description })));
 
     const body = {
       model: 'gpt-4o-mini',
@@ -133,7 +126,7 @@ Make sure suggested_category_id is one of the provided IDs.`;
         {
           role: 'user',
           content: [
-            { type: 'text', text: `Product name: ${productName}\n\nAvailable categories (ID | Name: Description):\n${categoriesSummary}\n\nReturn JSON only.` },
+            { type: 'text', text: `Product name: ${productName}\n\nAvailable categories (ID | Name: Description):\n${categoriesSummary}\n\nAvailable categories JSON (id,name,description):\n${categoriesJson}\n\nReturn JSON only.` },
             { type: 'image_url', image_url: { url: imageUrl } }
           ]
         }
@@ -160,29 +153,55 @@ Make sure suggested_category_id is one of the provided IDs.`;
     }
 
     const aiData = await aiRes.json();
-    const content: string = aiData.choices?.[0]?.message?.content || '';
+    const rawContent: string = aiData.choices?.[0]?.message?.content || '';
 
-    let parsed;
+    // Sanitize potential code fences and extract JSON
+    let content = rawContent.trim();
+    const fenceMatch = content.match(/```[a-zA-Z]*\n([\s\S]*?)```/);
+    if (fenceMatch) {
+      content = fenceMatch[1].trim();
+    }
+    if (content.startsWith('json')) {
+      content = content.slice(4).trim();
+    }
+    // If still contains surrounding text, try to isolate first {...}
+    if (!(content.startsWith('{') && content.endsWith('}'))) {
+      const first = content.indexOf('{');
+      const last = content.lastIndexOf('}');
+      if (first !== -1 && last !== -1 && last > first) {
+        content = content.slice(first, last + 1).trim();
+      }
+    }
+
+    let parsed: any;
     try {
       parsed = JSON.parse(content);
     } catch (e) {
-      console.warn('Failed to parse JSON from AI, content:', content);
-      // Fallback
-      parsed = {
-        analysis: content?.slice(0, 800) || 'No analysis available',
-        suggested_category_id: categories?.[0]?.id || null,
-        confidence: 0.5,
-      };
+      console.warn('Failed to parse JSON from AI, content:', rawContent);
+      parsed = {};
     }
 
-    const suggested = (categories || []).find((c: any) => c.id === parsed.suggested_category_id) || null;
+    // Build safe response
+    const safeAnalysis = typeof parsed.analysis === 'string' && parsed.analysis.trim().length > 0
+      ? parsed.analysis.trim()
+      : 'Analysis unavailable.';
+
+    let suggestedId: string | null = typeof parsed.suggested_category_id === 'string' ? parsed.suggested_category_id : null;
+    // Ensure it exists; otherwise leave null
+    if (!suggestedId || !(categories || []).some((c: any) => c.id === suggestedId)) {
+      suggestedId = (categories || [])[0]?.id || null;
+    }
+
+    const confidence = typeof parsed.confidence === 'number' ? parsed.confidence : null;
+
+    const suggested = (categories || []).find((c: any) => c.id === suggestedId) || null;
 
     return new Response(
       JSON.stringify({
-        analysis: parsed.analysis,
-        suggestedCategoryId: parsed.suggested_category_id,
+        analysis: safeAnalysis,
+        suggestedCategoryId: suggestedId,
         suggestedCategoryName: suggested?.name || null,
-        confidence: parsed.confidence ?? null,
+        confidence,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
