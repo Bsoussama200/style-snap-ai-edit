@@ -226,16 +226,7 @@ const ProductWizard: React.FC = () => {
       const finalUrl = await uploadToStorage(file, 'outputs');
       setFinalImageUrl(finalUrl);
 
-      // Ask AI for motion/effects prompt based on the final image
-      const motionForm = new FormData();
-      motionForm.append('mode', 'motion');
-      motionForm.append('image_url', finalUrl);
-      const motionRes = await supabase.functions.invoke('analyze-product', { body: motionForm });
-      if (motionRes.error) throw new Error(motionRes.error.message);
-      const motion = (motionRes.data?.prompt as string) || '';
-      setMotionSuggestion(motion.trim());
-
-      // Go to options first; prompt will be generated from chosen options
+      // Go to options first; ensure image URL is ready
       setVideoPrompt('');
       setStep('video_options');
     } catch (err) {
@@ -247,15 +238,38 @@ const ProductWizard: React.FC = () => {
     }
   };
   
-  const generatePromptFromOptions = () => {
-    const parts: string[] = [];
-    if (motionSuggestion) parts.push(motionSuggestion.trim());
-    if (selectedCamera) parts.push(`Camera movement: ${selectedCamera}.`);
-    if (selectedEffects.length) parts.push(`Visual effects: ${selectedEffects.join(', ')}.`);
-    if (productInUse) parts.push('Show the product in use naturally (hands or person), while keeping the product as the primary focus.');
-    const composed = parts.join('\n').trim();
-    setVideoPrompt(composed);
-    setStep('video_prompt');
+  const generatePromptFromOptions = async () => {
+    try {
+      setIsFetchingMotion(true);
+      // Fetch motion suggestion now, after user chose options
+      let motion = motionSuggestion;
+      if (!motion) {
+        if (!finalImageUrl) {
+          throw new Error('Image not ready. Please go back and confirm the image.');
+        }
+        const motionForm = new FormData();
+        motionForm.append('mode', 'motion');
+        motionForm.append('image_url', finalImageUrl);
+        const motionRes = await supabase.functions.invoke('analyze-product', { body: motionForm });
+        if (motionRes.error) throw new Error(motionRes.error.message);
+        motion = (motionRes.data?.prompt as string) || '';
+        setMotionSuggestion(motion.trim());
+      }
+
+      const parts: string[] = [];
+      if (motion) parts.push(motion.trim());
+      if (selectedCamera) parts.push(`Camera movement: ${selectedCamera}.`);
+      if (selectedEffects.length) parts.push(`Visual effects: ${selectedEffects.join(', ')}.`);
+      if (productInUse) parts.push('Show the product in use naturally (hands or person), while keeping the product as the primary focus.');
+      const composed = parts.join('\n').trim();
+      setVideoPrompt(composed);
+      setStep('video_prompt');
+    } catch (err) {
+      console.error(err);
+      toast({ title: 'Prompt generation failed', description: err instanceof Error ? err.message : 'Try again.', variant: 'destructive' });
+    } finally {
+      setIsFetchingMotion(false);
+    }
   };
 
   const generateVideoFromPrompt = async () => {
@@ -456,7 +470,7 @@ const ProductWizard: React.FC = () => {
               <Button onClick={() => downloadBlobUrl(generatedImage, `product-image-${Date.now()}.png`)} className="flex-1"><Download className="w-4 h-4 mr-2" />Download Image</Button>
               {mode === 'photovideo' && !videoUrl && (
                 <Button onClick={confirmAndMaybeCreateVideo} disabled={isFetchingMotion} className="flex-1">
-                  {isFetchingMotion ? (<><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Preparing prompt...</>) : (<><Play className="w-4 h-4 mr-2" />Validate & Generate Video</>)}
+                  {isFetchingMotion ? (<><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Preparing...</>) : (<>Select Video Options</>)}
                 </Button>
               )}
               {mode === 'photovideo' && videoUrl && (
