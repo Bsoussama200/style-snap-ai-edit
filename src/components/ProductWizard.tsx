@@ -25,6 +25,7 @@ type Step =
   | 'style'
   | 'generating'
   | 'confirm'
+  | 'video_options'
   | 'video_prompt'
   | 'video_generating'
   | 'video_ready';
@@ -47,6 +48,40 @@ const ProductWizard: React.FC = () => {
   const [finalImageUrl, setFinalImageUrl] = useState<string>('');
   const [videoPrompt, setVideoPrompt] = useState<string>('');
   const [isFetchingMotion, setIsFetchingMotion] = useState<boolean>(false);
+
+  // Video options data and selections
+  const CAMERA_MOVEMENTS = [
+    { name: 'Pan', description: 'Move the view horizontally (left or right).' },
+    { name: 'Tilt', description: 'Move the view vertically (up or down).' },
+    { name: 'Zoom In', description: 'Gradually move closer to the subject.' },
+    { name: 'Zoom Out', description: 'Gradually move further away from the subject.' },
+    { name: 'Dolly In', description: 'Simulate moving the camera physically forward, changing perspective.' },
+    { name: 'Dolly Out', description: 'Simulate moving the camera physically backward, changing perspective.' },
+    { name: 'Truck', description: 'Move the entire camera sideways.' },
+    { name: 'Pedestal', description: 'Move the camera vertically up or down without tilting.' },
+    { name: 'Push-In', description: 'Slow, steady movement toward the subject for drama.' },
+    { name: 'Pull-Back', description: 'Slowly moving away from the subject to reveal more.' },
+    { name: 'Parallax Shift', description: 'Slight horizontal movement creating depth between foreground and background.' },
+    { name: 'Arc Move', description: 'Curved movement around the subject for subtle dynamism.' },
+  ] as const;
+
+  const NATURAL_VISUAL_EFFECTS = [
+    { name: 'Focus Shift', description: 'Gradually blur one part of the image while bringing another into focus.' },
+    { name: 'Depth of Field Blur', description: 'Keep the subject sharp and background slightly blurred.' },
+    { name: 'Light Flicker', description: 'Subtle change in brightness as if light is passing through trees or clouds.' },
+    { name: 'Lens Flare', description: 'Gentle sun or lamp glare moving with camera shift.' },
+    { name: 'Shadow Movement', description: 'Shadows moving across the subject as if from passing objects or sunlight.' },
+    { name: 'Natural Vibration', description: 'Small hand-held style shake for realism.' },
+    { name: 'Bokeh Glow', description: 'Soft light spots in the blurred background.' },
+    { name: 'Vignette Fade', description: 'Subtle darkening of image corners to draw focus to center.' },
+    { name: 'Dust Particles', description: 'Tiny particles drifting naturally in the air.' },
+    { name: 'Light Leak', description: 'Warm faded color streaks like from old film cameras.' },
+  ] as const;
+
+  const [selectedCamera, setSelectedCamera] = useState<string>('');
+  const [selectedEffects, setSelectedEffects] = useState<string[]>([]);
+  const [productInUse, setProductInUse] = useState<boolean>(false);
+  const [motionSuggestion, setMotionSuggestion] = useState<string>('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -198,11 +233,10 @@ const ProductWizard: React.FC = () => {
       const motionRes = await supabase.functions.invoke('analyze-product', { body: motionForm });
       if (motionRes.error) throw new Error(motionRes.error.message);
       const motion = (motionRes.data?.prompt as string) || '';
-      const focusSuffix = (focusSuffixPrompt?.content || 'Focus: Keep attention and camera movement centered on the main product or primary subject. Avoid background distractions. Smooth, subtle motion that highlights the product.');
-      setVideoPrompt(`${motion}\n${focusSuffix}`.trim());
+      setMotionSuggestion(motion.trim());
 
-      // Let user review/edit the prompt before generating the video
-      setStep('video_prompt');
+      // Go to options so user can choose movement/effects before composing the prompt
+      setStep('video_options');
     } catch (err) {
       console.error(err);
       toast({ title: 'Prompt generation failed', description: err instanceof Error ? err.message : 'Try again.', variant: 'destructive' });
@@ -212,6 +246,17 @@ const ProductWizard: React.FC = () => {
     }
   };
   
+  const generatePromptFromOptions = () => {
+    const parts: string[] = [];
+    if (motionSuggestion) parts.push(motionSuggestion.trim());
+    if (selectedCamera) parts.push(`Camera movement: ${selectedCamera}.`);
+    if (selectedEffects.length) parts.push(`Visual effects: ${selectedEffects.join(', ')}.`);
+    if (productInUse) parts.push('Show the product in use naturally (hands or person), while keeping the product as the primary focus.');
+    const composed = parts.join('\n').trim();
+    setVideoPrompt(composed);
+    setStep('video_prompt');
+  };
+
   const generateVideoFromPrompt = async () => {
     if (!finalImageUrl) {
       toast({ title: 'Missing image', description: 'Please confirm the generated image first.', variant: 'destructive' });
@@ -408,6 +453,77 @@ const ProductWizard: React.FC = () => {
               {mode === 'photovideo' && videoUrl && (
                 <Button onClick={() => window.open(videoUrl, '_blank')} className="flex-1"><Download className="w-4 h-4 mr-2" />Download Video</Button>
               )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {step === 'video_options' && (
+        <Card className="glass-card max-w-3xl mx-auto">
+          <CardContent className="p-6 space-y-6">
+            <h2 className="text-xl font-semibold">Video Options</h2>
+
+            <div className="space-y-3">
+              <h3 className="font-medium">Camera movement</h3>
+              <div className="grid gap-2">
+                {CAMERA_MOVEMENTS.map((m) => (
+                  <label key={m.name} className={`flex items-start gap-3 p-3 rounded-md border cursor-pointer ${selectedCamera === m.name ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}>
+                    <input
+                      type="radio"
+                      name="camera"
+                      className="mt-1"
+                      checked={selectedCamera === m.name}
+                      onChange={() => setSelectedCamera(m.name)}
+                    />
+                    <div>
+                      <div className="font-medium">{m.name}</div>
+                      <div className="text-sm text-muted-foreground">{m.description}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="font-medium">Natural visual effects</h3>
+              <div className="grid md:grid-cols-2 gap-2">
+                {NATURAL_VISUAL_EFFECTS.map((e) => {
+                  const checked = selectedEffects.includes(e.name);
+                  return (
+                    <label key={e.name} className={`flex items-start gap-3 p-3 rounded-md border cursor-pointer ${checked ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}>
+                      <input
+                        type="checkbox"
+                        className="mt-1"
+                        checked={checked}
+                        onChange={() =>
+                          setSelectedEffects((prev) =>
+                            prev.includes(e.name) ? prev.filter((x) => x !== e.name) : [...prev, e.name]
+                          )
+                        }
+                      />
+                      <div>
+                        <div className="font-medium">{e.name}</div>
+                        <div className="text-sm text-muted-foreground">{e.description}</div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <input
+                id="productInUse"
+                type="checkbox"
+                checked={productInUse}
+                onChange={(e) => setProductInUse(e.target.checked)}
+              />
+              <label htmlFor="productInUse" className="text-sm">Show the product in use (hands/person interacting)</label>
+            </div>
+
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setStep('confirm')} className="gap-2"><ArrowLeft className="w-4 h-4" />Back</Button>
+              <Button className="flex-1" onClick={generatePromptFromOptions}>Generate Video Prompt</Button>
             </div>
           </CardContent>
         </Card>
