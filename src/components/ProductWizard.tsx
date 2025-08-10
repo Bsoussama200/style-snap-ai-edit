@@ -77,8 +77,10 @@ const ProductWizard: React.FC = () => {
     setUploadedImage(file);
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
+    // Reset any previous video state when a new image is uploaded
+    setVideoUrl('');
+    setFinalImageUrl('');
   };
-
   const startAnalysis = async () => {
     if (!uploadedImage) {
       toast({ title: 'Upload required', description: 'Please upload an image first.', variant: 'destructive' });
@@ -132,6 +134,9 @@ const ProductWizard: React.FC = () => {
       return;
     }
 
+    // Reset video-related state for a fresh generation
+    setVideoUrl('');
+    setFinalImageUrl('');
     setIsGenerating(true);
     setStep('generating');
     try {
@@ -396,7 +401,7 @@ const ProductWizard: React.FC = () => {
               <Button onClick={() => downloadBlobUrl(generatedImage, `product-image-${Date.now()}.png`)} className="flex-1"><Download className="w-4 h-4 mr-2" />Download Image</Button>
               {mode === 'photovideo' && !videoUrl && (
                 <Button onClick={confirmAndMaybeCreateVideo} disabled={isFetchingMotion} className="flex-1">
-                  {isFetchingMotion ? (<><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Preparing prompt...</>) : (<><Play className="w-4 h-4 mr-2" />Confirm & Create Video</>)}
+                  {isFetchingMotion ? (<><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Preparing prompt...</>) : (<><Play className="w-4 h-4 mr-2" />Validate & Generate Video</>)}
                 </Button>
               )}
               {mode === 'photovideo' && videoUrl && (
