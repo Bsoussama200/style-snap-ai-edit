@@ -241,28 +241,32 @@ const ProductWizard: React.FC = () => {
   const generatePromptFromOptions = async () => {
     try {
       setIsFetchingMotion(true);
-      // Fetch motion suggestion now, after user chose options
-      let motion = motionSuggestion;
-      if (!motion) {
-        if (!finalImageUrl) {
-          throw new Error('Image not ready. Please go back and confirm the image.');
-        }
-        const motionForm = new FormData();
-        motionForm.append('mode', 'motion');
-        motionForm.append('image_url', finalImageUrl);
-        const motionRes = await supabase.functions.invoke('analyze-product', { body: motionForm });
-        if (motionRes.error) throw new Error(motionRes.error.message);
-        motion = (motionRes.data?.prompt as string) || '';
-        setMotionSuggestion(motion.trim());
+      
+      if (!finalImageUrl) {
+        throw new Error('Image not ready. Please go back and confirm the image.');
       }
 
+      // Build context from selected options to inform the AI
       const parts: string[] = [];
-      if (motion) parts.push(motion.trim());
-      if (selectedCamera) parts.push(`Camera movement: ${selectedCamera}.`);
-      if (selectedEffects.length) parts.push(`Visual effects: ${selectedEffects.join(', ')}.`);
-      if (productInUse) parts.push('Show the product in use naturally (hands or person), while keeping the product as the primary focus.');
-      const composed = parts.join('\n').trim();
-      setVideoPrompt(composed);
+      if (selectedCamera) parts.push(`Camera movement: ${selectedCamera}`);
+      if (selectedEffects.length) parts.push(`Visual effects: ${selectedEffects.join(', ')}`);
+      if (productInUse) parts.push('Show the product in use naturally (hands or person), while keeping the product as the primary focus');
+      
+      const optionsContext = parts.length > 0 ? parts.join('. ') + '.' : '';
+      
+      // Generate AI prompt with options context
+      const motionForm = new FormData();
+      motionForm.append('mode', 'motion');
+      motionForm.append('image_url', finalImageUrl);
+      if (optionsContext) {
+        motionForm.append('options_context', optionsContext);
+      }
+      
+      const motionRes = await supabase.functions.invoke('analyze-product', { body: motionForm });
+      if (motionRes.error) throw new Error(motionRes.error.message);
+      
+      const aiGeneratedPrompt = (motionRes.data?.prompt as string) || '';
+      setVideoPrompt(aiGeneratedPrompt.trim());
       setStep('video_prompt');
     } catch (err) {
       console.error(err);
@@ -281,14 +285,11 @@ const ProductWizard: React.FC = () => {
     setStep('video_generating');
     try {
       const focus = (focusSuffixPrompt?.content || 'Focus: Keep attention and camera movement centered on the main product or primary subject. Avoid background distractions. Smooth, subtle motion that highlights the product.');
-      const optionParts: string[] = [];
-      if (selectedCamera) optionParts.push(`Camera movement: ${selectedCamera}.`);
-      if (selectedEffects.length) optionParts.push(`Visual effects: ${selectedEffects.join(', ')}.`);
-      if (productInUse) optionParts.push('Show the product in use naturally (hands or person), while keeping the product as the primary focus.');
-      const optionsText = optionParts.join(' ');
+      
+      // Use the AI-generated prompt that already incorporates the options
       const base = (videoPrompt || '').trim();
-      const combinedPrompt = [base, optionsText].filter(Boolean).join('\n').trim();
-      const promptToSend = `${combinedPrompt}\n${focus}`.trim();
+      const promptToSend = `${base}\n${focus}`.trim();
+      
       const start = await supabase.functions.invoke('kie-runway-generate', {
         body: {
           prompt: promptToSend,
