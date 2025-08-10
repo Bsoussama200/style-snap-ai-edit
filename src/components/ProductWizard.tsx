@@ -390,12 +390,8 @@ const ProductWizard: React.FC = () => {
           <CardContent className="p-6 space-y-4">
             <h2 className="text-xl font-semibold">Review and Confirm</h2>
             <img src={generatedImage} alt="Generated product image" className="w-full rounded-lg" />
-            {videoUrl && (
-              <div className="space-y-2">
-                <video controls className="w-full rounded-lg" src={videoUrl} />
-              </div>
-            )}
             <div className="flex flex-col sm:flex-row gap-3">
+              <Button variant="outline" onClick={() => setStep('upload')} className="flex-1"><ArrowLeft className="w-4 h-4 mr-2" />Back to Upload</Button>
               <Button onClick={() => setStep('style')} variant="outline" className="flex-1"><RefreshCw className="w-4 h-4 mr-2" />Regenerate</Button>
               <Button onClick={() => downloadBlobUrl(generatedImage, `product-image-${Date.now()}.png`)} className="flex-1"><Download className="w-4 h-4 mr-2" />Download Image</Button>
               {mode === 'photovideo' && !videoUrl && (
