@@ -400,22 +400,41 @@ const ProductWizard: React.FC = () => {
           if (!sourceImageUrl) throw new Error('Source image URL missing');
           updateVideo(entry.id, { status: 'generating-image' });
           console.log(`Generating starting scene image for video ${i + 1} with scene: ${(prompt as any).startingScene}`);
+          
+          // Add specific debugging for Video 4
+          if (i === 3) { // Video 4 (0-indexed)
+            console.log(`=== VIDEO 4 DEBUG ===`);
+            console.log(`Video 4 prompt:`, prompt);
+            console.log(`Video 4 startingScene:`, (prompt as any).startingScene);
+            console.log(`Video 4 sourceImageUrl:`, sourceImageUrl);
+            console.log(`===================`);
+          }
 
           try {
+            const imagePrompt = `Create a professional scene: ${(prompt as any).startingScene}. High quality, well-lit, perfect for video production.`;
+            console.log(`Image generation prompt for video ${i + 1}:`, imagePrompt);
+            
             const imageResponse = await supabase.functions.invoke('kie-4o-image-generate', {
               body: {
-                prompt: `Create a professional scene: ${(prompt as any).startingScene}. High quality, well-lit, perfect for video production.`,
+                prompt: imagePrompt,
                 inputImage: sourceImageUrl,
               },
             });
             
             if (imageResponse.error) {
               console.error(`Image generation failed for video ${i + 1}:`, imageResponse.error);
-              throw new Error('Image generation service temporarily unavailable');
+              if (i === 3) console.error(`VIDEO 4 IMAGE ERROR:`, imageResponse.error);
+              throw new Error(`Image generation service error: ${JSON.stringify(imageResponse.error)}`);
             }
 
             const imageTaskId = imageResponse.data?.taskId as string | undefined;
-            if (!imageTaskId) throw new Error('No task ID received from image generation service');
+            if (!imageTaskId) {
+              console.error(`No task ID for video ${i + 1}. Response:`, imageResponse.data);
+              if (i === 3) console.error(`VIDEO 4 NO TASK ID:`, imageResponse.data);
+              throw new Error('No task ID received from image generation service');
+            }
+            
+            console.log(`Image task ID for video ${i + 1}: ${imageTaskId}`);
 
             const maxAttempts = 150; // Reduced to 5 minutes for faster failure detection
             let attempts = 0;
