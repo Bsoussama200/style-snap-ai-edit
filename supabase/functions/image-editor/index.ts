@@ -52,28 +52,25 @@ serve(async (req) => {
 
     console.log(`Processing ${images.length} images with prompt:`, prompt);
 
-    // Create FormData for OpenAI API
-    const openaiFormData = new FormData();
-    openaiFormData.append('model', 'gpt-image-1');
-    openaiFormData.append('prompt', prompt);
-    openaiFormData.append('size', '720x1280'); // 9:16 aspect ratio
-    openaiFormData.append('response_format', 'b64_json');
-    
-    // Add all images to the form data
-    for (let i = 0; i < images.length; i++) {
-      openaiFormData.append('image[]', images[i]);
-      console.log(`Added image ${i + 1}: ${images[i].name || 'unnamed'} (${images[i].size} bytes)`);
-    }
+    // Create JSON payload for OpenAI API
+    const payload = {
+      model: 'gpt-image-1',
+      prompt: prompt,
+      size: '1024x1536', // Valid size for gpt-image-1 (portrait)
+      n: 1,
+      quality: 'high'
+    };
 
-    console.log('Sending request to OpenAI /images/edits endpoint...');
+    console.log('Sending request to OpenAI /images/generations endpoint...');
 
-    // Call OpenAI's /images/edits endpoint using the provided API key
-    const response = await fetch('https://api.openai.com/v1/images/edits', {
+    // Call OpenAI's /images/generations endpoint using the provided API key
+    const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
       },
-      body: openaiFormData,
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
