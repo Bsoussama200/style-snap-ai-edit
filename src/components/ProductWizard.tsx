@@ -1148,16 +1148,6 @@ const ProductWizard: React.FC = () => {
           </Card>
 
 
-          {/* Action Buttons */}
-          <div className="flex gap-4 justify-center pt-4">
-            <Button variant="outline" onClick={() => setStep('upload')} className="gap-2 px-6">
-              <ArrowLeft className="w-4 h-4" />Back to Upload
-            </Button>
-            <Button onClick={proceedAfterCategory} className="gap-2 px-8 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90">
-              Continue to Style Selection
-              <Sparkles className="w-4 h-4" />
-            </Button>
-          </div>
         </div>
       )}
 
