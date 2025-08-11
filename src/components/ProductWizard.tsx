@@ -907,7 +907,7 @@ const ProductWizard: React.FC = () => {
                                  </div>
                                  
                                  {video.url && video.status === 'success' && (
-                                   <div className="relative w-full mx-auto" style={{ aspectRatio: '9/16', maxWidth: '200px' }}>
+                                   <div className="relative w-full mx-auto" style={{ aspectRatio: '9/16', maxWidth: '400px' }}>
                                      <video 
                                        src={video.url} 
                                        controls 
