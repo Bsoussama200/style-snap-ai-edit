@@ -9,6 +9,26 @@ import { useStyles } from '@/hooks/useStyles';
 import { Upload, RefreshCw, Download, Play, ArrowLeft, Video, MessageSquare, Sparkles } from 'lucide-react';
 import { usePrompt } from '@/hooks/usePrompts';
 
+interface VideoPrompt {
+  sceneDurationSeconds: number;
+  person: {
+    name: string;
+    description: string;
+    actions: string[];
+    line: string;
+    tone: string;
+    speaker: boolean;
+  };
+  place: {
+    description: string;
+  };
+  additionalInstructions: {
+    cameraMovement: string;
+    lighting: string;
+    backgroundMusic: string;
+  };
+}
+
 interface AnalysisResult {
   analysis: string;
   suggestedCategoryId: string | null;
@@ -25,6 +45,7 @@ interface AnalysisResult {
   };
   marketingAngles?: string[];
   targetAudiences?: string[];
+  videoPrompts?: VideoPrompt[];
 }
 
 type Mode = 'photo' | 'photovideo';
@@ -60,6 +81,7 @@ const ProductWizard: React.FC = () => {
   const [videoPrompt, setVideoPrompt] = useState<string>('');
   const [isFetchingMotion, setIsFetchingMotion] = useState<boolean>(false);
   const [videoProvider, setVideoProvider] = useState<'runway' | 'veo3'>('runway');
+  const [isGeneratingVideoPrompts, setIsGeneratingVideoPrompts] = useState<boolean>(false);
 
   // Video options data and selections
   const CAMERA_MOVEMENTS = [
@@ -155,6 +177,10 @@ const ProductWizard: React.FC = () => {
       const result = data as AnalysisResult;
       setAnalysis(result);
       if (result.suggestedCategoryId) setCategoryId(result.suggestedCategoryId);
+      
+      // Generate video prompts after analysis
+      await generateVideoPrompts(result);
+      
       setStep('category');
     } catch (err) {
       console.error(err);
@@ -285,6 +311,34 @@ const ProductWizard: React.FC = () => {
       toast({ title: 'Prompt generation failed', description: err instanceof Error ? err.message : 'Try again.', variant: 'destructive' });
     } finally {
       setIsFetchingMotion(false);
+    }
+  };
+
+  const generateVideoPrompts = async (analysisResult: AnalysisResult) => {
+    if (!analysisResult.productProfile) return;
+    
+    setIsGeneratingVideoPrompts(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-video-prompts', {
+        body: {
+          productProfile: analysisResult.productProfile,
+          analysis: analysisResult.analysis,
+          marketingAngles: analysisResult.marketingAngles,
+          targetAudiences: analysisResult.targetAudiences,
+        },
+      });
+      
+      if (error) throw new Error(error.message);
+      
+      const videoPrompts = data?.videoPrompts as VideoPrompt[];
+      if (videoPrompts && Array.isArray(videoPrompts)) {
+        setAnalysis(prev => prev ? { ...prev, videoPrompts } : prev);
+      }
+    } catch (err) {
+      console.error('Failed to generate video prompts:', err);
+      // Don't show error toast as this is supplementary feature
+    } finally {
+      setIsGeneratingVideoPrompts(false);
     }
   };
 
@@ -586,6 +640,57 @@ const ProductWizard: React.FC = () => {
                   </div>
                 ) : null}
 
+
+                {/* Video Prompts Section */}
+                {analysis.videoPrompts?.length ? (
+                  <div className="p-6 rounded-xl bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent grid place-items-center shadow-md">
+                        <Video className="h-4 w-4 text-white" />
+                      </div>
+                      <h3 className="text-lg font-bold">Video Prompts</h3>
+                      <span className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary font-medium">
+                        AI Generated
+                      </span>
+                    </div>
+                    <div className="grid gap-4">
+                      {analysis.videoPrompts.map((prompt, index) => (
+                        <div key={index} className="p-4 rounded-lg bg-background/50 border border-primary/10 space-y-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm font-semibold text-primary">Prompt {index + 1}</span>
+                            <span className="text-xs px-2 py-1 rounded-full bg-secondary text-secondary-foreground">
+                              {prompt.sceneDurationSeconds}s
+                            </span>
+                          </div>
+                          <div className="grid md:grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <p className="font-medium text-muted-foreground mb-1">Person:</p>
+                              <p className="text-xs mb-1">{prompt.person.name} - {prompt.person.description}</p>
+                              <p className="text-xs italic">"{prompt.person.line}" ({prompt.person.tone})</p>
+                              <p className="text-xs text-muted-foreground mt-1">Actions: {prompt.person.actions.join(', ')}</p>
+                            </div>
+                            <div>
+                              <p className="font-medium text-muted-foreground mb-1">Setting:</p>
+                              <p className="text-xs mb-2">{prompt.place.description}</p>
+                              <p className="font-medium text-muted-foreground mb-1">Technical:</p>
+                              <p className="text-xs">Camera: {prompt.additionalInstructions.cameraMovement}</p>
+                              <p className="text-xs">Lighting: {prompt.additionalInstructions.lighting}</p>
+                              <p className="text-xs">Music: {prompt.additionalInstructions.backgroundMusic}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : isGeneratingVideoPrompts ? (
+                  <div className="p-6 rounded-xl bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10 text-center">
+                    <div className="flex items-center justify-center gap-3 mb-2">
+                      <RefreshCw className="h-5 w-5 animate-spin text-primary" />
+                      <span className="text-sm font-medium">Generating video prompts...</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Creating VEO3 prompts based on your product analysis</p>
+                  </div>
+                ) : null}
 
                 {/* CHOOSE CATEGORY - Prominent Section */}
                 <div className="border-2 border-primary/30 rounded-xl p-6 bg-gradient-to-r from-primary/5 to-accent/5 shadow-lg">
