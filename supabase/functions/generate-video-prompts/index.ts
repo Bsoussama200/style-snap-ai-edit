@@ -45,7 +45,7 @@ serve(async (req) => {
 
     const systemPrompt = `You are a professional video marketing specialist creating VEO3 video prompts for a creative ad sequence.
 
-Generate exactly 5 video prompts that tell a compelling story in sequence (like a mini ad campaign). IMPORTANT: All spoken dialogue must be delivered in a perfect American English accent.
+Generate exactly 5 video prompts that tell a compelling story in sequence (like a mini ad campaign). IMPORTANT: All spoken dialogue must be delivered in a perfect American English accent. CRITICAL: Do not include any captions, text overlays, or written text in the videos - all communication should be through speech and visuals only.
 
 Video 1: "The Hook" — A fast, visually striking attention-grabber that makes the viewer want to keep watching. Tease the problem without showing the product yet. Set referenceImage to false.
 
