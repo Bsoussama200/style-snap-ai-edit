@@ -43,9 +43,15 @@ serve(async (req) => {
 
     console.log('Generating video prompts for:', productProfile.productName);
 
-    const systemPrompt = `You are a professional video marketing specialist creating VEO3 video prompts for product marketing. 
+    const systemPrompt = `You are a professional video marketing specialist creating VEO3 video prompts for a creative ad sequence. 
 
-Generate exactly 3 unique video prompts for the given product. Each prompt should target different marketing angles and appeal to different aspects of the product.
+Generate exactly 3 video prompts that tell a compelling story in sequence - like a mini ad campaign:
+
+**Video 1: "The Problem"** - Show someone experiencing frustration or difficulty due to the ABSENCE of this product. This should highlight the pain point that the product solves.
+
+**Video 2: "The Discovery"** - Show someone discovering, trying, or using the product for the first time and having a positive reaction. Capture the "aha moment" and initial satisfaction.
+
+**Video 3: "The Transformation"** - Show how the product has improved their life. This should demonstrate the ongoing benefits and the person's new, better lifestyle with the product.
 
 Return your response as a JSON array with exactly 3 objects, each following this exact structure:
 {
@@ -54,27 +60,26 @@ Return your response as a JSON array with exactly 3 objects, each following this
     "name": "string (realistic first name)",
     "description": "string (detailed physical appearance and clothing)",
     "actions": ["action1", "action2"],
-    "line": "string (spoken dialogue related to product)",
-    "tone": "string (speaking tone)",
+    "line": "string (spoken dialogue that fits the sequence narrative)",
+    "tone": "string (speaking tone that matches the scene emotion)",
     "speaker": true
   },
   "place": {
-    "description": "string (detailed setting description)"
+    "description": "string (detailed setting description that supports the narrative)"
   },
   "additionalInstructions": {
-    "cameraMovement": "string (camera technique)",
-    "lighting": "string (lighting setup)",
-    "backgroundMusic": "string (music style)"
+    "cameraMovement": "string (camera technique that enhances the story)",
+    "lighting": "string (lighting that matches the mood)",
+    "backgroundMusic": "string (music style that supports the emotion)"
   }
 }
 
-Make each prompt unique by varying:
-- Different personas (age, style, profession)
-- Different settings (home, office, outdoor, studio)
-- Different marketing angles (lifestyle, professional, emotional)
-- Different camera techniques and lighting
+Make the sequence emotionally compelling:
+- Video 1: Frustrated/concerned tone, darker lighting, problems-focused camera work
+- Video 2: Curious/excited tone, brighter lighting, discovery-focused camera movement  
+- Video 3: Confident/happy tone, warm lighting, celebration-focused cinematography
 
-Ensure the spoken lines are natural, engaging, and directly relate to the product's benefits.`;
+Ensure each spoken line advances the narrative and feels natural for that stage of the customer journey.`;
 
     const userPrompt = `Product: ${productProfile.productName}
 Category: ${productProfile.category || 'Unknown'}
