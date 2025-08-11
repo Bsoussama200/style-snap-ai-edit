@@ -31,6 +31,16 @@ interface VideoPrompt {
   };
 }
 
+interface VideoGenerationResult {
+  id: number;
+  promptIndex: number;
+  status: 'pending' | 'generating-image' | 'processing' | 'generating-video' | 'success' | 'error';
+  prompt: VideoPrompt;
+  taskId?: string;
+  videoUrl?: string;
+  error?: string;
+}
+
 interface AnalysisResult {
   analysis: string;
   suggestedCategoryId: string | null;
@@ -85,7 +95,7 @@ const ProductWizard: React.FC = () => {
   const [videoProvider, setVideoProvider] = useState<'runway' | 'veo3'>('runway');
   const [isGeneratingVideoPrompts, setIsGeneratingVideoPrompts] = useState<boolean>(false);
   const [isGeneratingVideos, setIsGeneratingVideos] = useState<boolean>(false);
-  const [generatedVideos, setGeneratedVideos] = useState<Array<{id: string, url: string | null, status: string}>>([]);
+  const [generatedVideos, setGeneratedVideos] = useState<VideoGenerationResult[]>([]);
   const [videoTaskIds, setVideoTaskIds] = useState<string[]>([]);
   const [isGeneratingRunwayVideo, setIsGeneratingRunwayVideo] = useState<boolean>(false);
   const [runwayVideoTaskId, setRunwayVideoTaskId] = useState<string>('');
@@ -354,80 +364,197 @@ const ProductWizard: React.FC = () => {
   };
 
   const generateAllVideos = async () => {
-    if (!analysis?.videoPrompts?.length) {
-      toast({ title: 'No prompts available', description: 'Please generate video prompts first.', variant: 'destructive' });
-      return;
-    }
-
+    if (!analysis?.videoPrompts || !uploadedImage) return;
+    
     setIsGeneratingVideos(true);
-    const taskIds: string[] = [];
-    const videoStates: Array<{id: string, url: string | null, status: string}> = [];
-
-    try {
-      // Start all video generations simultaneously
-      for (let i = 0; i < analysis.videoPrompts.length; i++) {
-        const prompt = analysis.videoPrompts[i];
+    setGeneratedVideos([]);
+    
+    const videoResults: VideoGenerationResult[] = [];
+    
+    for (let i = 0; i < analysis.videoPrompts.length; i++) {
+      const prompt = analysis.videoPrompts[i];
+      const videoId = Date.now() + i;
+      
+      // Add video to state immediately
+      const newVideo: VideoGenerationResult = {
+        id: videoId,
+        promptIndex: i,
+        status: 'pending',
+        prompt: prompt,
+      };
+      
+      videoResults.push(newVideo);
+      setGeneratedVideos([...videoResults]);
+      
+      try {
+        let referenceImageUrl = null;
+        let enhancedPrompt = `${prompt.person.description} ${prompt.person.actions.join(', ')}. Setting: ${prompt.place.description}. The person says: "${prompt.person.line}" in a ${prompt.person.tone} tone with a perfect American English accent. Camera: ${prompt.additionalInstructions.cameraMovement}. Lighting: ${prompt.additionalInstructions.lighting}. Duration: ${prompt.sceneDurationSeconds} seconds.`;
+        
+        // Step 1: Generate starting scene image if needed
+        if (prompt.referenceImage && uploadedImage && (prompt as any).startingScene) {
+          // Update status to show image generation
+          newVideo.status = 'generating-image';
+          setGeneratedVideos([...videoResults]);
+          
+          console.log(`Generating starting scene image for video ${i + 1} with prompt:`, (prompt as any).startingScene);
+          
+          // Generate starting scene image
+          const imageResponse = await supabase.functions.invoke('kie-flux-kontext-generate', {
+            body: {
+              prompt: (prompt as any).startingScene,
+              inputImage: uploadedImage,
+            }
+          });
+          
+          if (imageResponse.error) {
+            throw new Error(imageResponse.error.message || 'Failed to generate starting scene image');
+          }
+          
+          const imageTaskId = imageResponse.data?.taskId;
+          if (!imageTaskId) {
+            throw new Error('No task ID received from image generation service');
+          }
+          
+          console.log(`Image generation started for video ${i + 1}, task ID:`, imageTaskId);
+          
+          // Poll for image completion
+          const pollForImageCompletion = async () => {
+            const maxAttempts = 60;
+            let attempts = 0;
+            
+            while (attempts < maxAttempts) {
+              try {
+                const statusResponse = await supabase.functions.invoke('kie-flux-kontext-status', {
+                  body: { taskId: imageTaskId }
+                });
+                
+                if (statusResponse.error) {
+                  throw new Error(statusResponse.error.message || 'Failed to check image status');
+                }
+                
+                const status = statusResponse.data;
+                console.log(`Image status for video ${i + 1}:`, status);
+                
+                if (status?.successFlag === 1 && status?.response?.resultImageUrl) {
+                  console.log(`Image generation completed for video ${i + 1}:`, status.response.resultImageUrl);
+                  return status.response.resultImageUrl;
+                } else if (status?.successFlag === -1) {
+                  throw new Error(status?.errorMessage || 'Image generation failed');
+                }
+                
+                // Continue polling
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                attempts++;
+              } catch (error) {
+                console.error('Image status check error:', error);
+                attempts++;
+                await new Promise(resolve => setTimeout(resolve, 2000));
+              }
+            }
+            
+            throw new Error('Image generation timed out');
+          };
+          
+          referenceImageUrl = await pollForImageCompletion();
+        } else if (prompt.referenceImage && uploadedImage) {
+          referenceImageUrl = uploadedImage;
+        }
+        
+        // Step 2: Generate prompt enhancement
+        newVideo.status = 'processing';
+        setGeneratedVideos([...videoResults]);
         
         // Convert the structured prompt to a text description for VEO3
-        const textPrompt = `${prompt.person.description} ${prompt.person.actions.join(', ')}. Setting: ${prompt.place.description}. The person says: "${prompt.person.line}" in a ${prompt.person.tone} tone with a perfect American English accent. Camera: ${prompt.additionalInstructions.cameraMovement}. Lighting: ${prompt.additionalInstructions.lighting}. Duration: ${prompt.sceneDurationSeconds} seconds.`;
+        enhancedPrompt = `${prompt.person.description} ${prompt.person.actions.join(', ')}. Setting: ${prompt.place.description}. The person says: "${prompt.person.line}" in a ${prompt.person.tone} tone with a perfect American English accent. Camera: ${prompt.additionalInstructions.cameraMovement}. Lighting: ${prompt.additionalInstructions.lighting}. Duration: ${prompt.sceneDurationSeconds} seconds.`;
         
-        console.log(`Starting video generation ${i + 1} with prompt:`, textPrompt);
+        console.log(`Starting video generation ${i + 1} with prompt:`, enhancedPrompt);
         console.log(`Video ${i + 1} includes product reference:`, prompt.referenceImage);
+        
+        // Step 3: Generate video with VEO3
+        newVideo.status = 'generating-video';
+        setGeneratedVideos([...videoResults]);
         
         // Prepare the VEO3 request body
         const veoBody: any = {
-          prompt: textPrompt,
+          prompt: enhancedPrompt,
           model: 'veo3_fast',
           aspectRatio: '9:16',
           enableFallback: false,
         };
 
-        if (prompt.referenceImage && sourceImageUrl) {
-          veoBody.imageUrl = sourceImageUrl;
-          veoBody.image_url = sourceImageUrl;
+        if (referenceImageUrl) {
+          veoBody.imageUrl = referenceImageUrl;
+          veoBody.image_url = referenceImageUrl;
           veoBody.referenceImage = true;
-          console.log(`Adding reference image for video ${i + 1}:`, sourceImageUrl);
-        } else if (prompt.referenceImage && !sourceImageUrl) {
-          console.warn(`referenceImage requested for video ${i + 1} but sourceImageUrl is missing`);
+          console.log(`Adding reference image for video ${i + 1}:`, referenceImageUrl);
         }
         
-        const startRes = await supabase.functions.invoke('kie-veo-generate', {
+        const videoResponse = await supabase.functions.invoke('kie-veo-generate', {
           body: veoBody,
         });
         
-        if (startRes.error) {
-          throw new Error(`Video ${i + 1} generation failed: ${startRes.error.message}`);
+        if (videoResponse.error) {
+          throw new Error(videoResponse.error.message || 'Failed to start video generation');
         }
         
-        const taskId = startRes.data?.taskId as string;
+        const taskId = videoResponse.data?.taskId;
         if (!taskId) {
-          throw new Error(`No taskId returned for video ${i + 1}`);
+          throw new Error('No task ID received from video generation service');
         }
         
-        taskIds.push(taskId);
-        videoStates.push({
-          id: taskId,
-          url: null,
-          status: 'pending'
-        });
+        newVideo.taskId = taskId;
+        setGeneratedVideos([...videoResults]);
+        
+        // Step 4: Poll for video completion
+        const pollForCompletion = async () => {
+          const maxAttempts = 100;
+          let attempts = 0;
+          
+          while (attempts < maxAttempts) {
+            try {
+              const statusResponse = await supabase.functions.invoke('kie-veo-status', {
+                body: { taskId }
+              });
+              
+              if (statusResponse.error) {
+                throw new Error(statusResponse.error.message || 'Failed to check video status');
+              }
+              
+              const status = statusResponse.data;
+              
+              if (status?.successFlag === 1 && status?.response?.videoUrl) {
+                newVideo.status = 'success';
+                newVideo.videoUrl = status.response.videoUrl;
+                setGeneratedVideos([...videoResults]);
+                return;
+              } else if (status?.successFlag === -1) {
+                throw new Error(status?.errorMessage || 'Video generation failed');
+              }
+              
+              // Continue polling
+              await new Promise(resolve => setTimeout(resolve, 3000));
+              attempts++;
+            } catch (error) {
+              console.error('Status check error:', error);
+              attempts++;
+              await new Promise(resolve => setTimeout(resolve, 3000));
+            }
+          }
+          
+          throw new Error('Video generation timed out');
+        };
+        
+        await pollForCompletion();
+        
+      } catch (error) {
+        console.error('Video generation error:', error);
+        newVideo.status = 'error';
+        newVideo.error = error instanceof Error ? error.message : 'Unknown error occurred';
+        setGeneratedVideos([...videoResults]);
       }
-      
-      setVideoTaskIds(taskIds);
-      setGeneratedVideos(videoStates);
-      
-      // Monitor all videos
-      await monitorVideoGeneration(taskIds);
-      
-    } catch (err) {
-      console.error('Video generation failed:', err);
-      toast({ 
-        title: 'Video generation failed', 
-        description: err instanceof Error ? err.message : 'Please try again.', 
-        variant: 'destructive' 
-      });
-    } finally {
-      setIsGeneratingVideos(false);
     }
+    
+    setIsGeneratingVideos(false);
   };
 
   const downloadImage = () => {
@@ -514,7 +641,7 @@ const ProductWizard: React.FC = () => {
   };
 
   const createFinalVideo = async () => {
-    const successfulVideos = generatedVideos.filter(v => v.status === 'success' && v.url);
+    const successfulVideos = generatedVideos.filter(v => v.status === 'success' && v.videoUrl);
     
     if (successfulVideos.length !== 5) {
       toast({
@@ -527,7 +654,7 @@ const ProductWizard: React.FC = () => {
 
     setIsCreatingFinalVideo(true);
     try {
-      const videoUrls = successfulVideos.map(v => v.url);
+      const videoUrls = successfulVideos.map(v => v.videoUrl);
       console.log('Combining videos:', videoUrls);
       
       const response = await supabase.functions.invoke('concatenate-videos', {
@@ -652,11 +779,11 @@ const ProductWizard: React.FC = () => {
           // Update video state
           setGeneratedVideos(prev => 
             prev.map(video => 
-              video.id === taskId 
+              video.taskId === taskId 
                 ? { 
                     ...video, 
-                    status: state, 
-                    url: state === 'success' ? videoUrl : null 
+                    status: state as 'success' | 'error' | 'pending' | 'generating-video', 
+                    videoUrl: state === 'success' ? videoUrl : undefined 
                   }
                 : video
             )
@@ -1116,7 +1243,7 @@ const ProductWizard: React.FC = () => {
                                        <CheckCircle className="h-4 w-4 text-green-500" />
                                        <span className="text-xs text-green-600">Complete</span>
                                      </>
-                                   ) : video.status === 'fail' || video.status === 'error' ? (
+                                   ) : video.status === 'error' ? (
                                      <>
                                        <XCircle className="h-4 w-4 text-red-500" />
                                        <span className="text-xs text-red-600">Failed</span>
@@ -1153,17 +1280,17 @@ const ProductWizard: React.FC = () => {
                                    <span className="text-sm font-medium">Video {index + 1}</span>
                                    <span className={`text-xs px-2 py-1 rounded-full ${
                                      video.status === 'success' ? 'bg-green-100 text-green-700' :
-                                     video.status === 'fail' || video.status === 'error' ? 'bg-red-100 text-red-700' :
+                                     video.status === 'error' ? 'bg-red-100 text-red-700' :
                                      'bg-yellow-100 text-yellow-700'
                                    }`}>
                                      {video.status}
                                    </span>
                                  </div>
                                  
-                                 {video.url && video.status === 'success' && (
-                                   <div className="relative w-full mx-auto" style={{ aspectRatio: '9/16', maxWidth: '400px' }}>
-                                     <video 
-                                       src={video.url} 
+                                  {video.videoUrl && video.status === 'success' && (
+                                    <div className="relative w-full mx-auto" style={{ aspectRatio: '9/16', maxWidth: '400px' }}>
+                                      <video 
+                                        src={video.videoUrl}
                                        controls 
                                        className="w-full h-full rounded-lg object-cover"
                                        style={{ aspectRatio: '9/16' }}
