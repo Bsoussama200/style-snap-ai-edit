@@ -466,8 +466,11 @@ const ProductWizard: React.FC = () => {
           try {
             const statusResponse = await supabase.functions.invoke('kie-veo-status', { body: { taskId } });
             if (statusResponse.error) throw statusResponse.error;
-            const state = statusResponse.data?.state as string;
-            const outUrl = statusResponse.data?.videoUrl as string | undefined;
+
+            const d: any = statusResponse.data || {};
+            const state: string | undefined = d.state || d.status || (typeof d.successFlag !== 'undefined' ? (d.successFlag === 1 ? 'success' : d.successFlag === -1 ? 'error' : 'pending') : undefined);
+            const outUrl: string | undefined = d.videoUrl || d.response?.videoUrl || d.raw?.response?.resultUrls?.[0] || d.response?.resultUrls?.[0];
+
             if (state === 'success' && outUrl) {
               updateVideo(entry.id, { status: 'success', videoUrl: outUrl });
               return;
