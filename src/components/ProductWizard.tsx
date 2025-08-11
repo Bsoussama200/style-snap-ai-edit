@@ -1351,48 +1351,52 @@ const ProductWizard: React.FC = () => {
                              </Button>
                            </div>
                            
-                           <div className="space-y-4">
-                             {generatedVideos.map((video, index) => (
-                               <div key={video.id} className="p-4 rounded-lg bg-background/50 border border-primary/10">
-                                 <div className="flex items-center justify-between mb-3">
-                                   <span className="text-sm font-medium">Video {index + 1}</span>
-                                   <span className={`text-xs px-2 py-1 rounded-full ${
-                                     video.status === 'success' ? 'bg-green-100 text-green-700' :
-                                     video.status === 'error' ? 'bg-red-100 text-red-700' :
-                                     'bg-yellow-100 text-yellow-700'
-                                   }`}>
-                                     {video.status}
-                                   </span>
-                                 </div>
-                                 
-                                  {video.videoUrl && video.status === 'success' && (
-                                    <div className="relative w-full mx-auto" style={{ aspectRatio: '9/16', maxWidth: '400px' }}>
-                                      <video 
-                                        src={video.videoUrl}
-                                       controls 
-                                       className="w-full h-full rounded-lg object-cover"
-                                       style={{ aspectRatio: '9/16' }}
-                                     >
-                                       Your browser does not support the video tag.
-                                     </video>
-                                   </div>
-                                 )}
-                               </div>
-                              ))}
-                            </div>
-                            
-                            {/* Create Final Video Button */}
-                            {generatedVideos.filter(v => v.status === 'success').length === 5 && !finalVideoUrl && (
-                              <div className="pt-4 border-t border-primary/10">
-                                {!isCreatingFinalVideo ? (
-                                  <Button 
-                                    onClick={createFinalVideo}
-                                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 gap-2"
-                                    size="lg"
-                                  >
-                                    <Video className="w-5 h-5" />
-                                    Combine 5 Videos into Final Ad
-                                  </Button>
+                            <div className="space-y-4">
+                              {generatedVideos.map((video, index) => (
+                                <div key={video.id} className="p-4 rounded-lg bg-background/50 border border-primary/10">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <span className="text-sm font-medium">Video {index + 1}</span>
+                                    <span className={`text-xs px-2 py-1 rounded-full ${
+                                      video.status === 'success' ? 'bg-green-100 text-green-700' :
+                                      video.status === 'error' ? 'bg-red-100 text-red-700' :
+                                      'bg-yellow-100 text-yellow-700'
+                                    }`}>
+                                      {video.status}
+                                    </span>
+                                  </div>
+                                  
+                                   {video.videoUrl && video.status === 'success' && (
+                                     <div className="relative w-full mx-auto" style={{ aspectRatio: '9/16', maxWidth: '400px' }}>
+                                       <video 
+                                         src={video.videoUrl}
+                                        controls 
+                                        className="w-full h-full rounded-lg object-cover"
+                                        style={{ aspectRatio: '9/16' }}
+                                      >
+                                        Your browser does not support the video tag.
+                                      </video>
+                                    </div>
+                                  )}
+                                </div>
+                               ))}
+                             </div>
+                             
+                             {/* Create Final Video Button - Show when we have successful videos */}
+                             {generatedVideos.filter(v => v.status === 'success').length > 0 && !finalVideoUrl && (
+                               <div className="pt-4 border-t border-primary/10">
+                                 {!isCreatingFinalVideo ? (
+                                   <Button 
+                                     onClick={createFinalVideo}
+                                     className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 gap-2"
+                                     size="lg"
+                                     disabled={generatedVideos.filter(v => v.status === 'success').length < 5}
+                                   >
+                                     <Video className="w-5 h-5" />
+                                     {generatedVideos.filter(v => v.status === 'success').length === 5 
+                                       ? 'Combine 5 Videos into Final Ad'
+                                       : `Combine Videos (${generatedVideos.filter(v => v.status === 'success').length}/5 ready)`
+                                     }
+                                   </Button>
                                 ) : (
                                   <div className="flex items-center justify-center gap-3 p-4 rounded-lg bg-background/50 border border-primary/20">
                                     <RefreshCw className="h-5 w-5 animate-spin text-primary" />
