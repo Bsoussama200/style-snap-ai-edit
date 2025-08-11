@@ -254,8 +254,17 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Error in analyze-product function:', error);
+    console.error('Error details:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack
+    });
     return new Response(
-      JSON.stringify({ error: (error as Error).message }),
+      JSON.stringify({ 
+        error: 'Failed to analyze product',
+        details: error.message || 'Unknown error occurred',
+        debugInfo: error.toString()
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
