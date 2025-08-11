@@ -15,6 +15,7 @@ serve(async (req) => {
   }
 
   if (!openAIApiKey) {
+    console.error('OpenAI API key not configured');
     return new Response(
       JSON.stringify({ error: 'OpenAI API key not configured' }),
       { 
@@ -25,9 +26,12 @@ serve(async (req) => {
   }
 
   try {
-    const { productProfile, analysis, marketingAngles, targetAudiences } = await req.json();
+    console.log('Generate video prompts function called');
+    const body = await req.json();
+    const { productProfile, analysis, marketingAngles, targetAudiences } = body;
 
     if (!productProfile) {
+      console.error('Product profile is missing');
       return new Response(
         JSON.stringify({ error: 'Product profile is required' }),
         { 
@@ -36,6 +40,8 @@ serve(async (req) => {
         }
       );
     }
+
+    console.log('Generating video prompts for:', productProfile.productName);
 
     const systemPrompt = `You are a professional video marketing specialist creating VEO3 video prompts for product marketing. 
 
@@ -85,8 +91,6 @@ Analysis: ${analysis || 'No additional analysis provided'}
 
 Create 3 distinct video prompts that showcase this product effectively for marketing purposes.`;
 
-    console.log('Generating video prompts for product:', productProfile.productName);
-
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -113,7 +117,7 @@ Create 3 distinct video prompts that showcase this product effectively for marke
     const data = await response.json();
     const generatedContent = data.choices[0].message.content;
 
-    console.log('Generated content:', generatedContent);
+    console.log('Generated content from OpenAI:', generatedContent);
 
     // Parse the JSON response
     let videoPrompts;
@@ -132,17 +136,20 @@ Create 3 distinct video prompts that showcase this product effectively for marke
 
     // Validate that we have exactly 3 prompts
     if (!Array.isArray(videoPrompts) || videoPrompts.length !== 3) {
+      console.error('Invalid number of prompts:', videoPrompts?.length);
       throw new Error('Expected exactly 3 video prompts');
     }
 
     // Validate structure of each prompt
-    for (const prompt of videoPrompts) {
+    for (let i = 0; i < videoPrompts.length; i++) {
+      const prompt = videoPrompts[i];
       if (!prompt.person || !prompt.place || !prompt.additionalInstructions) {
-        throw new Error('Invalid prompt structure');
+        console.error(`Invalid prompt structure at index ${i}:`, prompt);
+        throw new Error(`Invalid prompt structure at index ${i}`);
       }
     }
 
-    console.log('Successfully generated 3 video prompts');
+    console.log('Successfully generated and validated 3 video prompts');
 
     return new Response(
       JSON.stringify({ videoPrompts }),
@@ -154,7 +161,10 @@ Create 3 distinct video prompts that showcase this product effectively for marke
   } catch (error) {
     console.error('Error in generate-video-prompts function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message || 'Unknown error occurred',
+        details: error.toString()
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
