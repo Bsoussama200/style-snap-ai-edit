@@ -223,7 +223,7 @@ const ProductWizard: React.FC = () => {
     try {
       const selectedStyleOption = styles.find(s => s.id === selectedStyle);
       const basePrompt = customPrompt.trim() || selectedStyleOption?.prompt || '';
-      const prompt = mode === 'photovideo' ? `${basePrompt}\nVertical 9:16 composition, portrait 720x1280 framing.` : basePrompt;
+      const prompt = `${basePrompt}. Vertical 9:16 composition, portrait 720x1280 framing. High quality product photography.`;
 
       const form = new FormData();
       form.append('image', uploadedImage);
@@ -459,12 +459,21 @@ const ProductWizard: React.FC = () => {
         },
       });
 
+      console.log('Runway generation response:', startRes);
+
       if (startRes.error) {
-        throw new Error(`Runway generation failed: ${startRes.error.message}`);
+        console.error('Runway generation error details:', startRes.error);
+        throw new Error(`Runway generation failed: ${startRes.error.message || 'Unknown error'}`);
+      }
+
+      if (!startRes.data) {
+        console.error('No data in Runway response:', startRes);
+        throw new Error('No data returned from Runway generation');
       }
 
       const taskId = startRes.data?.taskId as string;
       if (!taskId) {
+        console.error('No taskId in Runway response:', startRes.data);
         throw new Error('No taskId returned from Runway generation');
       }
 
