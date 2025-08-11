@@ -48,7 +48,7 @@ serve(async (req) => {
 
     const payload: any = {
       prompt,
-      inputImage,
+      inputImage: [inputImage],
     };
 
     console.log('4o Image generate payload:', { hasPrompt: !!prompt, hasInputImage: !!inputImage, inputImage });
