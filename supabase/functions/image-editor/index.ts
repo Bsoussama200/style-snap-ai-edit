@@ -54,15 +54,13 @@ serve(async (req) => {
 
     // Create FormData for OpenAI API
     const openaiFormData = new FormData();
-    openaiFormData.append('model', 'dall-e-2'); // dall-e-2 supports image editing
     openaiFormData.append('prompt', prompt);
-    openaiFormData.append('size', '1024x1024'); // Standard size for dall-e-2 edits
-    openaiFormData.append('response_format', 'b64_json');
+    openaiFormData.append('size', '1024x1024');
     
     // Add the uploaded image to the form data
     if (images.length > 0) {
-      openaiFormData.append('image', images[0]); // Use the first uploaded image
-      console.log(`Using uploaded image: ${images[0].name || 'unnamed'} (${images[0].size} bytes)`);
+      openaiFormData.append('image', images[0]);
+      console.log(`Added image: ${images[0].name || 'unnamed'} (${images[0].size} bytes)`);
     }
 
     console.log('Sending request to OpenAI /images/edits endpoint...');
