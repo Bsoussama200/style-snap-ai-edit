@@ -471,15 +471,15 @@ const ProductWizard: React.FC = () => {
               </div>
 
               <div className="p-6 space-y-6">
-                {/* Core Info Grid - Full Width Boxes */}
-                <div className="grid grid-cols-1 gap-4">
+                {/* Core Info Grid - Same Line, Bigger Boxes */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex items-center gap-4 p-4 rounded-lg bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10">
                     <div className="h-10 w-10 rounded-lg bg-primary/20 grid place-items-center">
                       <span className="text-primary font-bold text-lg">📦</span>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-muted-foreground uppercase tracking-wide font-medium">Product Name</p>
-                      <p className="font-bold text-lg">{analysis.productProfile?.productName || productName}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Product</p>
+                      <p className="font-bold text-sm truncate">{analysis.productProfile?.productName || productName}</p>
                     </div>
                   </div>
                   
@@ -487,20 +487,30 @@ const ProductWizard: React.FC = () => {
                     <div className="h-10 w-10 rounded-lg bg-accent/20 grid place-items-center">
                       <span className="text-accent font-bold text-lg">🏷️</span>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-muted-foreground uppercase tracking-wide font-medium">Category</p>
-                      <p className="font-bold text-lg">{analysis.productProfile?.category || '—'}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Category</p>
+                      <p className="font-bold text-sm truncate">{analysis.productProfile?.category || '—'}</p>
                     </div>
                   </div>
 
-                  {analysis.productProfile?.trendFit && (
+                  {analysis.productProfile?.trendFit ? (
                     <div className="flex items-center gap-4 p-4 rounded-lg bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10">
                       <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 grid place-items-center">
                         <span className="text-primary font-bold text-lg">🔥</span>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-muted-foreground uppercase tracking-wide font-medium">Trend Fit</p>
-                        <p className="font-bold text-lg">{analysis.productProfile.trendFit}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Trend</p>
+                        <p className="font-bold text-sm truncate">{analysis.productProfile.trendFit}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-4 p-4 rounded-lg bg-gradient-to-r from-secondary/5 to-muted/5 border border-secondary/10 opacity-50">
+                      <div className="h-10 w-10 rounded-lg bg-secondary/20 grid place-items-center">
+                        <span className="text-muted-foreground font-bold text-lg">✨</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Trend</p>
+                        <p className="font-bold text-sm text-muted-foreground">Not detected</p>
                       </div>
                     </div>
                   )}
