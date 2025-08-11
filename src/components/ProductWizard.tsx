@@ -452,179 +452,217 @@ const ProductWizard: React.FC = () => {
             <p className="text-muted-foreground">AI-powered analysis and strategic insights</p>
           </div>
 
-          {/* Product Profile Card */}
-          <Card className="glass-card backdrop-blur-lg bg-gradient-to-br from-background/80 to-background/40 border-primary/20">
-            <CardContent className="p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-accent grid place-items-center">
-                  <Sparkles className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold">Product Profile</h3>
-                  <p className="text-sm text-muted-foreground">Comprehensive product analysis</p>
+          {/* Modern Product Profile Card */}
+          <Card className="glass-card backdrop-blur-lg bg-gradient-to-br from-background/90 to-background/60 border-primary/20 overflow-hidden">
+            <CardContent className="p-0">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-6 border-b border-primary/10">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-accent grid place-items-center shadow-lg">
+                    <Sparkles className="h-6 w-6 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                      Product Intelligence
+                    </h3>
+                    <p className="text-sm text-muted-foreground">AI-powered comprehensive analysis</p>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid gap-8 lg:grid-cols-2">
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <div className="h-1 w-8 bg-gradient-to-r from-primary to-accent rounded-full"></div>
-                      <span className="font-medium text-sm uppercase tracking-wide text-muted-foreground">Core Details</span>
+              <div className="p-6 space-y-6">
+                {/* Core Info Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10">
+                    <div className="h-8 w-8 rounded-lg bg-primary/20 grid place-items-center">
+                      <span className="text-primary font-bold text-sm">📦</span>
                     </div>
-                    <div className="space-y-3 pl-10">
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-primary/10">
-                        <span className="text-muted-foreground text-sm">Product Name</span>
-                        <span className="font-semibold">{analysis.productProfile?.productName || productName}</span>
-                      </div>
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-primary/10">
-                        <span className="text-muted-foreground text-sm">Category</span>
-                        <span className="font-semibold">{analysis.productProfile?.category || analysis.suggestedCategoryName || '—'}</span>
-                      </div>
-                      {analysis.productProfile?.trendFit && (
-                        <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-accent/10 to-primary/10 border border-accent/20">
-                          <span className="text-muted-foreground text-sm">Trend Fit</span>
-                          <span className="font-semibold text-accent">{analysis.productProfile.trendFit}</span>
-                        </div>
-                      )}
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Product</p>
+                      <p className="font-semibold text-sm">{analysis.productProfile?.productName || productName}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-accent/5 to-primary/5 border border-accent/10">
+                    <div className="h-8 w-8 rounded-lg bg-accent/20 grid place-items-center">
+                      <span className="text-accent font-bold text-sm">🏷️</span>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Category</p>
+                      <p className="font-semibold text-sm">{analysis.productProfile?.category || '—'}</p>
                     </div>
                   </div>
 
-                  {(analysis.productProfile?.materials?.length || analysis.productProfile?.colors?.length) && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <div className="h-1 w-8 bg-gradient-to-r from-primary to-accent rounded-full"></div>
-                        <span className="font-medium text-sm uppercase tracking-wide text-muted-foreground">Materials & Colors</span>
+                  {analysis.productProfile?.trendFit && (
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10">
+                      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 grid place-items-center">
+                        <span className="text-primary font-bold text-sm">🔥</span>
                       </div>
-                      <div className="space-y-4 pl-10">
-                        {analysis.productProfile?.materials?.length ? (
-                          <div className="space-y-2">
-                            <span className="text-sm font-medium text-muted-foreground">Materials</span>
-                            <div className="flex flex-wrap gap-2">
-                              {analysis.productProfile.materials.map((m, i) => (
-                                <span key={i} className="px-3 py-1.5 rounded-full bg-gradient-to-r from-secondary to-secondary/80 text-secondary-foreground text-sm font-medium border border-primary/10 hover:scale-105 transition-transform">
-                                  {m}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        ) : null}
-                        {analysis.productProfile?.colors?.length ? (
-                          <div className="space-y-2">
-                            <span className="text-sm font-medium text-muted-foreground">Colors</span>
-                            <div className="flex flex-wrap gap-2">
-                              {analysis.productProfile.colors.map((c, i) => (
-                                <span key={i} className="px-3 py-1.5 rounded-full bg-gradient-to-r from-accent/20 to-primary/20 text-foreground text-sm font-medium border border-accent/30 hover:scale-105 transition-transform">
-                                  {c}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        ) : null}
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wide">Trend</p>
+                        <p className="font-semibold text-sm">{analysis.productProfile.trendFit}</p>
                       </div>
                     </div>
                   )}
                 </div>
 
-                <div className="space-y-6">
-                  {(analysis.productProfile?.features?.length || analysis.productProfile?.emotionalAppeal?.length || analysis.targetAudiences?.length) && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <div className="h-1 w-8 bg-gradient-to-r from-primary to-accent rounded-full"></div>
-                        <span className="font-medium text-sm uppercase tracking-wide text-muted-foreground">Features, Appeal & Audiences</span>
+                {/* Attributes Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Left Column - Materials & Colors */}
+                  <div className="space-y-4">
+                    {analysis.productProfile?.materials?.length ? (
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="h-6 w-6 rounded bg-secondary/20 grid place-items-center">
+                            <span className="text-xs">🧱</span>
+                          </div>
+                          <span className="font-medium text-sm">Materials</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {analysis.productProfile.materials.map((m, i) => (
+                            <span key={i} className="px-2.5 py-1 rounded-md bg-secondary/30 text-secondary-foreground text-xs font-medium hover:bg-secondary/40 transition-colors">
+                              {m}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                      <div className="space-y-4 pl-10">
-                        {analysis.productProfile?.features?.length ? (
-                          <div className="space-y-2">
-                            <span className="text-sm font-medium text-muted-foreground">Key Features</span>
-                            <div className="flex flex-wrap gap-2">
-                              {analysis.productProfile.features.map((f, i) => (
-                                <span key={i} className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-sm font-medium border border-primary/20 hover:bg-primary/20 transition-colors">
-                                  {f}
-                                </span>
-                              ))}
-                            </div>
+                    ) : null}
+
+                    {analysis.productProfile?.colors?.length ? (
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="h-6 w-6 rounded bg-accent/20 grid place-items-center">
+                            <span className="text-xs">🎨</span>
                           </div>
-                        ) : null}
-                        {analysis.productProfile?.emotionalAppeal?.length ? (
-                          <div className="space-y-2">
-                            <span className="text-sm font-medium text-muted-foreground">Emotional Appeal</span>
-                            <div className="flex flex-wrap gap-2">
-                              {analysis.productProfile.emotionalAppeal.map((e, i) => (
-                                <span key={i} className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-accent/15 to-primary/15 text-accent text-sm font-medium border border-accent/25 hover:from-accent/25 hover:to-primary/25 transition-all">
-                                  {e}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        ) : null}
-                        {analysis.targetAudiences?.length ? (
-                          <div className="space-y-2">
-                            <span className="text-sm font-medium text-muted-foreground">Target Audiences</span>
-                            <div className="flex flex-wrap gap-2">
-                              {analysis.targetAudiences.map((audience, i) => (
-                                <span key={i} className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-primary/15 to-accent/10 text-primary text-sm font-medium border border-primary/25 hover:from-primary/25 hover:to-accent/20 transition-all">
-                                  {audience}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        ) : null}
+                          <span className="font-medium text-sm">Colors</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {analysis.productProfile.colors.map((c, i) => (
+                            <span key={i} className="px-2.5 py-1 rounded-md bg-accent/15 text-accent text-xs font-medium hover:bg-accent/25 transition-colors">
+                              {c}
+                            </span>
+                          ))}
+                        </div>
                       </div>
+                    ) : null}
+                  </div>
+
+                  {/* Right Column - Features & Appeal */}
+                  <div className="space-y-4">
+                    {analysis.productProfile?.features?.length ? (
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="h-6 w-6 rounded bg-primary/20 grid place-items-center">
+                            <span className="text-xs">⚙️</span>
+                          </div>
+                          <span className="font-medium text-sm">Features</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {analysis.productProfile.features.slice(0, 4).map((f, i) => (
+                            <span key={i} className="px-2.5 py-1 rounded-md bg-primary/15 text-primary text-xs font-medium hover:bg-primary/25 transition-colors">
+                              {f}
+                            </span>
+                          ))}
+                          {analysis.productProfile.features.length > 4 && (
+                            <span className="px-2.5 py-1 rounded-md bg-muted text-muted-foreground text-xs font-medium">
+                              +{analysis.productProfile.features.length - 4} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {analysis.productProfile?.emotionalAppeal?.length ? (
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="h-6 w-6 rounded bg-accent/20 grid place-items-center">
+                            <span className="text-xs">💝</span>
+                          </div>
+                          <span className="font-medium text-sm">Appeal</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {analysis.productProfile.emotionalAppeal.slice(0, 3).map((e, i) => (
+                            <span key={i} className="px-2.5 py-1 rounded-md bg-gradient-to-r from-accent/15 to-primary/10 text-accent text-xs font-medium hover:from-accent/25 hover:to-primary/20 transition-all">
+                              {e}
+                            </span>
+                          ))}
+                          {analysis.productProfile.emotionalAppeal.length > 3 && (
+                            <span className="px-2.5 py-1 rounded-md bg-muted text-muted-foreground text-xs font-medium">
+                              +{analysis.productProfile.emotionalAppeal.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Target Audiences Compact */}
+                {analysis.targetAudiences?.length ? (
+                  <div className="p-4 rounded-lg bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="h-6 w-6 rounded bg-primary/20 grid place-items-center">
+                        <span className="text-xs">🎯</span>
+                      </div>
+                      <span className="font-medium text-sm">Target Audiences</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {analysis.targetAudiences.map((audience, i) => (
+                        <span key={i} className="px-3 py-1.5 rounded-full bg-primary/20 text-primary text-xs font-medium hover:bg-primary/30 transition-colors">
+                          {audience}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Quick Edit Section */}
+                <div className="border-t border-primary/10 pt-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="h-6 w-6 rounded bg-secondary/20 grid place-items-center">
+                      <span className="text-xs">✏️</span>
+                    </div>
+                    <span className="font-medium text-sm">Quick Edit</span>
+                  </div>
+                  <Textarea
+                    value={(analysis.targetAudiences || []).join('\n')}
+                    onChange={(e) => setAnalysis(prev => prev ? { 
+                      ...prev, 
+                      targetAudiences: e.target.value.split('\n').map(v => v.trim()).filter(Boolean) 
+                    } : prev)}
+                    className="w-full min-h-[50px] bg-background/60 border-primary/15 focus:border-primary/30 resize-none text-xs rounded-lg"
+                    placeholder="Edit target audiences (one per line)"
+                  />
+                </div>
+
+                {/* Category Selection Compact */}
+                <div className="flex items-center gap-4 p-4 rounded-lg bg-gradient-to-r from-secondary/5 to-primary/5 border border-secondary/20">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className="h-6 w-6 rounded bg-secondary/20 grid place-items-center">
+                      <span className="text-xs">📂</span>
+                    </div>
+                    <select
+                      className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none font-medium text-sm"
+                      value={categoryId}
+                      onChange={(e) => setCategoryId(e.target.value)}
+                    >
+                      <option value="">Select category</option>
+                      {categories?.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {typeof analysis.confidence === 'number' && (
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 w-16 bg-secondary/30 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500"
+                          style={{ width: `${analysis.confidence * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">{(analysis.confidence * 100).toFixed(0)}%</span>
                     </div>
                   )}
-
-                  {/* Compact Target Audience Section */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="h-1 w-6 bg-gradient-to-r from-primary to-accent rounded-full"></div>
-                        <span className="font-medium text-sm uppercase tracking-wide text-muted-foreground">Target Audiences</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground">One per line</span>
-                    </div>
-                    <div className="pl-8">
-                      <Textarea
-                        value={(analysis.targetAudiences || []).join('\n')}
-                        onChange={(e) => setAnalysis(prev => prev ? { 
-                          ...prev, 
-                          targetAudiences: e.target.value.split('\n').map(v => v.trim()).filter(Boolean) 
-                        } : prev)}
-                        className="w-full min-h-[60px] bg-background/60 backdrop-blur-sm border-primary/15 focus:border-primary/30 resize-none text-sm rounded-lg transition-all"
-                        placeholder="Busy professionals • Tech enthusiasts • Young millennials"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <div className="h-1 w-8 bg-gradient-to-r from-primary to-accent rounded-full"></div>
-                      <span className="font-medium text-sm uppercase tracking-wide text-muted-foreground">Category Selection</span>
-                    </div>
-                    <div className="pl-10 space-y-3">
-                      <select
-                        className="w-full rounded-lg border border-primary/20 bg-background/80 backdrop-blur-sm p-3 font-medium focus:border-primary/40 focus:ring-2 focus:ring-primary/20 transition-all"
-                        value={categoryId}
-                        onChange={(e) => setCategoryId(e.target.value)}
-                      >
-                        <option value="">Select category</option>
-                        {categories?.map(c => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                      </select>
-                      {typeof analysis.confidence === 'number' && (
-                        <div className="flex items-center gap-2">
-                          <div className="h-2 flex-1 bg-secondary rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500"
-                              style={{ width: `${analysis.confidence * 100}%` }}
-                            />
-                          </div>
-                          <span className="text-xs font-medium text-muted-foreground">{(analysis.confidence * 100).toFixed(0)}% confidence</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
                 </div>
               </div>
             </CardContent>
