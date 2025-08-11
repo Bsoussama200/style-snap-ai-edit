@@ -1118,6 +1118,48 @@ const ProductWizard: React.FC = () => {
                                      Download
                                    </Button>
                                  </div>
+
+                                 {/* Camera Movement Selection */}
+                                 <div className="pt-4 border-t border-primary/10">
+                                   <h4 className="text-md font-semibold mb-3">Choose Camera Movement</h4>
+                                   <p className="text-sm text-muted-foreground mb-4">Select a camera movement for your video generation</p>
+                                   
+                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                                     {CAMERA_MOVEMENTS.map((movement) => (
+                                       <div
+                                         key={movement.name}
+                                         className={`p-3 rounded-lg border cursor-pointer transition-all hover:scale-105 ${
+                                           selectedCamera === movement.name
+                                             ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                                             : 'border-primary/20 bg-background/50 hover:border-primary/40'
+                                         }`}
+                                         onClick={() => setSelectedCamera(movement.name)}
+                                       >
+                                         <h5 className="font-medium text-sm mb-1">{movement.name}</h5>
+                                         <p className="text-xs text-muted-foreground">{movement.description}</p>
+                                       </div>
+                                     ))}
+                                   </div>
+
+                                   {selectedCamera && (
+                                     <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                                       <div className="flex items-center justify-between">
+                                         <span className="text-sm font-medium">Selected:</span>
+                                         <div className="flex items-center gap-2">
+                                           <span className="text-sm font-semibold text-primary">{selectedCamera}</span>
+                                           <Button 
+                                             variant="ghost" 
+                                             size="sm" 
+                                             onClick={() => setSelectedCamera('')}
+                                             className="h-6 w-6 p-0"
+                                           >
+                                             ✕
+                                           </Button>
+                                         </div>
+                                       </div>
+                                     </div>
+                                   )}
+                                 </div>
                                </div>
                              ) : null}
                            </div>
