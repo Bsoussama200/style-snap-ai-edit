@@ -574,27 +574,25 @@ const ProductWizard: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Target Audience Editor */}
+                  {/* Compact Target Audience Section */}
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <div className="h-1 w-8 bg-gradient-to-r from-primary to-accent rounded-full"></div>
-                      <span className="font-medium text-sm uppercase tracking-wide text-muted-foreground">Target Audience Editor</span>
-                    </div>
-                    <div className="pl-10">
-                      <div className="relative">
-                        <Textarea
-                          value={(analysis.targetAudiences || []).join('\n')}
-                          onChange={(e) => setAnalysis(prev => prev ? { 
-                            ...prev, 
-                            targetAudiences: e.target.value.split('\n').map(v => v.trim()).filter(Boolean) 
-                          } : prev)}
-                          className="w-full min-h-[80px] bg-background/70 backdrop-blur-sm border-primary/20 focus:border-primary/40 resize-none text-sm"
-                          placeholder="• Busy professionals (25-40)&#10;• Tech enthusiasts&#10;• Budget-conscious millennials&#10;• Home improvement DIYers"
-                        />
-                        <div className="absolute top-2 right-2">
-                          <span className="text-xs px-2 py-1 rounded bg-primary/20 text-primary font-medium">Edit Mode</span>
-                        </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="h-1 w-6 bg-gradient-to-r from-primary to-accent rounded-full"></div>
+                        <span className="font-medium text-sm uppercase tracking-wide text-muted-foreground">Target Audiences</span>
                       </div>
+                      <span className="text-xs text-muted-foreground">One per line</span>
+                    </div>
+                    <div className="pl-8">
+                      <Textarea
+                        value={(analysis.targetAudiences || []).join('\n')}
+                        onChange={(e) => setAnalysis(prev => prev ? { 
+                          ...prev, 
+                          targetAudiences: e.target.value.split('\n').map(v => v.trim()).filter(Boolean) 
+                        } : prev)}
+                        className="w-full min-h-[60px] bg-background/60 backdrop-blur-sm border-primary/15 focus:border-primary/30 resize-none text-sm rounded-lg transition-all"
+                        placeholder="Busy professionals • Tech enthusiasts • Young millennials"
+                      />
                     </div>
                   </div>
 
