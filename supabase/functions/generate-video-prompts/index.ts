@@ -70,15 +70,15 @@ Generate exactly 5 video prompts that tell a story in sequence in the style of c
 
 The product must NOT be shown in Videos 1–4, and will only appear in Video 5.
 
-Video 1: "First Question" — Show an interviewer walking up to a random person in an urban or busy outdoor location. Ask them an intriguing, lifestyle-related question that hooks the viewer (e.g., "What's one thing you wish you had right now to make your day better?"). Keep it natural and unscripted-feeling. Set referenceImage to false.
+Video 1: "First Question" — Show an INTERVIEWER (with microphone or camera) walking up to a random person in an urban or busy outdoor location and asking them an intriguing, lifestyle-related question that hooks the viewer (e.g., "What's one thing you wish you had right now to make your day better?"). The INTERVIEWEE responds naturally. Show both the interviewer asking and the person answering. Keep it natural and unscripted-feeling. Set referenceImage to false.
 
-Video 2: "More Voices" — Quick cuts of 2–3 different people answering a similar question, giving varied, relatable, or funny answers. Still no mention or visual of the product. Set referenceImage to false.
+Video 2: "More Voices" — Show the INTERVIEWER asking similar questions to 2–3 different people in quick cuts. Each INTERVIEWEE gives varied, relatable, or funny answers. Show the interviewer's reactions and follow-up questions. Still no mention or visual of the product. Set referenceImage to false.
 
-Video 3: "The Curious Build-Up" — Interviewees start giving answers that hint toward the product's category or benefit without naming it directly. (Example: "I just wish I had something that could keep me organized all day without me thinking about it.") Set referenceImage to false.
+Video 3: "The Curious Build-Up" — The INTERVIEWER continues asking questions, and INTERVIEWEES start giving answers that hint toward the product's category or benefit without naming it directly. Show the interviewer getting more curious about their responses (Example: "I just wish I had something that could keep me organized all day without me thinking about it."). Set referenceImage to false.
 
-Video 4: "The Big Hint" — One interviewee gives an answer that heavily foreshadows the product's key feature, creating anticipation. Show the interviewer reacting like they know what would solve this. End with a close-up of their smirk or "wait and see" look. Set referenceImage to false.
+Video 4: "The Big Hint" — One INTERVIEWEE gives an answer that heavily foreshadows the product's key feature, creating anticipation. Show the INTERVIEWER reacting like they know what would solve this, with follow-up questions that build suspense. End with a close-up of the interviewer's smirk or "wait and see" look. Set referenceImage to false.
 
-Video 5: "The Reveal" — Show ONLY the product, on its own, in a crisp, dynamic product showcase scene. Use a short, punchy voice-over line from the interviewer that connects all the previous answers to the product's benefit (e.g., "Looks like we found your answer."). Set referenceImage to true. CRITICAL: DO NOT recreate the reference photo's scene, background, or setting. The reference image is ONLY for product identification — create an entirely new scene as described in your prompt. MUST include startingScene field describing the initial scene/setting for product placement.`;
+Video 5: "The Reveal" — Show ONLY the product, on its own, in a crisp, dynamic product showcase scene. Use a short, punchy voice-over line from the INTERVIEWER that connects all the previous answers to the product's benefit (e.g., "Looks like we found your answer."). Set referenceImage to true. CRITICAL: DO NOT recreate the reference photo's scene, background, or setting. The reference image is ONLY for product identification — create an entirely new scene as described in your prompt. MUST include startingScene field describing the initial scene/setting for product placement.`;
     } else {
       // Default to problem-solution style
       systemPrompt = `You are a professional video marketing specialist creating VEO3 video prompts for a creative ad sequence.
