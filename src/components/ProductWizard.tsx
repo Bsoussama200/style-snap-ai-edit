@@ -527,11 +527,11 @@ const ProductWizard: React.FC = () => {
                 </div>
 
                 <div className="space-y-6">
-                  {(analysis.productProfile?.features?.length || analysis.productProfile?.emotionalAppeal?.length) && (
+                  {(analysis.productProfile?.features?.length || analysis.productProfile?.emotionalAppeal?.length || analysis.targetAudiences?.length) && (
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
                         <div className="h-1 w-8 bg-gradient-to-r from-primary to-accent rounded-full"></div>
-                        <span className="font-medium text-sm uppercase tracking-wide text-muted-foreground">Features & Appeal</span>
+                        <span className="font-medium text-sm uppercase tracking-wide text-muted-foreground">Features, Appeal & Audiences</span>
                       </div>
                       <div className="space-y-4 pl-10">
                         {analysis.productProfile?.features?.length ? (
@@ -558,9 +558,45 @@ const ProductWizard: React.FC = () => {
                             </div>
                           </div>
                         ) : null}
+                        {analysis.targetAudiences?.length ? (
+                          <div className="space-y-2">
+                            <span className="text-sm font-medium text-muted-foreground">Target Audiences</span>
+                            <div className="flex flex-wrap gap-2">
+                              {analysis.targetAudiences.map((audience, i) => (
+                                <span key={i} className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-primary/15 to-accent/10 text-primary text-sm font-medium border border-primary/25 hover:from-primary/25 hover:to-accent/20 transition-all">
+                                  {audience}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   )}
+
+                  {/* Target Audience Editor */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="h-1 w-8 bg-gradient-to-r from-primary to-accent rounded-full"></div>
+                      <span className="font-medium text-sm uppercase tracking-wide text-muted-foreground">Target Audience Editor</span>
+                    </div>
+                    <div className="pl-10">
+                      <div className="relative">
+                        <Textarea
+                          value={(analysis.targetAudiences || []).join('\n')}
+                          onChange={(e) => setAnalysis(prev => prev ? { 
+                            ...prev, 
+                            targetAudiences: e.target.value.split('\n').map(v => v.trim()).filter(Boolean) 
+                          } : prev)}
+                          className="w-full min-h-[80px] bg-background/70 backdrop-blur-sm border-primary/20 focus:border-primary/40 resize-none text-sm"
+                          placeholder="• Busy professionals (25-40)&#10;• Tech enthusiasts&#10;• Budget-conscious millennials&#10;• Home improvement DIYers"
+                        />
+                        <div className="absolute top-2 right-2">
+                          <span className="text-xs px-2 py-1 rounded bg-primary/20 text-primary font-medium">Edit Mode</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
