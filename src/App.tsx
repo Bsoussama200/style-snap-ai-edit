@@ -8,6 +8,7 @@ import { navItems } from "./nav-items";
 import Admin from "./pages/Admin";
 import Pay from "./pages/Pay";
 import Build from "./pages/Build";
+import Test from "./pages/Test";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/admin" element={<Admin />} />
           <Route path="/pay" element={<Pay />} />
           <Route path="/build" element={<Build />} />
+          <Route path="/test" element={<Test />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
