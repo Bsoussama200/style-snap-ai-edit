@@ -28,7 +28,7 @@ serve(async (req) => {
   try {
     console.log('Generate video prompts function called');
     const body = await req.json();
-    const { productProfile, analysis, marketingAngles, targetAudiences } = body;
+    const { productProfile, analysis, marketingAngles, targetAudiences, videoStyle } = body;
 
     if (!productProfile) {
       console.error('Product profile is missing');
@@ -43,7 +43,27 @@ serve(async (req) => {
 
     console.log('Generating video prompts for:', productProfile.productName);
 
-    const systemPrompt = `You are a professional video marketing specialist creating VEO3 video prompts for a creative ad sequence.
+    let systemPrompt = '';
+    
+    if (videoStyle === 'aspiration-cinematic') {
+      systemPrompt = `You are a professional video marketing specialist creating VEO3 video prompts for a creative ad sequence.
+
+Generate exactly 5 video prompts that tell a cinematic, aspirational story in sequence (like a mini brand film). IMPORTANT: All spoken dialogue must be delivered in a perfect American English accent. CRITICAL: Do not include any captions, text overlays, or written text in the videos — all communication should be through speech and visuals only.
+
+The story must focus on evoking emotions, building brand lifestyle appeal, and creating a strong desire for the product, without explicitly focusing on a problem.
+
+Video 1: "The Spark" — An atmospheric, visually rich opener. Show the moment of inspiration or an intriguing scenario where the viewer is drawn into the lifestyle or feeling associated with the product. No product shown yet. Set referenceImage to false.
+
+Video 2: "The Journey Begins" — Show characters in motion, moving toward a goal, dream, or experience. Subtly hint at the product's world (color palette, props, setting) without revealing it. Dialogue should build curiosity. Set referenceImage to false.
+
+Video 3: "The Encounter" — The first time the product is seen, but not yet explained. Make it feel like a natural part of this aspirational lifestyle. Set referenceImage to true. CRITICAL: DO NOT recreate the reference photo's scene, background, or setting. The reference image is ONLY for product identification — create an entirely new scene as described in your prompt. MUST include startingScene describing the initial scene/setting for product placement.
+
+Video 4: "Living the Dream" — Show characters fully immersed in their elevated lifestyle with the product seamlessly integrated. Focus on emotions, confidence, and aspirational visuals. Set referenceImage to true. CRITICAL: DO NOT recreate the reference photo's scene, background, or setting. The reference image is ONLY for product identification — create an entirely new scene as described in your prompt. MUST include startingScene.
+
+Video 5: "The Brand Statement" — End with ONLY the product (no people) in a cinematic showcase scene. Use dynamic camera work and a short, poetic voice-over line that conveys the essence of the brand. Set referenceImage to true. CRITICAL: DO NOT recreate the reference photo's scene, background, or setting. The reference image is ONLY for product identification — create an entirely new scene as described in your prompt. MUST include startingScene.`;
+    } else {
+      // Default to problem-solution style
+      systemPrompt = `You are a professional video marketing specialist creating VEO3 video prompts for a creative ad sequence.
 
 Generate exactly 5 video prompts that tell a compelling story in sequence (like a mini ad campaign). IMPORTANT: All spoken dialogue must be delivered in a perfect American English accent. CRITICAL: Do not include any captions, text overlays, or written text in the videos - all communication should be through speech and visuals only.
 
@@ -55,7 +75,10 @@ Video 3: "The Discovery" — Show someone discovering, trying, or using the prod
 
 Video 4: "The Transformation" — Show how the product improves their life. Demonstrate ongoing benefits and a better lifestyle with the product. Set referenceImage to true (product shown in use). CRITICAL: DO NOT recreate the reference photo's scene, background, or setting. The reference image is ONLY for product identification - create an entirely new scene as described in your prompt. MUST include "startingScene" field describing the initial scene/setting for product placement.
 
-Video 5: "Product Showcase + VO" — Show ONLY the product (no person on screen) with dynamic camera movement around/toward the product. Use a voice-over narrator who speaks a concise, compelling line in a perfect American English accent that highlights the product's key benefit. Set referenceImage to true. CRITICAL: DO NOT recreate the reference photo's scene, background, or setting. The reference image is ONLY for product identification - create an entirely new scene as described in your prompt. MUST include "startingScene" field describing the initial scene/setting for product placement.
+Video 5: "Product Showcase + VO" — Show ONLY the product (no person on screen) with dynamic camera movement around/toward the product. Use a voice-over narrator who speaks a concise, compelling line in a perfect American English accent that highlights the product's key benefit. Set referenceImage to true. CRITICAL: DO NOT recreate the reference photo's scene, background, or setting. The reference image is ONLY for product identification - create an entirely new scene as described in your prompt. MUST include "startingScene" field describing the initial scene/setting for product placement.`;
+    }
+
+    systemPrompt += `
 
 Return your response strictly as a JSON array with exactly 5 objects, NO markdown, NO code fences, each following this exact structure:
 {

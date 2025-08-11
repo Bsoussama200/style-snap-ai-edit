@@ -64,6 +64,7 @@ type Mode = 'photo' | 'photovideo';
 
 type Step =
   | 'upload'
+  | 'video_style'
   | 'category'
   | 'mode'
   | 'style'
@@ -75,7 +76,7 @@ type Step =
   | 'video_ready';
 
 const ProductWizard: React.FC = () => {
-  const [step, setStep] = useState<Step>('upload');
+  const [step, setStep] = useState<Step>('video_style');
   const [productName, setProductName] = useState('');
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -103,6 +104,7 @@ const ProductWizard: React.FC = () => {
   const [isCreatingFinalVideo, setIsCreatingFinalVideo] = useState<boolean>(false);
   const [finalVideoUrl, setFinalVideoUrl] = useState<string>('');
   const [finalVideoPlaylist, setFinalVideoPlaylist] = useState<string[]>([]);
+  const [selectedVideoStyle, setSelectedVideoStyle] = useState<string>('');
 
   // Video options data and selections
   const CAMERA_MOVEMENTS = [
@@ -182,6 +184,10 @@ const ProductWizard: React.FC = () => {
       toast({ title: 'Product name required', description: 'Please enter a product name.', variant: 'destructive' });
       return;
     }
+    if (!selectedVideoStyle) {
+      toast({ title: 'Video style required', description: 'Please select a video style.', variant: 'destructive' });
+      return;
+    }
 
     setIsAnalyzing(true);
     try {
@@ -199,7 +205,7 @@ const ProductWizard: React.FC = () => {
       setAnalysis(result);
       if (result.suggestedCategoryId) setCategoryId(result.suggestedCategoryId);
       
-      // Generate video prompts after analysis
+      // Generate video prompts after analysis with selected style
       await generateVideoPrompts(result);
       
       setStep('category');
@@ -346,6 +352,7 @@ const ProductWizard: React.FC = () => {
           analysis: analysisResult.analysis,
           marketingAngles: analysisResult.marketingAngles,
           targetAudiences: analysisResult.targetAudiences,
+          videoStyle: selectedVideoStyle,
         },
       });
       
@@ -916,6 +923,98 @@ const ProductWizard: React.FC = () => {
             Upload a product image and our AI will analyze it, craft a compelling prompt, and generate a professional video in minutes.
           </p>
         </div>
+
+      {step === 'video_style' && (
+        <Card className="glass-card max-w-4xl mx-auto">
+          <CardContent className="p-6 space-y-6">
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-bold gradient-text">Choose Your Video Style</h2>
+              <p className="text-muted-foreground">Select the narrative approach for your product video sequence</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Problem/Solution Style */}
+              <Card 
+                className={`cursor-pointer transition-all duration-300 hover:shadow-lg border-2 ${
+                  selectedVideoStyle === 'problem-solution' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                }`}
+                onClick={() => setSelectedVideoStyle('problem-solution')}
+              >
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-accent grid place-items-center">
+                      <span className="text-primary-foreground font-bold text-xl">🎯</span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold">Problem/Solution</h3>
+                      <p className="text-sm text-muted-foreground">Classic marketing approach</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    A compelling 5-video sequence that hooks viewers, highlights problems, shows discovery, demonstrates transformation, and showcases your product with clear benefits.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">Hook</span>
+                    <span className="px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">Problem</span>
+                    <span className="px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">Discovery</span>
+                    <span className="px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">Transformation</span>
+                    <span className="px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">Showcase</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Aspiration-Driven Style */}
+              <Card 
+                className={`cursor-pointer transition-all duration-300 hover:shadow-lg border-2 ${
+                  selectedVideoStyle === 'aspiration-cinematic' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                }`}
+                onClick={() => setSelectedVideoStyle('aspiration-cinematic')}
+              >
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 grid place-items-center">
+                      <span className="text-white font-bold text-xl">✨</span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold">Aspiration-Driven Cinematic</h3>
+                      <p className="text-sm text-muted-foreground">Emotional brand storytelling</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    A cinematic narrative that evokes emotions, builds lifestyle appeal, and creates desire through aspirational storytelling without explicit problem-solving.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full">Spark</span>
+                    <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full">Journey</span>
+                    <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full">Encounter</span>
+                    <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full">Living Dream</span>
+                    <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full">Brand Statement</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="flex gap-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setStep('upload')} 
+                className="flex-1"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              <Button 
+                onClick={() => setStep('upload')} 
+                className="flex-1" 
+                disabled={!selectedVideoStyle}
+              >
+                Continue
+                {selectedVideoStyle && <CheckCircle className="w-4 h-4 ml-2" />}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {step === 'upload' && (
         <Card className="glass-card max-w-3xl mx-auto">
