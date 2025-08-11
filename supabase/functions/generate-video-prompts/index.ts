@@ -124,8 +124,12 @@ Return your response strictly as a JSON array with exactly 5 objects, NO markdow
 For videos where referenceImage is true (Videos 3, 4, and 5), you MUST include a "startingScene" field that describes the scene/setting where the product should be placed. This will be used to generate a reference image by placing the uploaded product into this described scene before video generation begins.
 
 MANDATORY REQUIREMENTS:
-- Videos 1 & 2: referenceImage: false, NO startingScene field
-- Videos 3, 4 & 5: referenceImage: true, MUST include startingScene field with detailed scene description
+- Videos 1, 2, 3 & 4: referenceImage: false, NO startingScene field  
+- Video 5 ONLY: referenceImage: true, MUST include startingScene field with detailed scene description
+
+For street-interview style specifically:
+- Videos 1-4: referenceImage: false, NO startingScene field (product not shown)
+- Video 5: referenceImage: true, INCLUDE startingScene for product showcase
 
 Make the sequence emotionally compelling:
 - Video 1: Punchy hook, dynamic motion/edits, tease the pain point, referenceImage: false, NO startingScene
