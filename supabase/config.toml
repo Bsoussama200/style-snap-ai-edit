@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.generate-video-prompts]
 verify_jwt = false
+
+[functions.concatenate-videos]
+verify_jwt = false

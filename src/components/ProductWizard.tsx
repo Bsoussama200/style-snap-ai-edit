@@ -89,6 +89,8 @@ const ProductWizard: React.FC = () => {
   const [isGeneratingRunwayVideo, setIsGeneratingRunwayVideo] = useState<boolean>(false);
   const [runwayVideoTaskId, setRunwayVideoTaskId] = useState<string>('');
   const [runwayVideoUrl, setRunwayVideoUrl] = useState<string>('');
+  const [isCreatingFinalVideo, setIsCreatingFinalVideo] = useState<boolean>(false);
+  const [finalVideoUrl, setFinalVideoUrl] = useState<string>('');
 
   // Video options data and selections
   const CAMERA_MOVEMENTS = [
@@ -506,6 +508,45 @@ const ProductWizard: React.FC = () => {
       });
     } finally {
       setIsGeneratingRunwayVideo(false);
+    }
+  };
+
+  const createFinalVideo = async () => {
+    const successfulVideos = generatedVideos.filter(v => v.status === 'success' && v.url);
+    
+    if (successfulVideos.length !== 5) {
+      toast({
+        title: 'Cannot create final video',
+        description: 'All 5 videos must be generated successfully first.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsCreatingFinalVideo(true);
+    try {
+      const videoUrls = successfulVideos.map(v => v.url);
+      
+      const { data, error } = await supabase.functions.invoke('concatenate-videos', {
+        body: { videoUrls }
+      });
+      
+      if (error) throw new Error(error.message);
+      
+      setFinalVideoUrl(data.videoUrl);
+      toast({
+        title: 'Final video created!',
+        description: 'Your 5 videos have been combined into one ad sequence.'
+      });
+    } catch (err) {
+      console.error('Error creating final video:', err);
+      toast({
+        title: 'Failed to create final video',
+        description: err instanceof Error ? err.message : 'Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsCreatingFinalVideo(false);
     }
   };
 
@@ -1089,13 +1130,82 @@ const ProductWizard: React.FC = () => {
                                    </div>
                                  )}
                                </div>
-                             ))}
-                           </div>
-                         </div>
-                       )}
-                     </div>
-                   </div>
-                 ) : isGeneratingVideoPrompts ? (
+                              ))}
+                            </div>
+                            
+                            {/* Create Final Video Button */}
+                            {generatedVideos.filter(v => v.status === 'success').length === 5 && !finalVideoUrl && (
+                              <div className="pt-4 border-t border-primary/10">
+                                {!isCreatingFinalVideo ? (
+                                  <Button 
+                                    onClick={createFinalVideo}
+                                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 gap-2"
+                                    size="lg"
+                                  >
+                                    <Video className="w-5 h-5" />
+                                    Combine 5 Videos into Final Ad
+                                  </Button>
+                                ) : (
+                                  <div className="flex items-center justify-center gap-3 p-4 rounded-lg bg-background/50 border border-primary/20">
+                                    <RefreshCw className="h-5 w-5 animate-spin text-primary" />
+                                    <span className="text-sm font-medium">Creating final video...</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Final Video Display */}
+                        {finalVideoUrl && (
+                          <div className="mt-6 p-6 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200">
+                            <div className="text-center mb-4">
+                              <h4 className="text-lg font-bold text-green-800 mb-2">🎬 Final Video Ad</h4>
+                              <p className="text-sm text-green-600">Your 5 videos combined into one powerful ad sequence</p>
+                            </div>
+                            
+                            <div className="relative w-full mx-auto" style={{ aspectRatio: '9/16', maxWidth: '400px' }}>
+                              <video 
+                                src={finalVideoUrl} 
+                                controls 
+                                className="w-full h-full rounded-lg object-cover shadow-lg"
+                                style={{ aspectRatio: '9/16' }}
+                              >
+                                Your browser does not support the video tag.
+                              </video>
+                            </div>
+                            
+                            <div className="mt-4 flex gap-3 justify-center">
+                              <Button 
+                                onClick={() => {
+                                  const link = document.createElement('a');
+                                  link.href = finalVideoUrl;
+                                  link.download = `final-ad-video-${Date.now()}.mp4`;
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                }}
+                                variant="outline"
+                                className="gap-2"
+                              >
+                                <Download className="w-4 h-4" />
+                                Download Final Video
+                              </Button>
+                              
+                              <Button 
+                                onClick={createFinalVideo}
+                                variant="outline"
+                                className="gap-2"
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                                Recreate
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : isGeneratingVideoPrompts ? (
                    <div className="p-6 rounded-xl bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10 text-center">
                      <div className="flex items-center justify-center gap-3 mb-2">
                        <RefreshCw className="h-5 w-5 animate-spin text-primary" />
