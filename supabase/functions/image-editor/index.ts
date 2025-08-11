@@ -57,7 +57,7 @@ serve(async (req) => {
     openaiFormData.append('model', 'gpt-image-1');
     openaiFormData.append('prompt', prompt);
     openaiFormData.append('size', '720x1280'); // 9:16 aspect ratio
-    openaiFormData.append('response_format', 'b64_json');
+    // Note: gpt-image-1 always returns base64, response_format parameter not supported
     
     // Add all images to the form data
     for (let i = 0; i < images.length; i++) {
