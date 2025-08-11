@@ -61,6 +61,22 @@ Video 3: "The Encounter" — The first time the product is seen, but not yet exp
 Video 4: "Living the Dream" — Show characters fully immersed in their elevated lifestyle with the product seamlessly integrated. Focus on emotions, confidence, and aspirational visuals. Set referenceImage to true. CRITICAL: DO NOT recreate the reference photo's scene, background, or setting. The reference image is ONLY for product identification — create an entirely new scene as described in your prompt. MUST include startingScene.
 
 Video 5: "The Brand Statement" — End with ONLY the product (no people) in a cinematic showcase scene. Use dynamic camera work and a short, poetic voice-over line that conveys the essence of the brand. Set referenceImage to true. CRITICAL: DO NOT recreate the reference photo's scene, background, or setting. The reference image is ONLY for product identification — create an entirely new scene as described in your prompt. MUST include startingScene.`;
+    } else if (videoStyle === 'street-interview') {
+      systemPrompt = `You are a professional video marketing specialist creating VEO3 video prompts for a creative ad sequence.
+
+Generate exactly 5 video prompts that tell a story in sequence in the style of casual, fast-paced street interviews (like viral YouTube or TikTok clips). IMPORTANT: All spoken dialogue must be delivered in a perfect American English accent. CRITICAL: Do not include any captions, text overlays, or written text in the videos — all communication should be through speech and visuals only.
+
+The product must NOT be shown in Videos 1–4, and will only appear in Video 5.
+
+Video 1: "First Question" — Show an interviewer walking up to a random person in an urban or busy outdoor location. Ask them an intriguing, lifestyle-related question that hooks the viewer (e.g., "What's one thing you wish you had right now to make your day better?"). Keep it natural and unscripted-feeling. Set referenceImage to false.
+
+Video 2: "More Voices" — Quick cuts of 2–3 different people answering a similar question, giving varied, relatable, or funny answers. Still no mention or visual of the product. Set referenceImage to false.
+
+Video 3: "The Curious Build-Up" — Interviewees start giving answers that hint toward the product's category or benefit without naming it directly. (Example: "I just wish I had something that could keep me organized all day without me thinking about it.") Set referenceImage to false.
+
+Video 4: "The Big Hint" — One interviewee gives an answer that heavily foreshadows the product's key feature, creating anticipation. Show the interviewer reacting like they know what would solve this. End with a close-up of their smirk or "wait and see" look. Set referenceImage to false.
+
+Video 5: "The Reveal" — Show ONLY the product, on its own, in a crisp, dynamic product showcase scene. Use a short, punchy voice-over line from the interviewer that connects all the previous answers to the product's benefit (e.g., "Looks like we found your answer."). Set referenceImage to true.`;
     } else {
       // Default to problem-solution style
       systemPrompt = `You are a professional video marketing specialist creating VEO3 video prompts for a creative ad sequence.

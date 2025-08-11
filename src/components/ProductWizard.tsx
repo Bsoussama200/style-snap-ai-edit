@@ -6,7 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCategories } from '@/hooks/useCategories';
 import { useStyles } from '@/hooks/useStyles';
-import { Upload, RefreshCw, Download, Play, ArrowLeft, Video, MessageSquare, Sparkles, CheckCircle, XCircle } from 'lucide-react';
+import { Upload, RefreshCw, Download, Play, ArrowLeft, Video, MessageSquare, Sparkles, CheckCircle, XCircle, Mic, Target } from 'lucide-react';
 import { usePrompt } from '@/hooks/usePrompts';
 import SequentialVideoPlayer from './SequentialVideoPlayer';
 
@@ -932,7 +932,7 @@ const ProductWizard: React.FC = () => {
               <p className="text-muted-foreground">Select the narrative approach for your product video sequence</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {/* Problem/Solution Style */}
               <Card 
                 className={`cursor-pointer transition-all duration-300 hover:shadow-lg border-2 ${
@@ -989,6 +989,36 @@ const ProductWizard: React.FC = () => {
                     <span className="px-2 py-1 text-xs bg-accent/10 text-accent-foreground rounded-full">Encounter</span>
                     <span className="px-2 py-1 text-xs bg-accent/10 text-accent-foreground rounded-full">Living Dream</span>
                     <span className="px-2 py-1 text-xs bg-accent/10 text-accent-foreground rounded-full">Brand Statement</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Street Interview Style */}
+              <Card 
+                className={`cursor-pointer transition-all duration-300 hover:shadow-lg border-2 ${
+                  selectedVideoStyle === 'street-interview' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                }`}
+                onClick={() => setSelectedVideoStyle('street-interview')}
+              >
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 grid place-items-center">
+                      <span className="text-white font-bold text-xl">🎤</span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold">Street Interview / Vox Pop</h3>
+                      <p className="text-sm text-muted-foreground">Viral social media style</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Fast-paced street interviews in viral YouTube/TikTok style. Build curiosity through real people's answers leading to product reveal.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="px-2 py-1 text-xs bg-accent/10 text-accent-foreground rounded-full">First Question</span>
+                    <span className="px-2 py-1 text-xs bg-accent/10 text-accent-foreground rounded-full">More Voices</span>
+                    <span className="px-2 py-1 text-xs bg-accent/10 text-accent-foreground rounded-full">Build-Up</span>
+                    <span className="px-2 py-1 text-xs bg-accent/10 text-accent-foreground rounded-full">Big Hint</span>
+                    <span className="px-2 py-1 text-xs bg-accent/10 text-accent-foreground rounded-full">The Reveal</span>
                   </div>
                 </CardContent>
               </Card>
