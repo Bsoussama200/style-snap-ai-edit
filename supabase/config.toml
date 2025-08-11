@@ -29,3 +29,9 @@ verify_jwt = false
 
 [functions.concatenate-videos]
 verify_jwt = false
+
+[functions.kie-flux-kontext-generate]
+verify_jwt = false
+
+[functions.kie-flux-kontext-status]
+verify_jwt = false
