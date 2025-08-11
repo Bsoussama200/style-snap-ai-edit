@@ -984,11 +984,11 @@ const ProductWizard: React.FC = () => {
                     A cinematic narrative that evokes emotions, builds lifestyle appeal, and creates desire through aspirational storytelling without explicit problem-solving.
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full">Spark</span>
-                    <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full">Journey</span>
-                    <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full">Encounter</span>
-                    <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full">Living Dream</span>
-                    <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full">Brand Statement</span>
+                    <span className="px-2 py-1 text-xs bg-accent/10 text-accent-foreground rounded-full">Spark</span>
+                    <span className="px-2 py-1 text-xs bg-accent/10 text-accent-foreground rounded-full">Journey</span>
+                    <span className="px-2 py-1 text-xs bg-accent/10 text-accent-foreground rounded-full">Encounter</span>
+                    <span className="px-2 py-1 text-xs bg-accent/10 text-accent-foreground rounded-full">Living Dream</span>
+                    <span className="px-2 py-1 text-xs bg-accent/10 text-accent-foreground rounded-full">Brand Statement</span>
                   </div>
                 </CardContent>
               </Card>
