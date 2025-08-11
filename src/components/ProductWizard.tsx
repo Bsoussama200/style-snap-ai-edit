@@ -892,7 +892,7 @@ const ProductWizard: React.FC = () => {
                              </Button>
                            </div>
                            
-                           <div className="grid gap-4">
+                           <div className="grid md:grid-cols-3 gap-4">
                              {generatedVideos.map((video, index) => (
                                <div key={video.id} className="p-4 rounded-lg bg-background/50 border border-primary/10">
                                  <div className="flex items-center justify-between mb-3">
@@ -907,14 +907,16 @@ const ProductWizard: React.FC = () => {
                                  </div>
                                  
                                  {video.url && video.status === 'success' && (
-                                   <video 
-                                     src={video.url} 
-                                     controls 
-                                     className="w-full rounded-lg"
-                                     style={{ maxHeight: '300px' }}
-                                   >
-                                     Your browser does not support the video tag.
-                                   </video>
+                                   <div className="relative w-full mx-auto" style={{ aspectRatio: '9/16', maxWidth: '200px' }}>
+                                     <video 
+                                       src={video.url} 
+                                       controls 
+                                       className="w-full h-full rounded-lg object-cover"
+                                       style={{ aspectRatio: '9/16' }}
+                                     >
+                                       Your browser does not support the video tag.
+                                     </video>
+                                   </div>
                                  )}
                                </div>
                              ))}
