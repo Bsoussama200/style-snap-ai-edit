@@ -380,8 +380,11 @@ const ProductWizard: React.FC = () => {
 
         if (prompt.referenceImage && sourceImageUrl) {
           veoBody.imageUrl = sourceImageUrl;
+          veoBody.image_url = sourceImageUrl;
           veoBody.referenceImage = true;
           console.log(`Adding reference image for video ${i + 1}:`, sourceImageUrl);
+        } else if (prompt.referenceImage && !sourceImageUrl) {
+          console.warn(`referenceImage requested for video ${i + 1} but sourceImageUrl is missing`);
         }
         
         const startRes = await supabase.functions.invoke('kie-veo-generate', {
@@ -657,11 +660,13 @@ const ProductWizard: React.FC = () => {
           enableFallback: false,
         };
 
-        // Include reference image if available
         if (sourceImageUrl) {
           veoBody.imageUrl = sourceImageUrl;
+          veoBody.image_url = sourceImageUrl;
           veoBody.referenceImage = true;
           console.log('Adding reference image to VEO generation:', sourceImageUrl);
+        } else {
+          console.warn('referenceImage requested for single VEO generation but sourceImageUrl is missing');
         }
 
         const start = await supabase.functions.invoke('kie-veo-generate', {

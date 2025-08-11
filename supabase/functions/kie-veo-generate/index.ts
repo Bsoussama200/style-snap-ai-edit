@@ -45,6 +45,8 @@ serve(async (req) => {
 
     // Build payload - include imageUrl only if referenceImage is true and imageUrl is provided
     const payload: any = { model, aspectRatio, enableFallback, prompt };
+
+    console.log('Incoming VEO request:', { referenceImage, imageUrlPresent: Boolean(imageUrl), imageUrl });
     
     if (referenceImage && imageUrl) {
       payload.imageUrl = imageUrl;
