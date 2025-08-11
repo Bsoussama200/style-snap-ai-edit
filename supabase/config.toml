@@ -35,3 +35,9 @@ verify_jwt = false
 
 [functions.kie-flux-kontext-status]
 verify_jwt = false
+
+[functions.kie-4o-image-generate]
+verify_jwt = false
+
+[functions.kie-4o-image-status]
+verify_jwt = false

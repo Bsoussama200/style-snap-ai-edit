@@ -24,10 +24,10 @@ const Test: React.FC = () => {
   const addLog = (msg: string) => setLogs((l) => [new Date().toLocaleTimeString() + ": " + msg, ...l]);
 
   useEffect(() => {
-    document.title = "Flux Kontext Test | KIE Image Generation";
+    document.title = "4o Image Test | KIE Image Generation";
     const meta = document.querySelector('meta[name="description"]') || document.createElement('meta');
     meta.setAttribute('name', 'description');
-    meta.setAttribute('content', 'Test KIE Flux Kontext image generation: upload an image and enter a prompt to generate a scene.');
+    meta.setAttribute('content', 'Test KIE 4o Image generation: upload an image and enter a prompt to generate a scene.');
     document.head.appendChild(meta);
 
     const canonical = document.querySelector('link[rel="canonical"]') || document.createElement('link');
@@ -69,12 +69,12 @@ const Test: React.FC = () => {
       const publicUrl = pub?.publicUrl;
       if (!publicUrl) throw new Error('Failed to resolve public URL');
 
-      addLog('Starting KIE Flux Kontext image generation...');
+      addLog('Starting KIE 4o Image generation...');
       setUploading(false);
       setGenerating(true);
       setStatus('starting');
 
-      const gen = await supabase.functions.invoke('kie-flux-kontext-generate', {
+      const gen = await supabase.functions.invoke('kie-4o-image-generate', {
         body: { prompt, inputImage: publicUrl },
       });
       if (gen.error) throw new Error(gen.error.message || 'Failed to invoke generate');
@@ -91,7 +91,7 @@ const Test: React.FC = () => {
       pollingRef.current = window.setInterval(async () => {
         attempts++;
         try {
-          const st = await supabase.functions.invoke('kie-flux-kontext-status', { body: { taskId: tid } });
+          const st = await supabase.functions.invoke('kie-4o-image-status', { body: { taskId: tid } });
           if (st.error) throw st.error;
           const d: any = st.data;
           addLog(`status: successFlag=${d?.successFlag} msg=${d?.errorMessage || ''}`);
@@ -133,8 +133,8 @@ const Test: React.FC = () => {
   return (
     <div>
       <header className="container mx-auto px-4 py-6">
-        <h1 className="text-2xl font-semibold">Flux Kontext Image Generation Test</h1>
-        <p className="mt-1 text-sm opacity-80">Upload an input image and enter a scene prompt to generate a new image via KIE Flux Kontext.</p>
+        <h1 className="text-2xl font-semibold">KIE 4o Image Generation Test</h1>
+        <p className="mt-1 text-sm opacity-80">Upload an input image and enter a scene prompt to generate a new image via KIE 4o Image API.</p>
       </header>
       <main className="container mx-auto px-4 pb-12">
         <section>
@@ -164,7 +164,7 @@ const Test: React.FC = () => {
               {imageUrl && (
                 <div className="mt-4">
                   <Label>Result</Label>
-                  <img src={imageUrl} alt="KIE Flux Kontext generated image result" loading="lazy" className="mt-2 max-w-full h-auto rounded" />
+                  <img src={imageUrl} alt="KIE 4o image generated result" loading="lazy" className="mt-2 max-w-full h-auto rounded" />
                 </div>
               )}
 
