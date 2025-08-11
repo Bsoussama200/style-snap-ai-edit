@@ -87,18 +87,18 @@ const Test: React.FC = () => {
       // Poll status
       setStatus('pending');
       let attempts = 0;
-      const max = 60; // ~2 minutes
+      const max = 300; // ~10 minutes
       pollingRef.current = window.setInterval(async () => {
         attempts++;
         try {
           const st = await supabase.functions.invoke('kie-4o-image-status', { body: { taskId: tid } });
           if (st.error) throw st.error;
           const d: any = st.data;
-          addLog(`status: successFlag=${d?.successFlag} msg=${d?.errorMessage || ''}`);
-          if (d?.successFlag === 1 && d?.response?.resultImageUrl) {
+          addLog(`status: successFlag=${d?.successFlag} msg=${d?.errorMessage || ''} imageUrl=${d?.imageUrl || 'none'}`);
+          if (d?.successFlag === 1 && d?.imageUrl) {
             setGenerating(false);
             setStatus('success');
-            setImageUrl(d.response.resultImageUrl as string);
+            setImageUrl(d.imageUrl as string);
             addLog('Image ready!');
             if (pollingRef.current) window.clearInterval(pollingRef.current);
           } else if (d?.successFlag === -1) {
