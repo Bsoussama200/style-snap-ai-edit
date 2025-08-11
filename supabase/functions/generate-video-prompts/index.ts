@@ -78,7 +78,7 @@ Video 3: "The Curious Build-Up" — Focus on the INTERVIEWER asking follow-up qu
 
 Video 4: "The Big Hint" — Focus on an INTERVIEWEE giving an answer that heavily foreshadows the product's key feature, creating anticipation. Show this person's enthusiastic response while the interviewer reacts in the background. The interviewee should be the main speaking person in this video. Set referenceImage to false.
 
-Video 5: "The Reveal" — Show ONLY the product, on its own, in a crisp, dynamic product showcase scene. Use a short, punchy voice-over line from the INTERVIEWER that connects all the previous answers to the product's benefit (e.g., "Looks like we found your answer."). Set referenceImage to true. CRITICAL: DO NOT recreate the reference photo's scene, background, or setting. The reference image is ONLY for product identification — create an entirely new scene as described in your prompt. MUST include startingScene field describing the initial scene/setting for product placement.`;
+Video 5: "The Reveal" — Show ONLY the product, on its own, in a crisp, dynamic product showcase scene. Use a short, punchy voice-over line from the INTERVIEWER that connects all the previous answers to the product's benefit (e.g., "Looks like we found your answer."). Set referenceImage to false. Create an entirely new scene as described in your prompt. MUST include startingScene field describing the initial scene/setting for product placement.`;
     } else {
       // Default to problem-solution style
       systemPrompt = `You are a professional video marketing specialist creating VEO3 video prompts for a creative ad sequence.
