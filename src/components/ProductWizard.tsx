@@ -85,6 +85,9 @@ const ProductWizard: React.FC = () => {
   const [isGeneratingVideos, setIsGeneratingVideos] = useState<boolean>(false);
   const [generatedVideos, setGeneratedVideos] = useState<Array<{id: string, url: string | null, status: string}>>([]);
   const [videoTaskIds, setVideoTaskIds] = useState<string[]>([]);
+  const [isGeneratingRunwayVideo, setIsGeneratingRunwayVideo] = useState<boolean>(false);
+  const [runwayVideoTaskId, setRunwayVideoTaskId] = useState<string>('');
+  const [runwayVideoUrl, setRunwayVideoUrl] = useState<string>('');
 
   // Video options data and selections
   const CAMERA_MOVEMENTS = [
@@ -418,6 +421,121 @@ const ProductWizard: React.FC = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const generateRunwayVideo = async () => {
+    if (!generatedImage || !selectedCamera) {
+      toast({ 
+        title: 'Missing requirements', 
+        description: 'Please ensure you have both a generated image and selected camera movement.', 
+        variant: 'destructive' 
+      });
+      return;
+    }
+
+    setIsGeneratingRunwayVideo(true);
+    setRunwayVideoUrl('');
+    setRunwayVideoTaskId('');
+
+    try {
+      // Upload the generated image to get a stable URL
+      const blob = await fetch(generatedImage).then(r => r.blob());
+      const file = new File([blob], 'generated.png', { type: 'image/png' });
+      const imageUrl = await uploadToStorage(file, 'outputs');
+
+      // Create prompt based on camera movement
+      const cameraMovement = CAMERA_MOVEMENTS.find(m => m.name === selectedCamera);
+      const prompt = `${cameraMovement?.description || selectedCamera}. Smooth cinematic movement. Professional product video.`;
+
+      console.log('Starting Runway video generation with:', { imageUrl, prompt, selectedCamera });
+
+      const startRes = await supabase.functions.invoke('kie-runway-generate', {
+        body: {
+          prompt: prompt,
+          imageUrl: imageUrl,
+          duration: 10, // 10 seconds as requested
+          quality: '720p',
+          aspectRatio: '9:16',
+        },
+      });
+
+      if (startRes.error) {
+        throw new Error(`Runway generation failed: ${startRes.error.message}`);
+      }
+
+      const taskId = startRes.data?.taskId as string;
+      if (!taskId) {
+        throw new Error('No taskId returned from Runway generation');
+      }
+
+      setRunwayVideoTaskId(taskId);
+      toast({ title: 'Video generation started', description: 'Your 10-second video is being created...' });
+
+      // Monitor the video generation
+      await monitorRunwayVideoGeneration(taskId);
+
+    } catch (err) {
+      console.error('Runway video generation failed:', err);
+      toast({ 
+        title: 'Video generation failed', 
+        description: err instanceof Error ? err.message : 'Please try again.', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setIsGeneratingRunwayVideo(false);
+    }
+  };
+
+  const monitorRunwayVideoGeneration = async (taskId: string) => {
+    const maxAttempts = 120; // ~4 minutes for 10s video
+    let attempts = 0;
+    
+    while (attempts < maxAttempts) {
+      attempts++;
+      
+      try {
+        const statusRes = await supabase.functions.invoke('kie-runway-status', { 
+          body: { taskId } 
+        });
+        
+        if (statusRes.error) {
+          console.error('Status check failed:', statusRes.error);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          continue;
+        }
+        
+        const state = statusRes.data?.state as string;
+        const videoUrl = statusRes.data?.videoUrl as string;
+        
+        console.log(`Runway video status: ${state}`, videoUrl);
+        
+        if (state === 'success' && videoUrl) {
+          setRunwayVideoUrl(videoUrl);
+          toast({
+            title: 'Video generation complete!',
+            description: 'Your 10-second video is ready to view.'
+          });
+          break;
+        } else if (state === 'failed' || state === 'error') {
+          throw new Error('Video generation failed');
+        }
+        
+        // Wait before next check
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+      } catch (err) {
+        console.error('Error checking Runway status:', err);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+    
+    if (attempts >= maxAttempts) {
+      toast({
+        title: 'Generation timeout',
+        description: 'Video generation is taking longer than expected. Please try again.',
+        variant: 'destructive'
+      });
+    }
   };
 
   const monitorVideoGeneration = async (taskIds: string[]) => {
@@ -1142,20 +1260,87 @@ const ProductWizard: React.FC = () => {
                                    </div>
 
                                    {selectedCamera && (
-                                     <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-                                       <div className="flex items-center justify-between">
-                                         <span className="text-sm font-medium">Selected:</span>
-                                         <div className="flex items-center gap-2">
-                                           <span className="text-sm font-semibold text-primary">{selectedCamera}</span>
-                                           <Button 
-                                             variant="ghost" 
-                                             size="sm" 
-                                             onClick={() => setSelectedCamera('')}
-                                             className="h-6 w-6 p-0"
-                                           >
-                                             ✕
-                                           </Button>
+                                     <div className="space-y-4">
+                                       <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                                         <div className="flex items-center justify-between">
+                                           <span className="text-sm font-medium">Selected:</span>
+                                           <div className="flex items-center gap-2">
+                                             <span className="text-sm font-semibold text-primary">{selectedCamera}</span>
+                                             <Button 
+                                               variant="ghost" 
+                                               size="sm" 
+                                               onClick={() => setSelectedCamera('')}
+                                               className="h-6 w-6 p-0"
+                                             >
+                                               ✕
+                                             </Button>
+                                           </div>
                                          </div>
+                                       </div>
+
+                                       {/* Video Generation with Runway */}
+                                       <div className="pt-4 border-t border-primary/10">
+                                         {!isGeneratingRunwayVideo && !runwayVideoUrl ? (
+                                           <Button 
+                                             onClick={generateRunwayVideo}
+                                             className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 gap-2"
+                                             size="lg"
+                                           >
+                                             <Video className="w-5 h-5" />
+                                             Generate 10s Video with Runway
+                                           </Button>
+                                         ) : isGeneratingRunwayVideo ? (
+                                           <div className="space-y-3">
+                                             <div className="flex items-center justify-center gap-3 p-4 rounded-lg bg-background/50 border border-primary/20">
+                                               <RefreshCw className="h-5 w-5 animate-spin text-primary" />
+                                               <span className="text-sm font-medium">Generating 10s video...</span>
+                                             </div>
+                                             <p className="text-xs text-center text-muted-foreground">
+                                               Using {selectedCamera} movement • Runway AI • 10 seconds
+                                             </p>
+                                           </div>
+                                         ) : runwayVideoUrl ? (
+                                           <div className="space-y-4">
+                                             <h5 className="text-sm font-semibold text-center">Generated Video (10s)</h5>
+                                             <div className="relative w-full mx-auto" style={{ aspectRatio: '9/16', maxWidth: '300px' }}>
+                                               <video 
+                                                 src={runwayVideoUrl} 
+                                                 controls 
+                                                 className="w-full h-full rounded-lg object-cover"
+                                                 style={{ aspectRatio: '9/16' }}
+                                               >
+                                                 Your browser does not support the video tag.
+                                               </video>
+                                             </div>
+                                             
+                                             <div className="flex gap-3">
+                                               <Button 
+                                                 onClick={generateRunwayVideo}
+                                                 variant="outline"
+                                                 className="flex-1 gap-2"
+                                               >
+                                                 <RefreshCw className="w-4 h-4" />
+                                                 Regenerate
+                                               </Button>
+                                               
+                                               <Button 
+                                                 onClick={() => {
+                                                   const link = document.createElement('a');
+                                                   link.href = runwayVideoUrl;
+                                                   link.download = `runway-video-${Date.now()}.mp4`;
+                                                   document.body.appendChild(link);
+                                                   link.click();
+                                                   document.body.removeChild(link);
+                                                 }}
+                                                 variant="outline"
+                                                 className="flex-1 gap-2"
+                                               >
+                                                 <Download className="w-4 h-4" />
+                                                 Download
+                                               </Button>
+                                             </div>
+                                           </div>
+                                         ) : null}
                                        </div>
                                      </div>
                                    )}
