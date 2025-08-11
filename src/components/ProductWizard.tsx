@@ -483,9 +483,9 @@ const ProductWizard: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-4 p-4 rounded-lg bg-gradient-to-r from-accent/5 to-primary/5 border border-accent/10">
-                    <div className="h-10 w-10 rounded-lg bg-accent/20 grid place-items-center">
-                      <span className="text-accent font-bold text-lg">🏷️</span>
+                  <div className="flex items-center gap-4 p-4 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/10">
+                    <div className="h-10 w-10 rounded-lg bg-primary/20 grid place-items-center">
+                      <span className="text-primary font-bold text-lg">🏷️</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Category</p>
@@ -544,16 +544,16 @@ const ProductWizard: React.FC = () => {
 
                   {/* Appeal */}
                   {analysis.productProfile?.emotionalAppeal?.length ? (
-                    <div className="p-4 rounded-lg bg-gradient-to-r from-accent/5 to-primary/5 border border-accent/10">
+                    <div className="p-4 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/10">
                       <div className="flex items-center gap-2 mb-3">
-                        <div className="h-6 w-6 rounded bg-accent/20 grid place-items-center">
+                        <div className="h-6 w-6 rounded bg-primary/20 grid place-items-center">
                           <span className="text-xs">💝</span>
                         </div>
                         <span className="font-medium text-sm">Appeal</span>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {analysis.productProfile.emotionalAppeal.slice(0, 4).map((e, i) => (
-                          <span key={i} className="px-3 py-1.5 rounded-full bg-accent/20 text-accent text-xs font-medium hover:bg-accent/30 transition-colors">
+                          <span key={i} className="px-3 py-1.5 rounded-full bg-primary/20 text-primary text-xs font-medium hover:bg-primary/30 transition-colors">
                             {e}
                           </span>
                         ))}
