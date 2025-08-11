@@ -61,6 +61,7 @@ Return your response strictly as a JSON array with exactly 5 objects, NO markdow
 {
   "sceneDurationSeconds": 8,
   "referenceImage": boolean,
+  "startingScene": "string (ONLY include if referenceImage is true - describe the scene/setting where the product should be placed to generate the reference image from the uploaded photo)",
   "person": {
     "name": "string (realistic first name or 'Narrator' for video 5)",
     "description": "string (for video 5, indicate voice-over narrator only; no on-screen person)",
@@ -78,6 +79,8 @@ Return your response strictly as a JSON array with exactly 5 objects, NO markdow
     "backgroundMusic": "string (music style that supports the emotion)"
   }
 }
+
+For videos where referenceImage is true (Videos 3, 4, and 5), you MUST include a "startingScene" field that describes the scene/setting where the product should be placed. This will be used to generate a reference image by placing the uploaded product into this described scene before video generation begins.
 
 Make the sequence emotionally compelling:
 - Video 1: Punchy hook, dynamic motion/edits, tease the pain point, referenceImage: false
