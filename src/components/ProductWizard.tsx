@@ -8,6 +8,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useStyles } from '@/hooks/useStyles';
 import { Upload, RefreshCw, Download, Play, ArrowLeft, Video, MessageSquare, Sparkles, CheckCircle, XCircle } from 'lucide-react';
 import { usePrompt } from '@/hooks/usePrompts';
+import SequentialVideoPlayer from './SequentialVideoPlayer';
 
 interface VideoPrompt {
   sceneDurationSeconds: number;
@@ -91,6 +92,7 @@ const ProductWizard: React.FC = () => {
   const [runwayVideoUrl, setRunwayVideoUrl] = useState<string>('');
   const [isCreatingFinalVideo, setIsCreatingFinalVideo] = useState<boolean>(false);
   const [finalVideoUrl, setFinalVideoUrl] = useState<string>('');
+  const [finalVideoPlaylist, setFinalVideoPlaylist] = useState<string[]>([]);
 
   // Video options data and selections
   const CAMERA_MOVEMENTS = [
@@ -527,21 +529,18 @@ const ProductWizard: React.FC = () => {
     try {
       const videoUrls = successfulVideos.map(v => v.url);
       
-      const { data, error } = await supabase.functions.invoke('concatenate-videos', {
-        body: { videoUrls }
-      });
+      // Instead of calling an external API, we'll create a sequential video player
+      setFinalVideoPlaylist(videoUrls);
+      setFinalVideoUrl(videoUrls[0]); // Start with first video
       
-      if (error) throw new Error(error.message);
-      
-      setFinalVideoUrl(data.videoUrl);
       toast({
-        title: 'Final video created!',
-        description: 'Your 5 videos have been combined into one ad sequence.'
+        title: 'Final video sequence ready!',
+        description: 'Your 5 videos will play sequentially as one continuous ad.'
       });
     } catch (err) {
       console.error('Error creating final video:', err);
       toast({
-        title: 'Failed to create final video',
+        title: 'Failed to prepare final video',
         description: err instanceof Error ? err.message : 'Please try again.',
         variant: 'destructive'
       });
@@ -1164,32 +1163,31 @@ const ProductWizard: React.FC = () => {
                               <p className="text-sm text-green-600">Your 5 videos combined into one powerful ad sequence</p>
                             </div>
                             
-                            <div className="relative w-full mx-auto" style={{ aspectRatio: '9/16', maxWidth: '400px' }}>
-                              <video 
-                                src={finalVideoUrl} 
-                                controls 
-                                className="w-full h-full rounded-lg object-cover shadow-lg"
-                                style={{ aspectRatio: '9/16' }}
-                              >
-                                Your browser does not support the video tag.
-                              </video>
-                            </div>
+                            <SequentialVideoPlayer 
+                              videoUrls={finalVideoPlaylist}
+                              onVideoEnd={(currentIndex) => {
+                                console.log(`Video ${currentIndex + 1} ended`);
+                              }}
+                            />
                             
                             <div className="mt-4 flex gap-3 justify-center">
                               <Button 
                                 onClick={() => {
-                                  const link = document.createElement('a');
-                                  link.href = finalVideoUrl;
-                                  link.download = `final-ad-video-${Date.now()}.mp4`;
-                                  document.body.appendChild(link);
-                                  link.click();
-                                  document.body.removeChild(link);
+                                  // Download all videos as a zip or provide links
+                                  finalVideoPlaylist.forEach((url, index) => {
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.download = `video-${index + 1}-${Date.now()}.mp4`;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                  });
                                 }}
                                 variant="outline"
                                 className="gap-2"
                               >
                                 <Download className="w-4 h-4" />
-                                Download Final Video
+                                Download All Videos
                               </Button>
                               
                               <Button 
