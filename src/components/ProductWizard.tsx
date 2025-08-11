@@ -444,113 +444,231 @@ const ProductWizard: React.FC = () => {
       )}
 
       {step === 'category' && analysis && (
-        <Card className="glass-card max-w-4xl mx-auto">
-          <CardContent className="p-6 space-y-6">
-            <h2 className="text-xl font-semibold">Product Profile & Category</h2>
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Product Intelligence
+            </h2>
+            <p className="text-muted-foreground">AI-powered analysis and strategic insights</p>
+          </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-3">
-                <h3 className="font-medium">Product Profile</h3>
-                <div className="space-y-2 text-sm">
-                  <div><span className="text-muted-foreground">Name:</span> <span className="font-medium">{analysis.productProfile?.productName || productName}</span></div>
-                  <div><span className="text-muted-foreground">Category:</span> <span className="font-medium">{analysis.productProfile?.category || analysis.suggestedCategoryName || '—'}</span></div>
-                  {analysis.productProfile?.materials?.length ? (
-                    <div>
-                      <span className="text-muted-foreground">Materials:</span>
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {analysis.productProfile.materials.map((m, i) => (
-                          <span key={i} className="px-2 py-0.5 rounded-md bg-secondary text-secondary-foreground">{m}</span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                  {analysis.productProfile?.colors?.length ? (
-                    <div>
-                      <span className="text-muted-foreground">Colors:</span>
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {analysis.productProfile.colors.map((c, i) => (
-                          <span key={i} className="px-2 py-0.5 rounded-md bg-secondary text-secondary-foreground">{c}</span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                  {analysis.productProfile?.features?.length ? (
-                    <div>
-                      <span className="text-muted-foreground">Features:</span>
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {analysis.productProfile.features.map((f, i) => (
-                          <span key={i} className="px-2 py-0.5 rounded-md bg-secondary text-secondary-foreground">{f}</span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                  {analysis.productProfile?.emotionalAppeal?.length ? (
-                    <div>
-                      <span className="text-muted-foreground">Emotional appeal:</span>
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {analysis.productProfile.emotionalAppeal.map((e, i) => (
-                          <span key={i} className="px-2 py-0.5 rounded-md bg-secondary text-secondary-foreground">{e}</span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                  {analysis.productProfile?.trendFit ? (
-                    <div><span className="text-muted-foreground">Trend fit:</span> <span className="font-medium">{analysis.productProfile.trendFit}</span></div>
-                  ) : null}
+          {/* Product Profile Card */}
+          <Card className="glass-card backdrop-blur-lg bg-gradient-to-br from-background/80 to-background/40 border-primary/20">
+            <CardContent className="p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-accent grid place-items-center">
+                  <Sparkles className="h-5 w-5 text-primary-foreground" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold">Product Profile</h3>
+                  <p className="text-sm text-muted-foreground">Comprehensive product analysis</p>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <h3 className="font-medium">Category</h3>
-                <select
-                  className="w-full rounded-md border border-border bg-background p-2"
-                  value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
-                >
-                  <option value="">Select category</option>
-                  {categories?.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-                {typeof analysis.confidence === 'number' && (
-                  <p className="text-xs text-muted-foreground">AI confidence: {(analysis.confidence * 100).toFixed(0)}%</p>
-                )}
-              </div>
-            </div>
+              <div className="grid gap-8 lg:grid-cols-2">
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="h-1 w-8 bg-gradient-to-r from-primary to-accent rounded-full"></div>
+                      <span className="font-medium text-sm uppercase tracking-wide text-muted-foreground">Core Details</span>
+                    </div>
+                    <div className="space-y-3 pl-10">
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-primary/10">
+                        <span className="text-muted-foreground text-sm">Product Name</span>
+                        <span className="font-semibold">{analysis.productProfile?.productName || productName}</span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-primary/10">
+                        <span className="text-muted-foreground text-sm">Category</span>
+                        <span className="font-semibold">{analysis.productProfile?.category || analysis.suggestedCategoryName || '—'}</span>
+                      </div>
+                      {analysis.productProfile?.trendFit && (
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-accent/10 to-primary/10 border border-accent/20">
+                          <span className="text-muted-foreground text-sm">Trend Fit</span>
+                          <span className="font-semibold text-accent">{analysis.productProfile.trendFit}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-            <div className="grid gap-6 md:grid-cols-3">
-              <div className="md:col-span-3 space-y-2">
-                <label className="text-sm text-muted-foreground">Product summary (editable)</label>
+                  {(analysis.productProfile?.materials?.length || analysis.productProfile?.colors?.length) && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="h-1 w-8 bg-gradient-to-r from-primary to-accent rounded-full"></div>
+                        <span className="font-medium text-sm uppercase tracking-wide text-muted-foreground">Materials & Colors</span>
+                      </div>
+                      <div className="space-y-4 pl-10">
+                        {analysis.productProfile?.materials?.length ? (
+                          <div className="space-y-2">
+                            <span className="text-sm font-medium text-muted-foreground">Materials</span>
+                            <div className="flex flex-wrap gap-2">
+                              {analysis.productProfile.materials.map((m, i) => (
+                                <span key={i} className="px-3 py-1.5 rounded-full bg-gradient-to-r from-secondary to-secondary/80 text-secondary-foreground text-sm font-medium border border-primary/10 hover:scale-105 transition-transform">
+                                  {m}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                        {analysis.productProfile?.colors?.length ? (
+                          <div className="space-y-2">
+                            <span className="text-sm font-medium text-muted-foreground">Colors</span>
+                            <div className="flex flex-wrap gap-2">
+                              {analysis.productProfile.colors.map((c, i) => (
+                                <span key={i} className="px-3 py-1.5 rounded-full bg-gradient-to-r from-accent/20 to-primary/20 text-foreground text-sm font-medium border border-accent/30 hover:scale-105 transition-transform">
+                                  {c}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-6">
+                  {(analysis.productProfile?.features?.length || analysis.productProfile?.emotionalAppeal?.length) && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="h-1 w-8 bg-gradient-to-r from-primary to-accent rounded-full"></div>
+                        <span className="font-medium text-sm uppercase tracking-wide text-muted-foreground">Features & Appeal</span>
+                      </div>
+                      <div className="space-y-4 pl-10">
+                        {analysis.productProfile?.features?.length ? (
+                          <div className="space-y-2">
+                            <span className="text-sm font-medium text-muted-foreground">Key Features</span>
+                            <div className="flex flex-wrap gap-2">
+                              {analysis.productProfile.features.map((f, i) => (
+                                <span key={i} className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-sm font-medium border border-primary/20 hover:bg-primary/20 transition-colors">
+                                  {f}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                        {analysis.productProfile?.emotionalAppeal?.length ? (
+                          <div className="space-y-2">
+                            <span className="text-sm font-medium text-muted-foreground">Emotional Appeal</span>
+                            <div className="flex flex-wrap gap-2">
+                              {analysis.productProfile.emotionalAppeal.map((e, i) => (
+                                <span key={i} className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-accent/15 to-primary/15 text-accent text-sm font-medium border border-accent/25 hover:from-accent/25 hover:to-primary/25 transition-all">
+                                  {e}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="h-1 w-8 bg-gradient-to-r from-primary to-accent rounded-full"></div>
+                      <span className="font-medium text-sm uppercase tracking-wide text-muted-foreground">Category Selection</span>
+                    </div>
+                    <div className="pl-10 space-y-3">
+                      <select
+                        className="w-full rounded-lg border border-primary/20 bg-background/80 backdrop-blur-sm p-3 font-medium focus:border-primary/40 focus:ring-2 focus:ring-primary/20 transition-all"
+                        value={categoryId}
+                        onChange={(e) => setCategoryId(e.target.value)}
+                      >
+                        <option value="">Select category</option>
+                        {categories?.map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                      {typeof analysis.confidence === 'number' && (
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 flex-1 bg-secondary rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500"
+                              style={{ width: `${analysis.confidence * 100}%` }}
+                            />
+                          </div>
+                          <span className="text-xs font-medium text-muted-foreground">{(analysis.confidence * 100).toFixed(0)}% confidence</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Strategic Insights Grid */}
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Product Summary */}
+            <Card className="glass-card lg:col-span-3 backdrop-blur-lg bg-gradient-to-br from-background/80 to-background/40 border-primary/20">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <MessageSquare className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold">Product Summary</h3>
+                  <span className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary font-medium">Editable</span>
+                </div>
                 <Textarea
                   value={analysis.analysis}
                   onChange={(e) => setAnalysis(prev => prev ? { ...prev, analysis: e.target.value } : prev)}
-                  className="w-full min-h-[88px] text-foreground"
+                  className="w-full min-h-[100px] bg-background/50 backdrop-blur-sm border-primary/20 focus:border-primary/40 resize-none"
+                  placeholder="AI-generated product analysis..."
                 />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm text-muted-foreground">Marketing angles (one per line)</label>
+              </CardContent>
+            </Card>
+
+            {/* Marketing Angles */}
+            <Card className="glass-card backdrop-blur-lg bg-gradient-to-br from-background/80 to-background/40 border-accent/20">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-accent/20 to-primary/20 grid place-items-center">
+                    <span className="text-accent font-bold text-sm">⚡</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Marketing Angles</h3>
+                    <p className="text-xs text-muted-foreground">One per line</p>
+                  </div>
+                </div>
                 <Textarea
                   value={(analysis.marketingAngles || []).join('\n')}
                   onChange={(e) => setAnalysis(prev => prev ? { ...prev, marketingAngles: e.target.value.split('\n').map(v => v.trim()).filter(Boolean) } : prev)}
-                  className="w-full min-h-[120px] text-foreground"
+                  className="w-full min-h-[120px] bg-background/50 backdrop-blur-sm border-accent/20 focus:border-accent/40 resize-none"
+                  placeholder="• Pain point solver&#10;• Time-saving solution&#10;• Premium quality..."
                 />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm text-muted-foreground">Target audiences (one per line)</label>
+              </CardContent>
+            </Card>
+
+            {/* Target Audiences */}
+            <Card className="glass-card backdrop-blur-lg bg-gradient-to-br from-background/80 to-background/40 border-primary/20">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 grid place-items-center">
+                    <span className="text-primary font-bold text-sm">👥</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Target Audiences</h3>
+                    <p className="text-xs text-muted-foreground">One per line</p>
+                  </div>
+                </div>
                 <Textarea
                   value={(analysis.targetAudiences || []).join('\n')}
                   onChange={(e) => setAnalysis(prev => prev ? { ...prev, targetAudiences: e.target.value.split('\n').map(v => v.trim()).filter(Boolean) } : prev)}
-                  className="w-full min-h-[120px] text-foreground"
+                  className="w-full min-h-[120px] bg-background/50 backdrop-blur-sm border-primary/20 focus:border-primary/40 resize-none"
+                  placeholder="• Busy professionals&#10;• Tech enthusiasts&#10;• Budget-conscious shoppers..."
                 />
-              </div>
-            </div>
+              </CardContent>
+            </Card>
+          </div>
 
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep('upload')} className="gap-2"><ArrowLeft className="w-4 h-4" />Back</Button>
-              <Button onClick={proceedAfterCategory} className="flex-1">Continue</Button>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Action Buttons */}
+          <div className="flex gap-4 justify-center pt-4">
+            <Button variant="outline" onClick={() => setStep('upload')} className="gap-2 px-6">
+              <ArrowLeft className="w-4 h-4" />Back to Upload
+            </Button>
+            <Button onClick={proceedAfterCategory} className="gap-2 px-8 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90">
+              Continue to Style Selection
+              <Sparkles className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
       )}
 
       {step === 'mode' && (
