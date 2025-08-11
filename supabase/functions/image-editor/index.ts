@@ -52,28 +52,24 @@ serve(async (req) => {
 
     console.log(`Processing ${images.length} images with prompt:`, prompt);
 
-    // Create FormData for OpenAI API
-    const openaiFormData = new FormData();
-    openaiFormData.append('model', 'gpt-image-1');
-    openaiFormData.append('prompt', prompt);
-    openaiFormData.append('size', '720x1280'); // 9:16 aspect ratio
-    // Note: gpt-image-1 always returns base64, response_format parameter not supported
-    
-    // Add all images to the form data
-    for (let i = 0; i < images.length; i++) {
-      openaiFormData.append('image[]', images[i]);
-      console.log(`Added image ${i + 1}: ${images[i].name || 'unnamed'} (${images[i].size} bytes)`);
-    }
+    // Create request body for OpenAI image generation API
+    const requestBody = {
+      model: 'gpt-image-1',
+      prompt: prompt,
+      size: '720x1280', // 9:16 aspect ratio
+      n: 1
+    };
 
-    console.log('Sending request to OpenAI /images/edits endpoint...');
+    console.log('Sending request to OpenAI /images/generations endpoint...');
 
-    // Call OpenAI's /images/edits endpoint using the provided API key
-    const response = await fetch('https://api.openai.com/v1/images/edits', {
+    // Call OpenAI's /images/generations endpoint using the provided API key
+    const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
       },
-      body: openaiFormData,
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
@@ -86,10 +82,10 @@ serve(async (req) => {
     console.log('OpenAI response received successfully');
 
     if (data && data.data && data.data.length > 0) {
-      // Return the response in the same format as before for frontend compatibility
+      // gpt-image-1 returns base64 data in b64_json field
       return new Response(JSON.stringify({ 
         data: data.data.map(item => ({ 
-          b64_json: item.b64_json 
+          b64_json: item.b64_json || item.url // Handle both base64 and URL responses
         }))
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
