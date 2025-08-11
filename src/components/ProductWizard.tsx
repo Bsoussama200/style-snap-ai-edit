@@ -6,7 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCategories } from '@/hooks/useCategories';
 import { useStyles } from '@/hooks/useStyles';
-import { Upload, RefreshCw, Download, Play, ArrowLeft, Video, MessageSquare, Sparkles } from 'lucide-react';
+import { Upload, RefreshCw, Download, Play, ArrowLeft, Video, MessageSquare, Sparkles, CheckCircle, XCircle } from 'lucide-react';
 import { usePrompt } from '@/hooks/usePrompts';
 
 interface VideoPrompt {
@@ -82,6 +82,9 @@ const ProductWizard: React.FC = () => {
   const [isFetchingMotion, setIsFetchingMotion] = useState<boolean>(false);
   const [videoProvider, setVideoProvider] = useState<'runway' | 'veo3'>('runway');
   const [isGeneratingVideoPrompts, setIsGeneratingVideoPrompts] = useState<boolean>(false);
+  const [isGeneratingVideos, setIsGeneratingVideos] = useState<boolean>(false);
+  const [generatedVideos, setGeneratedVideos] = useState<Array<{id: string, url: string | null, status: string}>>([]);
+  const [videoTaskIds, setVideoTaskIds] = useState<string[]>([]);
 
   // Video options data and selections
   const CAMERA_MOVEMENTS = [
@@ -339,6 +342,148 @@ const ProductWizard: React.FC = () => {
       // Don't show error toast as this is supplementary feature
     } finally {
       setIsGeneratingVideoPrompts(false);
+    }
+  };
+
+  const generateAllVideos = async () => {
+    if (!analysis?.videoPrompts?.length) {
+      toast({ title: 'No prompts available', description: 'Please generate video prompts first.', variant: 'destructive' });
+      return;
+    }
+
+    setIsGeneratingVideos(true);
+    const taskIds: string[] = [];
+    const videoStates: Array<{id: string, url: string | null, status: string}> = [];
+
+    try {
+      // Start all video generations simultaneously
+      for (let i = 0; i < analysis.videoPrompts.length; i++) {
+        const prompt = analysis.videoPrompts[i];
+        
+        // Convert the structured prompt to a text description for VEO3
+        const textPrompt = `${prompt.person.description} ${prompt.person.actions.join(', ')}. Setting: ${prompt.place.description}. The person says: "${prompt.person.line}" in a ${prompt.person.tone} tone. Camera: ${prompt.additionalInstructions.cameraMovement}. Lighting: ${prompt.additionalInstructions.lighting}. Duration: ${prompt.sceneDurationSeconds} seconds.`;
+        
+        console.log(`Starting video generation ${i + 1} with prompt:`, textPrompt);
+        
+        const startRes = await supabase.functions.invoke('kie-veo-generate', {
+          body: {
+            prompt: textPrompt,
+            model: 'veo3_fast',
+            aspectRatio: '9:16',
+            enableFallback: false,
+          },
+        });
+        
+        if (startRes.error) {
+          throw new Error(`Video ${i + 1} generation failed: ${startRes.error.message}`);
+        }
+        
+        const taskId = startRes.data?.taskId as string;
+        if (!taskId) {
+          throw new Error(`No taskId returned for video ${i + 1}`);
+        }
+        
+        taskIds.push(taskId);
+        videoStates.push({
+          id: taskId,
+          url: null,
+          status: 'pending'
+        });
+      }
+      
+      setVideoTaskIds(taskIds);
+      setGeneratedVideos(videoStates);
+      
+      // Monitor all videos
+      await monitorVideoGeneration(taskIds);
+      
+    } catch (err) {
+      console.error('Video generation failed:', err);
+      toast({ 
+        title: 'Video generation failed', 
+        description: err instanceof Error ? err.message : 'Please try again.', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setIsGeneratingVideos(false);
+    }
+  };
+
+  const monitorVideoGeneration = async (taskIds: string[]) => {
+    const maxAttempts = 90; // ~3 minutes total
+    let attempts = 0;
+    
+    while (attempts < maxAttempts) {
+      attempts++;
+      let allCompleted = true;
+      
+      // Check status of all videos
+      for (let i = 0; i < taskIds.length; i++) {
+        const taskId = taskIds[i];
+        
+        try {
+          const statusRes = await supabase.functions.invoke('kie-veo-status', { 
+            body: { taskId } 
+          });
+          
+          if (statusRes.error) {
+            console.error(`Status check failed for video ${i + 1}:`, statusRes.error);
+            continue;
+          }
+          
+          const state = statusRes.data?.state as string;
+          const videoUrl = statusRes.data?.videoUrl as string;
+          
+          // Update video state
+          setGeneratedVideos(prev => 
+            prev.map(video => 
+              video.id === taskId 
+                ? { 
+                    ...video, 
+                    status: state, 
+                    url: state === 'success' ? videoUrl : null 
+                  }
+                : video
+            )
+          );
+          
+          if (state === 'pending' || state === 'processing') {
+            allCompleted = false;
+          } else if (state === 'fail' || state === 'error') {
+            toast({
+              title: `Video ${i + 1} failed`,
+              description: 'This video generation encountered an error.',
+              variant: 'destructive'
+            });
+          } else if (state === 'success' && videoUrl) {
+            console.log(`Video ${i + 1} completed successfully`);
+          }
+          
+        } catch (err) {
+          console.error(`Error checking status for video ${i + 1}:`, err);
+          allCompleted = false;
+        }
+      }
+      
+      if (allCompleted) {
+        const successCount = generatedVideos.filter(v => v.status === 'success').length;
+        toast({
+          title: 'Video generation complete!',
+          description: `${successCount} out of 3 videos generated successfully.`
+        });
+        break;
+      }
+      
+      // Wait before next check
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+    
+    if (attempts >= maxAttempts) {
+      toast({
+        title: 'Generation timeout',
+        description: 'Some videos may still be processing. Check back later.',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -679,10 +824,106 @@ const ProductWizard: React.FC = () => {
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : isGeneratingVideoPrompts ? (
+                       ))}
+                     </div>
+                     
+                     {/* Video Generation Button and Status */}
+                     <div className="mt-6 pt-4 border-t border-primary/10">
+                       {!isGeneratingVideos && generatedVideos.length === 0 && (
+                         <Button 
+                           onClick={generateAllVideos}
+                           className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 gap-2"
+                           size="lg"
+                         >
+                           <Video className="w-5 h-5" />
+                           Generate 3 Videos with VEO3
+                         </Button>
+                       )}
+                       
+                       {isGeneratingVideos && (
+                         <div className="space-y-4">
+                           <div className="flex items-center justify-center gap-3 p-4 rounded-lg bg-background/50 border border-primary/20">
+                             <RefreshCw className="h-5 w-5 animate-spin text-primary" />
+                             <span className="text-sm font-medium">Generating videos...</span>
+                           </div>
+                           
+                           <div className="grid gap-3">
+                             {generatedVideos.map((video, index) => (
+                               <div key={video.id} className="flex items-center justify-between p-3 rounded-lg bg-background/30 border border-primary/10">
+                                 <span className="text-sm font-medium">Video {index + 1}</span>
+                                 <div className="flex items-center gap-2">
+                                   {video.status === 'pending' || video.status === 'processing' ? (
+                                     <>
+                                       <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                                       <span className="text-xs text-muted-foreground">{video.status}</span>
+                                     </>
+                                   ) : video.status === 'success' ? (
+                                     <>
+                                       <CheckCircle className="h-4 w-4 text-green-500" />
+                                       <span className="text-xs text-green-600">Complete</span>
+                                     </>
+                                   ) : video.status === 'fail' || video.status === 'error' ? (
+                                     <>
+                                       <XCircle className="h-4 w-4 text-red-500" />
+                                       <span className="text-xs text-red-600">Failed</span>
+                                     </>
+                                   ) : (
+                                     <span className="text-xs text-muted-foreground">Waiting</span>
+                                   )}
+                                 </div>
+                               </div>
+                             ))}
+                           </div>
+                         </div>
+                       )}
+                       
+                       {!isGeneratingVideos && generatedVideos.length > 0 && (
+                         <div className="space-y-4">
+                           <div className="flex items-center justify-between">
+                             <h4 className="text-sm font-semibold">Generated Videos</h4>
+                             <Button 
+                               onClick={generateAllVideos}
+                               variant="outline"
+                               size="sm"
+                               className="gap-2"
+                             >
+                               <RefreshCw className="w-4 h-4" />
+                               Regenerate
+                             </Button>
+                           </div>
+                           
+                           <div className="grid gap-4">
+                             {generatedVideos.map((video, index) => (
+                               <div key={video.id} className="p-4 rounded-lg bg-background/50 border border-primary/10">
+                                 <div className="flex items-center justify-between mb-3">
+                                   <span className="text-sm font-medium">Video {index + 1}</span>
+                                   <span className={`text-xs px-2 py-1 rounded-full ${
+                                     video.status === 'success' ? 'bg-green-100 text-green-700' :
+                                     video.status === 'fail' || video.status === 'error' ? 'bg-red-100 text-red-700' :
+                                     'bg-yellow-100 text-yellow-700'
+                                   }`}>
+                                     {video.status}
+                                   </span>
+                                 </div>
+                                 
+                                 {video.url && video.status === 'success' && (
+                                   <video 
+                                     src={video.url} 
+                                     controls 
+                                     className="w-full rounded-lg"
+                                     style={{ maxHeight: '300px' }}
+                                   >
+                                     Your browser does not support the video tag.
+                                   </video>
+                                 )}
+                               </div>
+                             ))}
+                           </div>
+                         </div>
+                       )}
+                     </div>
+                   </div>
+                 ) : isGeneratingVideoPrompts ? (
                   <div className="p-6 rounded-xl bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10 text-center">
                     <div className="flex items-center justify-center gap-3 mb-2">
                       <RefreshCw className="h-5 w-5 animate-spin text-primary" />
