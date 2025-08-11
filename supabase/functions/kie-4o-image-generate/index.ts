@@ -47,8 +47,10 @@ serve(async (req) => {
     }
 
     const payload: any = {
+      fallbackModel: "FLUX_MAX",
+      size: "2:3",
       prompt,
-      inputImage: [inputImage],
+      filesUrl: [inputImage],
     };
 
     console.log('4o Image generate payload:', { hasPrompt: !!prompt, hasInputImage: !!inputImage, inputImage });

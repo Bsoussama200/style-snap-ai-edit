@@ -94,11 +94,12 @@ const Test: React.FC = () => {
           const st = await supabase.functions.invoke('kie-4o-image-status', { body: { taskId: tid } });
           if (st.error) throw st.error;
           const d: any = st.data;
-          addLog(`status: successFlag=${d?.successFlag} msg=${d?.errorMessage || ''} imageUrl=${d?.imageUrl || 'none'}`);
-          if (d?.successFlag === 1 && d?.imageUrl) {
+          const imageUrl = d?.response?.resultUrls?.[0];
+          addLog(`status: successFlag=${d?.successFlag} msg=${d?.errorMessage || ''} imageUrl=${imageUrl || 'none'}`);
+          if (d?.successFlag === 1 && imageUrl) {
             setGenerating(false);
             setStatus('success');
-            setImageUrl(d.imageUrl as string);
+            setImageUrl(imageUrl as string);
             addLog('Image ready!');
             if (pollingRef.current) window.clearInterval(pollingRef.current);
           } else if (d?.successFlag === -1) {
