@@ -45,30 +45,32 @@ serve(async (req) => {
 
     const systemPrompt = `You are a professional video marketing specialist creating VEO3 video prompts for a creative ad sequence.
 
-Generate exactly 4 video prompts that tell a compelling story in sequence (like a mini ad campaign). IMPORTANT: All spoken dialogue must be delivered in a perfect American English accent.
+Generate exactly 5 video prompts that tell a compelling story in sequence (like a mini ad campaign). IMPORTANT: All spoken dialogue must be delivered in a perfect American English accent.
 
-Video 1: "The Problem" — Show someone experiencing frustration or difficulty due to the ABSENCE of this product. Focus on the pain point it solves. Set referenceImage to false (product not shown).
+Video 1: "The Hook" — A fast, visually striking attention-grabber that makes the viewer want to keep watching. Tease the problem without showing the product yet. Set referenceImage to false.
 
-Video 2: "The Discovery" — Show someone discovering, trying, or using the product for the first time and having a positive reaction (the "aha moment"). Set referenceImage to true (product prominently featured).
+Video 2: "The Problem" — Show someone experiencing frustration or difficulty due to the ABSENCE of this product. Highlight the pain point that the product solves. Set referenceImage to false.
 
-Video 3: "The Transformation" — Show how the product improves their life. Demonstrate ongoing benefits and a better lifestyle with the product. Set referenceImage to true (product shown in use).
+Video 3: "The Discovery" — Show someone discovering, trying, or using the product for the first time and having a positive reaction (the "aha moment"). Set referenceImage to true (product prominently featured).
 
-Video 4: "Product Showcase + VO" — Show ONLY the product (no person on screen). Use a voice-over narrator who speaks a concise, compelling line in a perfect American English accent that highlights the product's key benefit. Set referenceImage to true.
+Video 4: "The Transformation" — Show how the product improves their life. Demonstrate ongoing benefits and a better lifestyle with the product. Set referenceImage to true (product shown in use).
 
-Return your response strictly as a JSON array with exactly 4 objects, NO markdown, NO code fences, each following this exact structure:
+Video 5: "Product Showcase + VO" — Show ONLY the product (no person on screen). Use a voice-over narrator who speaks a concise, compelling line in a perfect American English accent that highlights the product's key benefit. Set referenceImage to true.
+
+Return your response strictly as a JSON array with exactly 5 objects, NO markdown, NO code fences, each following this exact structure:
 {
   "sceneDurationSeconds": 8,
   "referenceImage": boolean,
   "person": {
-    "name": "string (realistic first name or 'Narrator' for video 4)",
-    "description": "string (for video 4, indicate voice-over narrator only; no on-screen person)",
+    "name": "string (realistic first name or 'Narrator' for video 5)",
+    "description": "string (for video 5, indicate voice-over narrator only; no on-screen person)",
     "actions": ["action1", "action2"],
     "line": "string (spoken dialogue; perfect American English accent)",
     "tone": "string (speaking tone that matches the scene emotion)",
     "speaker": true
   },
   "place": {
-    "description": "string (detailed setting that supports the narrative; for video 4 describe a product-only scene/stage)"
+    "description": "string (detailed setting that supports the narrative; for video 5 describe a product-only scene/stage)"
   },
   "additionalInstructions": {
     "cameraMovement": "string (camera technique that enhances the story)",
@@ -78,10 +80,11 @@ Return your response strictly as a JSON array with exactly 4 objects, NO markdow
 }
 
 Make the sequence emotionally compelling:
-- Video 1: Frustrated/concerned tone, darker lighting, problems-focused camera work, referenceImage: false
-- Video 2: Curious/excited tone, brighter lighting, discovery-focused camera movement, referenceImage: true
-- Video 3: Confident/happy tone, warm lighting, celebration-focused cinematography, referenceImage: true
-- Video 4: Clear narrator delivery (perfect American English accent), product-only visuals, studio/hero-lighting, referenceImage: true
+- Video 1: Punchy hook, dynamic motion/edits, tease the pain point, referenceImage: false
+- Video 2: Frustrated/concerned tone, darker lighting, problems-focused camera work, referenceImage: false
+- Video 3: Curious/excited tone, brighter lighting, discovery-focused camera movement, referenceImage: true
+- Video 4: Confident/happy tone, warm lighting, celebration-focused cinematography, referenceImage: true
+- Video 5: Clear narrator delivery (perfect American English accent), product-only visuals, studio/hero-lighting, referenceImage: true
 
 Ensure each spoken line advances the narrative and feels natural for that stage of the customer journey.`;
 
@@ -98,7 +101,7 @@ Target Audiences: ${targetAudiences?.join(', ') || 'None specified'}
 
 Analysis: ${analysis || 'No additional analysis provided'}
 
-Create 4 distinct video prompts that showcase this product effectively for marketing purposes. Also ensure all spoken dialogue uses a perfect American English accent.`;
+Create 5 distinct video prompts that showcase this product effectively for marketing purposes. Also ensure all spoken dialogue uses a perfect American English accent.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -143,10 +146,10 @@ Create 4 distinct video prompts that showcase this product effectively for marke
       }
     }
 
-    // Validate that we have exactly 4 prompts
-    if (!Array.isArray(videoPrompts) || videoPrompts.length !== 4) {
+    // Validate that we have exactly 5 prompts
+    if (!Array.isArray(videoPrompts) || videoPrompts.length !== 5) {
       console.error('Invalid number of prompts:', videoPrompts?.length);
-      throw new Error('Expected exactly 4 video prompts');
+      throw new Error('Expected exactly 5 video prompts');
     }
 
     // Validate structure of each prompt
@@ -158,7 +161,7 @@ Create 4 distinct video prompts that showcase this product effectively for marke
       }
     }
 
-    console.log('Successfully generated and validated 4 video prompts');
+    console.log('Successfully generated and validated 5 video prompts');
 
     return new Response(
       JSON.stringify({ videoPrompts }),
