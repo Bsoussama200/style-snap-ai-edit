@@ -1017,10 +1017,10 @@ const ProductWizard: React.FC = () => {
                                <div key={video.id} className="flex items-center justify-between p-3 rounded-lg bg-background/30 border border-primary/10">
                                  <span className="text-sm font-medium">Video {index + 1}</span>
                                  <div className="flex items-center gap-2">
-                                   {video.status === 'pending' || video.status === 'processing' ? (
-                                     <>
-                                       <RefreshCw className="h-4 w-4 animate-spin text-primary" />
-                                       <span className="text-xs text-muted-foreground">{video.status}</span>
+                                    {video.status === 'pending' || video.status === 'processing' ? (
+                                      <>
+                                        <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                                        <span className="text-xs text-muted-foreground">generating</span>
                                      </>
                                    ) : video.status === 'success' ? (
                                      <>
