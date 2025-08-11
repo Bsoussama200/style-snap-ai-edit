@@ -417,14 +417,23 @@ const ProductWizard: React.FC = () => {
             const imageTaskId = imageResponse.data?.taskId as string | undefined;
             if (!imageTaskId) throw new Error('No task ID received from image generation service');
 
-            const maxAttempts = 300; // Increased timeout to 10 minutes
+            const maxAttempts = 150; // Reduced to 5 minutes for faster failure detection
             let attempts = 0;
             while (attempts < maxAttempts) {
               try {
                 const statusResponse = await supabase.functions.invoke('kie-4o-image-status', { body: { taskId: imageTaskId } });
-                if (statusResponse.error) throw statusResponse.error;
+                if (statusResponse.error) {
+                  console.error(`Image status check failed for video ${i + 1}:`, statusResponse.error);
+                  throw statusResponse.error;
+                }
                 const s = statusResponse.data as any;
-                console.log(`Image status for video ${i + 1}:`, s);
+                console.log(`Image status for video ${i + 1} (attempt ${attempts + 1}/${maxAttempts}):`, s);
+                
+                // Check for failure states
+                if (s?.successFlag === 0 || s?.errorMessage) {
+                  throw new Error(`Image generation failed: ${s?.errorMessage || 'Unknown error'}`);
+                }
+                
                 const imageUrl = s?.response?.resultUrls?.[0];
                 if (s?.successFlag === 1 && imageUrl) {
                   referenceImageUrl = imageUrl as string;
@@ -432,17 +441,31 @@ const ProductWizard: React.FC = () => {
                   break;
                 }
                 if (s?.successFlag === -1) throw new Error(s?.errorMessage || 'Image generation failed');
+                
+                attempts++;
+                if (attempts >= maxAttempts) {
+                  throw new Error(`Image generation timeout after ${maxAttempts} attempts`);
+                }
+                await new Promise(r => setTimeout(r, 2000));
               } catch (e) {
-                console.error('Image status check error:', e);
+                console.error(`Image status check error for video ${i + 1}:`, e);
+                attempts++;
+                if (attempts >= maxAttempts) {
+                  throw new Error(`Image generation monitoring failed: ${e}`);
+                }
+                await new Promise(r => setTimeout(r, 2000));
               }
-              attempts++;
-              await new Promise(r => setTimeout(r, 2000));
             }
-            if (!referenceImageUrl) throw new Error('Image generation timed out');
           } catch (imageError) {
             console.error(`Image generation failed for video ${i + 1}, using source image as fallback:`, imageError);
             // Fallback: use the source image as reference instead of failing completely
             referenceImageUrl = sourceImageUrl;
+            updateVideo(entry.id, { status: 'processing' }); // Update status to show progress
+            toast({
+              title: `Video ${i + 1} image fallback`,
+              description: 'Using original image instead of generated scene',
+              variant: 'default'
+            });
           }
         } else if (prompt.referenceImage) {
           if (!sourceImageUrl) throw new Error('Source image URL missing');
