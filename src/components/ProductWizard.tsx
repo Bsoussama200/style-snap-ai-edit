@@ -507,94 +507,53 @@ const ProductWizard: React.FC = () => {
                 </div>
 
                 {/* Attributes Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Left Column - Materials & Colors */}
-                  <div className="space-y-4">
-                    {analysis.productProfile?.materials?.length ? (
-                      <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="h-6 w-6 rounded bg-secondary/20 grid place-items-center">
-                            <span className="text-xs">🧱</span>
-                          </div>
-                          <span className="font-medium text-sm">Materials</span>
+                <div className="space-y-4">
+                  {/* Features & Appeal */}
+                  {analysis.productProfile?.features?.length ? (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="h-6 w-6 rounded bg-primary/20 grid place-items-center">
+                          <span className="text-xs">⚙️</span>
                         </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {analysis.productProfile.materials.map((m, i) => (
-                            <span key={i} className="px-2.5 py-1 rounded-md bg-secondary/30 text-secondary-foreground text-xs font-medium hover:bg-secondary/40 transition-colors">
-                              {m}
-                            </span>
-                          ))}
-                        </div>
+                        <span className="font-medium text-sm">Features</span>
                       </div>
-                    ) : null}
+                      <div className="flex flex-wrap gap-1.5">
+                        {analysis.productProfile.features.slice(0, 6).map((f, i) => (
+                          <span key={i} className="px-2.5 py-1 rounded-md bg-primary/15 text-primary text-xs font-medium hover:bg-primary/25 transition-colors">
+                            {f}
+                          </span>
+                        ))}
+                        {analysis.productProfile.features.length > 6 && (
+                          <span className="px-2.5 py-1 rounded-md bg-muted text-muted-foreground text-xs font-medium">
+                            +{analysis.productProfile.features.length - 6} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
 
-                    {analysis.productProfile?.colors?.length ? (
-                      <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="h-6 w-6 rounded bg-accent/20 grid place-items-center">
-                            <span className="text-xs">🎨</span>
-                          </div>
-                          <span className="font-medium text-sm">Colors</span>
+                  {analysis.productProfile?.emotionalAppeal?.length ? (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="h-6 w-6 rounded bg-accent/20 grid place-items-center">
+                          <span className="text-xs">💝</span>
                         </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {analysis.productProfile.colors.map((c, i) => (
-                            <span key={i} className="px-2.5 py-1 rounded-md bg-accent/15 text-accent text-xs font-medium hover:bg-accent/25 transition-colors">
-                              {c}
-                            </span>
-                          ))}
-                        </div>
+                        <span className="font-medium text-sm">Appeal</span>
                       </div>
-                    ) : null}
-                  </div>
-
-                  {/* Right Column - Features & Appeal */}
-                  <div className="space-y-4">
-                    {analysis.productProfile?.features?.length ? (
-                      <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="h-6 w-6 rounded bg-primary/20 grid place-items-center">
-                            <span className="text-xs">⚙️</span>
-                          </div>
-                          <span className="font-medium text-sm">Features</span>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {analysis.productProfile.features.slice(0, 4).map((f, i) => (
-                            <span key={i} className="px-2.5 py-1 rounded-md bg-primary/15 text-primary text-xs font-medium hover:bg-primary/25 transition-colors">
-                              {f}
-                            </span>
-                          ))}
-                          {analysis.productProfile.features.length > 4 && (
-                            <span className="px-2.5 py-1 rounded-md bg-muted text-muted-foreground text-xs font-medium">
-                              +{analysis.productProfile.features.length - 4} more
-                            </span>
-                          )}
-                        </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {analysis.productProfile.emotionalAppeal.slice(0, 4).map((e, i) => (
+                          <span key={i} className="px-2.5 py-1 rounded-md bg-gradient-to-r from-accent/15 to-primary/10 text-accent text-xs font-medium hover:from-accent/25 hover:to-primary/20 transition-all">
+                            {e}
+                          </span>
+                        ))}
+                        {analysis.productProfile.emotionalAppeal.length > 4 && (
+                          <span className="px-2.5 py-1 rounded-md bg-muted text-muted-foreground text-xs font-medium">
+                            +{analysis.productProfile.emotionalAppeal.length - 4} more
+                          </span>
+                        )}
                       </div>
-                    ) : null}
-
-                    {analysis.productProfile?.emotionalAppeal?.length ? (
-                      <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="h-6 w-6 rounded bg-accent/20 grid place-items-center">
-                            <span className="text-xs">💝</span>
-                          </div>
-                          <span className="font-medium text-sm">Appeal</span>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {analysis.productProfile.emotionalAppeal.slice(0, 3).map((e, i) => (
-                            <span key={i} className="px-2.5 py-1 rounded-md bg-gradient-to-r from-accent/15 to-primary/10 text-accent text-xs font-medium hover:from-accent/25 hover:to-primary/20 transition-all">
-                              {e}
-                            </span>
-                          ))}
-                          {analysis.productProfile.emotionalAppeal.length > 3 && (
-                            <span className="px-2.5 py-1 rounded-md bg-muted text-muted-foreground text-xs font-medium">
-                              +{analysis.productProfile.emotionalAppeal.length - 3} more
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
+                    </div>
+                  ) : null}
                 </div>
 
                 {/* Target Audiences Compact */}
@@ -616,24 +575,6 @@ const ProductWizard: React.FC = () => {
                   </div>
                 ) : null}
 
-                {/* Quick Edit Section */}
-                <div className="border-t border-primary/10 pt-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="h-6 w-6 rounded bg-secondary/20 grid place-items-center">
-                      <span className="text-xs">✏️</span>
-                    </div>
-                    <span className="font-medium text-sm">Quick Edit</span>
-                  </div>
-                  <Textarea
-                    value={(analysis.targetAudiences || []).join('\n')}
-                    onChange={(e) => setAnalysis(prev => prev ? { 
-                      ...prev, 
-                      targetAudiences: e.target.value.split('\n').map(v => v.trim()).filter(Boolean) 
-                    } : prev)}
-                    className="w-full min-h-[50px] bg-background/60 border-primary/15 focus:border-primary/30 resize-none text-xs rounded-lg"
-                    placeholder="Edit target audiences (one per line)"
-                  />
-                </div>
 
                 {/* CHOOSE CATEGORY - Prominent Section */}
                 <div className="border-2 border-primary/30 rounded-xl p-6 bg-gradient-to-r from-primary/5 to-accent/5 shadow-lg">
