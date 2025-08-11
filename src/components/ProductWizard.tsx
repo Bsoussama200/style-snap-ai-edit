@@ -409,6 +409,17 @@ const ProductWizard: React.FC = () => {
     }
   };
 
+  const downloadImage = () => {
+    if (!generatedImage) return;
+    
+    const link = document.createElement('a');
+    link.href = generatedImage;
+    link.download = `generated-product-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const monitorVideoGeneration = async (taskIds: string[]) => {
     const maxAttempts = 90; // ~3 minutes total
     let attempts = 0;
@@ -926,55 +937,238 @@ const ProductWizard: React.FC = () => {
                      </div>
                    </div>
                  ) : isGeneratingVideoPrompts ? (
-                  <div className="p-6 rounded-xl bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10 text-center">
-                    <div className="flex items-center justify-center gap-3 mb-2">
-                      <RefreshCw className="h-5 w-5 animate-spin text-primary" />
-                      <span className="text-sm font-medium">Generating video prompts...</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">Creating VEO3 prompts based on your product analysis</p>
-                  </div>
-                ) : null}
+                   <div className="p-6 rounded-xl bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10 text-center">
+                     <div className="flex items-center justify-center gap-3 mb-2">
+                       <RefreshCw className="h-5 w-5 animate-spin text-primary" />
+                       <span className="text-sm font-medium">Generating video prompts...</span>
+                     </div>
+                     <p className="text-xs text-muted-foreground">Creating VEO3 prompts based on your product analysis</p>
+                   </div>
+                 ) : null}
 
-                {/* CHOOSE CATEGORY - Prominent Section */}
-                <div className="border-2 border-primary/30 rounded-xl p-6 bg-gradient-to-r from-primary/5 to-accent/5 shadow-lg">
-                  <div className="text-center mb-4">
-                    <div className="flex items-center justify-center gap-3 mb-2">
-                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent grid place-items-center shadow-md">
-                        <span className="text-white font-bold text-lg">📂</span>
-                      </div>
-                      <h3 className="text-xl font-bold text-foreground">Choose Category</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground">Select the best matching category for your product</p>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <select
-                      className="w-full bg-background border-2 border-primary/20 rounded-lg p-4 font-semibold text-base focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
-                      value={categoryId}
-                      onChange={(e) => setCategoryId(e.target.value)}
-                    >
-                      <option value="" className="text-muted-foreground">🔍 Select a category...</option>
-                      {categories?.map(c => (
-                        <option key={c.id} value={c.id} className="font-medium">{c.name}</option>
-                      ))}
-                    </select>
-                    
-                    {typeof analysis.confidence === 'number' && (
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-primary/10">
-                        <span className="text-sm font-medium text-muted-foreground">AI Confidence</span>
-                        <div className="flex items-center gap-3">
-                          <div className="h-2 w-24 bg-secondary/30 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500"
-                              style={{ width: `${analysis.confidence * 100}%` }}
-                            />
-                          </div>
-                          <span className="text-sm font-bold text-primary">{(analysis.confidence * 100).toFixed(0)}%</span>
+                 {/* Product Display Box */}
+                 {analysis && (
+                   <div className="p-6 rounded-xl bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10">
+                     <div className="flex items-center gap-3 mb-4">
+                       <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent grid place-items-center shadow-md">
+                         <span className="text-white font-bold text-lg">🖼️</span>
+                       </div>
+                       <h3 className="text-lg font-bold">Product Display</h3>
+                       <span className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary font-medium">
+                         Generate Images
+                       </span>
+                     </div>
+
+                     {/* Category Selection */}
+                     {!categoryId ? (
+                       <div className="space-y-4">
+                         <div className="text-center mb-4">
+                           <h4 className="text-md font-semibold text-foreground mb-2">Choose Category</h4>
+                           <p className="text-sm text-muted-foreground">Select the best matching category for your product</p>
+                         </div>
+                         
+                         <div className="space-y-4">
+                           <select
+                             className="w-full bg-background border-2 border-primary/20 rounded-lg p-4 font-semibold text-base focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
+                             value={categoryId}
+                             onChange={(e) => setCategoryId(e.target.value)}
+                           >
+                             <option value="" className="text-muted-foreground">🔍 Select a category...</option>
+                             {categories?.map(c => (
+                               <option key={c.id} value={c.id} className="font-medium">{c.name}</option>
+                             ))}
+                           </select>
+                           
+                           {typeof analysis.confidence === 'number' && (
+                             <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-primary/10">
+                               <span className="text-sm font-medium text-muted-foreground">AI Confidence</span>
+                               <div className="flex items-center gap-3">
+                                 <div className="h-2 w-24 bg-secondary/30 rounded-full overflow-hidden">
+                                   <div 
+                                     className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500"
+                                     style={{ width: `${analysis.confidence * 100}%` }}
+                                   />
+                                 </div>
+                                 <span className="text-sm font-bold text-primary">{(analysis.confidence * 100).toFixed(0)}%</span>
+                               </div>
+                             </div>
+                           )}
+                         </div>
+                       </div>
+                     ) : (
+                       /* Style Selection and Image Generation */
+                       <div className="space-y-6">
+                         {/* Selected Category Display */}
+                         <div className="p-3 rounded-lg bg-background/50 border border-primary/10">
+                           <div className="flex items-center justify-between">
+                             <span className="text-sm font-medium">Selected Category:</span>
+                             <div className="flex items-center gap-2">
+                               <span className="text-sm font-semibold text-primary">
+                                 {categories?.find(c => c.id === categoryId)?.name}
+                               </span>
+                               <Button 
+                                 variant="ghost" 
+                                 size="sm" 
+                                 onClick={() => setCategoryId('')}
+                                 className="h-6 w-6 p-0"
+                               >
+                                 ✕
+                               </Button>
+                             </div>
+                           </div>
+                         </div>
+
+                         {/* Style Selection */}
+                         {!selectedStyle ? (
+                           <div className="space-y-4">
+                             <h4 className="text-md font-semibold">Pick a Style</h4>
+                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                               {styles.map((style) => (
+                                 <Card 
+                                   key={style.id} 
+                                   className={`glass-card cursor-pointer transition-all hover:scale-105 ${selectedStyle === style.id ? 'ring-2 ring-primary bg-primary/10' : ''}`} 
+                                   onClick={() => setSelectedStyle(style.id)}
+                                 >
+                                   <CardContent className="p-4 space-y-2">
+                                     <img src={style.placeholder || '/placeholder.svg'} alt={`${style.name} example`} className="w-full h-32 object-cover rounded-md" />
+                                     <div>
+                                       <h3 className="font-semibold">{style.name}</h3>
+                                       <p className="text-sm text-muted-foreground">{style.description}</p>
+                                     </div>
+                                   </CardContent>
+                                 </Card>
+                               ))}
+                             </div>
+                           </div>
+                         ) : (
+                           /* Image Generation */
+                           <div className="space-y-4">
+                             {/* Selected Style Display */}
+                             <div className="p-3 rounded-lg bg-background/50 border border-primary/10">
+                               <div className="flex items-center justify-between">
+                                 <span className="text-sm font-medium">Selected Style:</span>
+                                 <div className="flex items-center gap-2">
+                                   <span className="text-sm font-semibold text-primary">
+                                     {styles.find(s => s.id === selectedStyle)?.name}
+                                   </span>
+                                   <Button 
+                                     variant="ghost" 
+                                     size="sm" 
+                                     onClick={() => setSelectedStyle('')}
+                                     className="h-6 w-6 p-0"
+                                   >
+                                     ✕
+                                   </Button>
+                                 </div>
+                               </div>
+                             </div>
+
+                             {/* Custom Prompt */}
+                             <div className="space-y-2">
+                               <label className="text-sm font-medium">Custom Prompt (Optional)</label>
+                               <Textarea
+                                 value={customPrompt}
+                                 onChange={(e) => setCustomPrompt(e.target.value)}
+                                 placeholder="Add any specific details or modifications..."
+                                 className="min-h-[80px]"
+                               />
+                             </div>
+
+                             {/* Generate Button */}
+                             {!isGenerating && !generatedImage ? (
+                               <Button 
+                                 onClick={generateImage}
+                                 className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 gap-2"
+                                 size="lg"
+                               >
+                                 <Sparkles className="w-5 h-5" />
+                                 Generate Product Image
+                               </Button>
+                             ) : isGenerating ? (
+                               <div className="flex items-center justify-center gap-3 p-4 rounded-lg bg-background/50 border border-primary/20">
+                                 <RefreshCw className="h-5 w-5 animate-spin text-primary" />
+                                 <span className="text-sm font-medium">Generating image...</span>
+                               </div>
+                             ) : generatedImage ? (
+                               <div className="space-y-4">
+                                 <div className="relative">
+                                   <img 
+                                     src={generatedImage} 
+                                     alt="Generated product" 
+                                     className="w-full rounded-lg shadow-lg"
+                                   />
+                                 </div>
+                                 
+                                 <div className="flex gap-3">
+                                   <Button 
+                                     onClick={generateImage}
+                                     variant="outline"
+                                     className="flex-1 gap-2"
+                                   >
+                                     <RefreshCw className="w-4 h-4" />
+                                     Regenerate
+                                   </Button>
+                                   
+                                   <Button 
+                                     onClick={downloadImage}
+                                     variant="outline"
+                                     className="flex-1 gap-2"
+                                   >
+                                     <Download className="w-4 h-4" />
+                                     Download
+                                   </Button>
+                                 </div>
+                               </div>
+                             ) : null}
+                           </div>
+                         )}
+                       </div>
+                     )}
+                   </div>
+                 )}
+
+                  {/* CHOOSE CATEGORY - Now hidden since moved to Product Display */}
+                  {false && (
+                  <div className="border-2 border-primary/30 rounded-xl p-6 bg-gradient-to-r from-primary/5 to-accent/5 shadow-lg">
+                    <div className="text-center mb-4">
+                      <div className="flex items-center justify-center gap-3 mb-2">
+                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent grid place-items-center shadow-md">
+                          <span className="text-white font-bold text-lg">📂</span>
                         </div>
+                        <h3 className="text-xl font-bold text-foreground">Choose Category</h3>
                       </div>
-                    )}
+                      <p className="text-sm text-muted-foreground">Select the best matching category for your product</p>
+                    </div>
+                   
+                    <div className="space-y-4">
+                      <select
+                        className="w-full bg-background border-2 border-primary/20 rounded-lg p-4 font-semibold text-base focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
+                        value={categoryId}
+                        onChange={(e) => setCategoryId(e.target.value)}
+                      >
+                        <option value="" className="text-muted-foreground">🔍 Select a category...</option>
+                        {categories?.map(c => (
+                          <option key={c.id} value={c.id} className="font-medium">{c.name}</option>
+                        ))}
+                      </select>
+                      
+                      {typeof analysis.confidence === 'number' && (
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-primary/10">
+                          <span className="text-sm font-medium text-muted-foreground">AI Confidence</span>
+                          <div className="flex items-center gap-3">
+                            <div className="h-2 w-24 bg-secondary/30 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500"
+                                style={{ width: `${analysis.confidence * 100}%` }}
+                              />
+                            </div>
+                            <span className="text-sm font-bold text-primary">{(analysis.confidence * 100).toFixed(0)}%</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                  )}
               </div>
             </CardContent>
           </Card>
