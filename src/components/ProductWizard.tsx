@@ -508,23 +508,23 @@ const ProductWizard: React.FC = () => {
 
                 {/* Attributes Section */}
                 <div className="space-y-4">
-                  {/* Features & Appeal */}
+                  {/* Features */}
                   {analysis.productProfile?.features?.length ? (
-                    <div>
+                    <div className="p-4 rounded-lg bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10">
                       <div className="flex items-center gap-2 mb-3">
                         <div className="h-6 w-6 rounded bg-primary/20 grid place-items-center">
                           <span className="text-xs">⚙️</span>
                         </div>
                         <span className="font-medium text-sm">Features</span>
                       </div>
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap gap-2">
                         {analysis.productProfile.features.slice(0, 6).map((f, i) => (
-                          <span key={i} className="px-2.5 py-1 rounded-md bg-primary/15 text-primary text-xs font-medium hover:bg-primary/25 transition-colors">
+                          <span key={i} className="px-3 py-1.5 rounded-full bg-primary/20 text-primary text-xs font-medium hover:bg-primary/30 transition-colors">
                             {f}
                           </span>
                         ))}
                         {analysis.productProfile.features.length > 6 && (
-                          <span className="px-2.5 py-1 rounded-md bg-muted text-muted-foreground text-xs font-medium">
+                          <span className="px-3 py-1.5 rounded-full bg-muted/20 text-muted-foreground text-xs font-medium">
                             +{analysis.productProfile.features.length - 6} more
                           </span>
                         )}
@@ -532,22 +532,23 @@ const ProductWizard: React.FC = () => {
                     </div>
                   ) : null}
 
+                  {/* Appeal */}
                   {analysis.productProfile?.emotionalAppeal?.length ? (
-                    <div>
+                    <div className="p-4 rounded-lg bg-gradient-to-r from-accent/5 to-primary/5 border border-accent/10">
                       <div className="flex items-center gap-2 mb-3">
                         <div className="h-6 w-6 rounded bg-accent/20 grid place-items-center">
                           <span className="text-xs">💝</span>
                         </div>
                         <span className="font-medium text-sm">Appeal</span>
                       </div>
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap gap-2">
                         {analysis.productProfile.emotionalAppeal.slice(0, 4).map((e, i) => (
-                          <span key={i} className="px-2.5 py-1 rounded-md bg-gradient-to-r from-accent/15 to-primary/10 text-accent text-xs font-medium hover:from-accent/25 hover:to-primary/20 transition-all">
+                          <span key={i} className="px-3 py-1.5 rounded-full bg-accent/20 text-accent text-xs font-medium hover:bg-accent/30 transition-colors">
                             {e}
                           </span>
                         ))}
                         {analysis.productProfile.emotionalAppeal.length > 4 && (
-                          <span className="px-2.5 py-1 rounded-md bg-muted text-muted-foreground text-xs font-medium">
+                          <span className="px-3 py-1.5 rounded-full bg-muted/20 text-muted-foreground text-xs font-medium">
                             +{analysis.productProfile.emotionalAppeal.length - 4} more
                           </span>
                         )}
