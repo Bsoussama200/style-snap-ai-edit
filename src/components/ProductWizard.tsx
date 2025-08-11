@@ -395,7 +395,7 @@ const ProductWizard: React.FC = () => {
           console.log(`Generating starting scene image for video ${i + 1} with scene: ${(prompt as any).startingScene}`);
 
           try {
-            const imageResponse = await supabase.functions.invoke('kie-flux-kontext-generate', {
+            const imageResponse = await supabase.functions.invoke('kie-4o-image-generate', {
               body: {
                 prompt: `Create a professional scene: ${(prompt as any).startingScene}. High quality, well-lit, perfect for video production.`,
                 inputImage: sourceImageUrl,
@@ -410,16 +410,17 @@ const ProductWizard: React.FC = () => {
             const imageTaskId = imageResponse.data?.taskId as string | undefined;
             if (!imageTaskId) throw new Error('No task ID received from image generation service');
 
-            const maxAttempts = 60;
+            const maxAttempts = 300; // Increased timeout to 10 minutes
             let attempts = 0;
             while (attempts < maxAttempts) {
               try {
-                const statusResponse = await supabase.functions.invoke('kie-flux-kontext-status', { body: { taskId: imageTaskId } });
+                const statusResponse = await supabase.functions.invoke('kie-4o-image-status', { body: { taskId: imageTaskId } });
                 if (statusResponse.error) throw statusResponse.error;
                 const s = statusResponse.data as any;
                 console.log(`Image status for video ${i + 1}:`, s);
-                if (s?.successFlag === 1 && s?.response?.resultImageUrl) {
-                  referenceImageUrl = s.response.resultImageUrl as string;
+                const imageUrl = s?.response?.resultUrls?.[0];
+                if (s?.successFlag === 1 && imageUrl) {
+                  referenceImageUrl = imageUrl as string;
                   console.log(`Generated scene image for video ${i + 1}:`, referenceImageUrl);
                   break;
                 }
