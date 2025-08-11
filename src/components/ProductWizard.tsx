@@ -364,199 +364,133 @@ const ProductWizard: React.FC = () => {
   };
 
   const generateAllVideos = async () => {
-    if (!analysis?.videoPrompts || !uploadedImage) return;
+    if (!analysis?.videoPrompts) return;
     
     setIsGeneratingVideos(true);
-    setGeneratedVideos([]);
-    
-    const videoResults: VideoGenerationResult[] = [];
-    
-    for (let i = 0; i < analysis.videoPrompts.length; i++) {
-      const prompt = analysis.videoPrompts[i];
-      const videoId = Date.now() + i;
-      
-      // Add video to state immediately
-      const newVideo: VideoGenerationResult = {
-        id: videoId,
-        promptIndex: i,
-        status: 'pending',
-        prompt: prompt,
-      };
-      
-      videoResults.push(newVideo);
-      setGeneratedVideos([...videoResults]);
-      
+
+    // Initialize list with all videos as pending first
+    const initial: VideoGenerationResult[] = analysis.videoPrompts.map((p, i) => ({
+      id: Date.now() + i,
+      promptIndex: i,
+      status: 'pending',
+      prompt: p,
+    }));
+    setGeneratedVideos(initial);
+
+    const updateVideo = (id: number, patch: Partial<VideoGenerationResult>) => {
+      setGeneratedVideos(prev => prev.map(v => (v.id === id ? { ...v, ...patch } : v)));
+    };
+
+    const tasks = initial.map(async (entry, i) => {
+      const prompt = analysis.videoPrompts![i];
+      let referenceImageUrl: string | null = null;
+
       try {
-        let referenceImageUrl = null;
         let enhancedPrompt = `${prompt.person.description} ${prompt.person.actions.join(', ')}. Setting: ${prompt.place.description}. The person says: "${prompt.person.line}" in a ${prompt.person.tone} tone with a perfect American English accent. Camera: ${prompt.additionalInstructions.cameraMovement}. Lighting: ${prompt.additionalInstructions.lighting}. Duration: ${prompt.sceneDurationSeconds} seconds.`;
-        
+
         // Step 1: Generate starting scene image if needed
-        if (prompt.referenceImage && uploadedImage && (prompt as any).startingScene) {
-          // Update status to show image generation
-          newVideo.status = 'generating-image';
-          setGeneratedVideos([...videoResults]);
-          
+        if (prompt.referenceImage && (prompt as any).startingScene) {
+          if (!sourceImageUrl) throw new Error('Source image URL missing');
+          updateVideo(entry.id, { status: 'generating-image' });
           console.log(`Generating starting scene image for video ${i + 1} with prompt:`, (prompt as any).startingScene);
-          
-          // Generate starting scene image
+
           const imageResponse = await supabase.functions.invoke('kie-flux-kontext-generate', {
             body: {
               prompt: (prompt as any).startingScene,
-              inputImage: uploadedImage,
-            }
+              inputImage: sourceImageUrl,
+            },
           });
-          
-          if (imageResponse.error) {
-            throw new Error(imageResponse.error.message || 'Failed to generate starting scene image');
-          }
-          
-          const imageTaskId = imageResponse.data?.taskId;
-          if (!imageTaskId) {
-            throw new Error('No task ID received from image generation service');
-          }
-          
-          console.log(`Image generation started for video ${i + 1}, task ID:`, imageTaskId);
-          
-          // Poll for image completion
-          const pollForImageCompletion = async () => {
-            const maxAttempts = 60;
-            let attempts = 0;
-            
-            while (attempts < maxAttempts) {
-              try {
-                const statusResponse = await supabase.functions.invoke('kie-flux-kontext-status', {
-                  body: { taskId: imageTaskId }
-                });
-                
-                if (statusResponse.error) {
-                  throw new Error(statusResponse.error.message || 'Failed to check image status');
-                }
-                
-                const status = statusResponse.data;
-                console.log(`Image status for video ${i + 1}:`, status);
-                
-                if (status?.successFlag === 1 && status?.response?.resultImageUrl) {
-                  console.log(`Image generation completed for video ${i + 1}:`, status.response.resultImageUrl);
-                  return status.response.resultImageUrl;
-                } else if (status?.successFlag === -1) {
-                  throw new Error(status?.errorMessage || 'Image generation failed');
-                }
-                
-                // Continue polling
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                attempts++;
-              } catch (error) {
-                console.error('Image status check error:', error);
-                attempts++;
-                await new Promise(resolve => setTimeout(resolve, 2000));
+          if (imageResponse.error) throw new Error(imageResponse.error.message || 'Failed to generate starting scene image');
+
+          const imageTaskId = imageResponse.data?.taskId as string | undefined;
+          if (!imageTaskId) throw new Error('No task ID received from image generation service');
+
+          const maxAttempts = 60;
+          let attempts = 0;
+          while (attempts < maxAttempts) {
+            try {
+              const statusResponse = await supabase.functions.invoke('kie-flux-kontext-status', { body: { taskId: imageTaskId } });
+              if (statusResponse.error) throw statusResponse.error;
+              const s = statusResponse.data as any;
+              console.log(`Image status for video ${i + 1}:`, s);
+              if (s?.successFlag === 1 && s?.response?.resultImageUrl) {
+                referenceImageUrl = s.response.resultImageUrl as string;
+                break;
               }
+              if (s?.successFlag === -1) throw new Error(s?.errorMessage || 'Image generation failed');
+            } catch (e) {
+              console.error('Image status check error:', e);
             }
-            
-            throw new Error('Image generation timed out');
-          };
-          
-          referenceImageUrl = await pollForImageCompletion();
-        } else if (prompt.referenceImage && uploadedImage) {
-          referenceImageUrl = uploadedImage;
+            attempts++;
+            await new Promise(r => setTimeout(r, 2000));
+          }
+          if (!referenceImageUrl) throw new Error('Image generation timed out');
+        } else if (prompt.referenceImage) {
+          if (!sourceImageUrl) throw new Error('Source image URL missing');
+          referenceImageUrl = sourceImageUrl;
         }
-        
+
         // Step 2: Generate prompt enhancement
-        newVideo.status = 'processing';
-        setGeneratedVideos([...videoResults]);
-        
-        // Convert the structured prompt to a text description for VEO3
-        enhancedPrompt = `${prompt.person.description} ${prompt.person.actions.join(', ')}. Setting: ${prompt.place.description}. The person says: "${prompt.person.line}" in a ${prompt.person.tone} tone with a perfect American English accent. Camera: ${prompt.additionalInstructions.cameraMovement}. Lighting: ${prompt.additionalInstructions.lighting}. Duration: ${prompt.sceneDurationSeconds} seconds.`;
-        
+        updateVideo(entry.id, { status: 'processing' });
+
         console.log(`Starting video generation ${i + 1} with prompt:`, enhancedPrompt);
         console.log(`Video ${i + 1} includes product reference:`, prompt.referenceImage);
-        
+
         // Step 3: Generate video with VEO3
-        newVideo.status = 'generating-video';
-        setGeneratedVideos([...videoResults]);
-        
-        // Prepare the VEO3 request body
+        updateVideo(entry.id, { status: 'generating-video' });
+
         const veoBody: any = {
           prompt: enhancedPrompt,
           model: 'veo3_fast',
           aspectRatio: '9:16',
           enableFallback: false,
         };
-
         if (referenceImageUrl) {
           veoBody.imageUrl = referenceImageUrl;
           veoBody.image_url = referenceImageUrl;
           veoBody.referenceImage = true;
           console.log(`Adding reference image for video ${i + 1}:`, referenceImageUrl);
         }
-        
-        const videoResponse = await supabase.functions.invoke('kie-veo-generate', {
-          body: veoBody,
-        });
-        
-        if (videoResponse.error) {
-          throw new Error(videoResponse.error.message || 'Failed to start video generation');
-        }
-        
-        const taskId = videoResponse.data?.taskId;
-        if (!taskId) {
-          throw new Error('No task ID received from video generation service');
-        }
-        
-        newVideo.taskId = taskId;
-        setGeneratedVideos([...videoResults]);
-        
-        // Step 4: Poll for video completion
-        const pollForCompletion = async () => {
-          const maxAttempts = 100;
-          let attempts = 0;
-          
-          while (attempts < maxAttempts) {
-            try {
-              const statusResponse = await supabase.functions.invoke('kie-veo-status', {
-                body: { taskId }
-              });
-              
-              if (statusResponse.error) {
-                throw new Error(statusResponse.error.message || 'Failed to check video status');
-              }
-              
-              const status = statusResponse.data;
-              
-              if (status?.successFlag === 1 && status?.response?.videoUrl) {
-                newVideo.status = 'success';
-                newVideo.videoUrl = status.response.videoUrl;
-                setGeneratedVideos([...videoResults]);
-                return;
-              } else if (status?.successFlag === -1) {
-                throw new Error(status?.errorMessage || 'Video generation failed');
-              }
-              
-              // Continue polling
-              await new Promise(resolve => setTimeout(resolve, 3000));
-              attempts++;
-            } catch (error) {
-              console.error('Status check error:', error);
-              attempts++;
-              await new Promise(resolve => setTimeout(resolve, 3000));
+
+        const videoResponse = await supabase.functions.invoke('kie-veo-generate', { body: veoBody });
+        if (videoResponse.error) throw new Error(videoResponse.error.message || 'Failed to start video generation');
+
+        const taskId = videoResponse.data?.taskId as string | undefined;
+        if (!taskId) throw new Error('No task ID received from video generation service');
+        updateVideo(entry.id, { taskId });
+
+        // Step 4: Poll for video completion (using state/videoUrl returned by our edge fn)
+        const maxVidAttempts = 100;
+        let vAttempts = 0;
+        while (vAttempts < maxVidAttempts) {
+          try {
+            const statusResponse = await supabase.functions.invoke('kie-veo-status', { body: { taskId } });
+            if (statusResponse.error) throw statusResponse.error;
+            const state = statusResponse.data?.state as string;
+            const outUrl = statusResponse.data?.videoUrl as string | undefined;
+            if (state === 'success' && outUrl) {
+              updateVideo(entry.id, { status: 'success', videoUrl: outUrl });
+              return;
             }
+            if (state === 'error' || state === 'fail') {
+              throw new Error('Video generation failed');
+            }
+          } catch (e) {
+            console.error('Status check error:', e);
           }
-          
-          throw new Error('Video generation timed out');
-        };
-        
-        await pollForCompletion();
-        
-      } catch (error) {
+          vAttempts++;
+          await new Promise(r => setTimeout(r, 3000));
+        }
+        throw new Error('Video generation timed out');
+      } catch (error: any) {
         console.error('Video generation error:', error);
-        newVideo.status = 'error';
-        newVideo.error = error instanceof Error ? error.message : 'Unknown error occurred';
-        setGeneratedVideos([...videoResults]);
+        updateVideo(entry.id, { status: 'error', error: error?.message || 'Unknown error occurred' });
       }
-    }
-    
+    });
+
+    await Promise.allSettled(tasks);
     setIsGeneratingVideos(false);
   };
-
   const downloadImage = () => {
     if (!generatedImage) return;
     
