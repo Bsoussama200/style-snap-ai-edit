@@ -55,7 +55,7 @@ Video 3: "The Discovery" — Show someone discovering, trying, or using the prod
 
 Video 4: "The Transformation" — Show how the product improves their life. Demonstrate ongoing benefits and a better lifestyle with the product. Set referenceImage to true (product shown in use).
 
-Video 5: "Product Showcase + VO" — Show ONLY the product (no person on screen). Use a voice-over narrator who speaks a concise, compelling line in a perfect American English accent that highlights the product's key benefit. Set referenceImage to true.
+Video 5: "Product Showcase + VO" — Show ONLY the product (no person on screen) with dynamic camera movement around/toward the product. Use a voice-over narrator who speaks a concise, compelling line in a perfect American English accent that highlights the product's key benefit. Set referenceImage to true.
 
 Return your response strictly as a JSON array with exactly 5 objects, NO markdown, NO code fences, each following this exact structure:
 {
@@ -84,7 +84,7 @@ Make the sequence emotionally compelling:
 - Video 2: Frustrated/concerned tone, darker lighting, problems-focused camera work, referenceImage: false
 - Video 3: Curious/excited tone, brighter lighting, discovery-focused camera movement, referenceImage: true
 - Video 4: Confident/happy tone, warm lighting, celebration-focused cinematography, referenceImage: true
-- Video 5: Clear narrator delivery (perfect American English accent), product-only visuals, studio/hero-lighting, referenceImage: true
+- Video 5: Clear narrator delivery (perfect American English accent), product-only visuals with dynamic camera movement (360° rotation, dolly in/out, or dramatic angles), studio/hero-lighting, referenceImage: true
 
 Ensure each spoken line advances the narrative and feels natural for that stage of the customer journey.`;
 
