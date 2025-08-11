@@ -47,15 +47,16 @@ serve(async (req) => {
 
 Generate exactly 3 video prompts that tell a compelling story in sequence - like a mini ad campaign:
 
-**Video 1: "The Problem"** - Show someone experiencing frustration or difficulty due to the ABSENCE of this product. This should highlight the pain point that the product solves.
+**Video 1: "The Problem"** - Show someone experiencing frustration or difficulty due to the ABSENCE of this product. This should highlight the pain point that the product solves. Set referenceImage to false as the product is not shown.
 
-**Video 2: "The Discovery"** - Show someone discovering, trying, or using the product for the first time and having a positive reaction. Capture the "aha moment" and initial satisfaction.
+**Video 2: "The Discovery"** - Show someone discovering, trying, or using the product for the first time and having a positive reaction. Capture the "aha moment" and initial satisfaction. Set referenceImage to true as the product should be prominently featured.
 
-**Video 3: "The Transformation"** - Show how the product has improved their life. This should demonstrate the ongoing benefits and the person's new, better lifestyle with the product.
+**Video 3: "The Transformation"** - Show how the product has improved their life. This should demonstrate the ongoing benefits and the person's new, better lifestyle with the product. Set referenceImage to true as the product should be shown in use.
 
 Return your response as a JSON array with exactly 3 objects, each following this exact structure:
 {
   "sceneDurationSeconds": 8,
+  "referenceImage": boolean (true if product is shown in video, false if not),
   "person": {
     "name": "string (realistic first name)",
     "description": "string (detailed physical appearance and clothing)",
@@ -75,9 +76,9 @@ Return your response as a JSON array with exactly 3 objects, each following this
 }
 
 Make the sequence emotionally compelling:
-- Video 1: Frustrated/concerned tone, darker lighting, problems-focused camera work
-- Video 2: Curious/excited tone, brighter lighting, discovery-focused camera movement  
-- Video 3: Confident/happy tone, warm lighting, celebration-focused cinematography
+- Video 1: Frustrated/concerned tone, darker lighting, problems-focused camera work, referenceImage: false
+- Video 2: Curious/excited tone, brighter lighting, discovery-focused camera movement, referenceImage: true
+- Video 3: Confident/happy tone, warm lighting, celebration-focused cinematography, referenceImage: true
 
 Ensure each spoken line advances the narrative and feels natural for that stage of the customer journey.`;
 

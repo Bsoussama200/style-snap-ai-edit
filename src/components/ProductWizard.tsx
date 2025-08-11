@@ -11,6 +11,7 @@ import { usePrompt } from '@/hooks/usePrompts';
 
 interface VideoPrompt {
   sceneDurationSeconds: number;
+  referenceImage: boolean;
   person: {
     name: string;
     description: string;
@@ -367,14 +368,24 @@ const ProductWizard: React.FC = () => {
         const textPrompt = `${prompt.person.description} ${prompt.person.actions.join(', ')}. Setting: ${prompt.place.description}. The person says: "${prompt.person.line}" in a ${prompt.person.tone} tone. Camera: ${prompt.additionalInstructions.cameraMovement}. Lighting: ${prompt.additionalInstructions.lighting}. Duration: ${prompt.sceneDurationSeconds} seconds.`;
         
         console.log(`Starting video generation ${i + 1} with prompt:`, textPrompt);
+        console.log(`Video ${i + 1} includes product reference:`, prompt.referenceImage);
+        
+        // Prepare the VEO3 request body
+        const veoBody: any = {
+          prompt: textPrompt,
+          model: 'veo3_fast',
+          aspectRatio: '9:16',
+          enableFallback: false,
+        };
+
+        // If this prompt should include the product reference, add the uploaded image
+        if (prompt.referenceImage && sourceImageUrl) {
+          veoBody.referenceImage = sourceImageUrl;
+          console.log(`Adding reference image for video ${i + 1}:`, sourceImageUrl);
+        }
         
         const startRes = await supabase.functions.invoke('kie-veo-generate', {
-          body: {
-            prompt: textPrompt,
-            model: 'veo3_fast',
-            aspectRatio: '9:16',
-            enableFallback: false,
-          },
+          body: veoBody,
         });
         
         if (startRes.error) {
@@ -938,13 +949,20 @@ const ProductWizard: React.FC = () => {
                     </div>
                     <div className="grid gap-4">
                       {analysis.videoPrompts.map((prompt, index) => (
-                        <div key={index} className="p-4 rounded-lg bg-background/50 border border-primary/10 space-y-3">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-sm font-semibold text-primary">Prompt {index + 1}</span>
-                            <span className="text-xs px-2 py-1 rounded-full bg-secondary text-secondary-foreground">
-                              {prompt.sceneDurationSeconds}s
-                            </span>
-                          </div>
+                         <div key={index} className="p-4 rounded-lg bg-background/50 border border-primary/10 space-y-3">
+                           <div className="flex items-center gap-2 mb-2">
+                             <span className="text-sm font-semibold text-primary">Prompt {index + 1}</span>
+                             <span className="text-xs px-2 py-1 rounded-full bg-secondary text-secondary-foreground">
+                               {prompt.sceneDurationSeconds}s
+                             </span>
+                             <span className={`text-xs px-2 py-1 rounded-full ${
+                               prompt.referenceImage 
+                                 ? 'bg-green-100 text-green-700 border border-green-200' 
+                                 : 'bg-gray-100 text-gray-700 border border-gray-200'
+                             }`}>
+                               {prompt.referenceImage ? '🖼️ With Product' : '❌ No Product'}
+                             </span>
+                           </div>
                           <div className="grid md:grid-cols-2 gap-3 text-sm">
                             <div>
                               <p className="font-medium text-muted-foreground mb-1">Person:</p>
