@@ -1090,13 +1090,28 @@ const ProductWizard: React.FC = () => {
                              {generatedVideos.map((video, index) => (
                                <div key={video.id} className="flex items-center justify-between p-3 rounded-lg bg-background/30 border border-primary/10">
                                  <span className="text-sm font-medium">Video {index + 1}</span>
-                                 <div className="flex items-center gap-2">
-                                    {video.status === 'pending' || video.status === 'processing' ? (
+                                  <div className="flex items-center gap-2">
+                                     {video.status === 'pending' ? (
+                                       <>
+                                         <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                                         <span className="text-xs text-muted-foreground">starting</span>
+                                      </>
+                                    ) : video.status === 'generating-image' ? (
                                       <>
-                                        <RefreshCw className="h-4 w-4 animate-spin text-primary" />
-                                        <span className="text-xs text-muted-foreground">generating</span>
-                                     </>
-                                   ) : video.status === 'success' ? (
+                                        <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
+                                        <span className="text-xs text-blue-600">generating image</span>
+                                      </>
+                                    ) : video.status === 'processing' ? (
+                                      <>
+                                        <RefreshCw className="h-4 w-4 animate-spin text-yellow-500" />
+                                        <span className="text-xs text-yellow-600">processing</span>
+                                      </>
+                                    ) : video.status === 'generating-video' ? (
+                                      <>
+                                        <RefreshCw className="h-4 w-4 animate-spin text-purple-500" />
+                                        <span className="text-xs text-purple-600">generating video</span>
+                                      </>
+                                    ) : video.status === 'success' ? (
                                      <>
                                        <CheckCircle className="h-4 w-4 text-green-500" />
                                        <span className="text-xs text-green-600">Complete</span>
