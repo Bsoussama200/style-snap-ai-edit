@@ -14,3 +14,15 @@ verify_jwt = false
 
 [functions.kie-veo-status]
 verify_jwt = false
+
+[functions.kie-runway-generate]
+verify_jwt = false
+
+[functions.kie-runway-status]
+verify_jwt = false
+
+[functions.lemonsqueezy-payment]
+verify_jwt = false
+
+[functions.generate-video-prompts]
+verify_jwt = false
