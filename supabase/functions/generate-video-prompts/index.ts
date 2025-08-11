@@ -6,63 +6,47 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  if (!openAIApiKey) {
-    console.error('OpenAI API key not configured');
-    return new Response(
-      JSON.stringify({ error: 'OpenAI API key not configured' }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
-  }
-
   try {
-    console.log('Generate video prompts function called');
-    const body = await req.json();
-    const { productProfile, analysis, marketingAngles, targetAudiences, videoStyle } = body;
-    
-    console.log('Video style received:', videoStyle);
-
-    if (!productProfile) {
-      console.error('Product profile is missing');
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openAIApiKey) {
+      console.error('OpenAI API key not configured');
       return new Response(
-        JSON.stringify({ error: 'Product profile is required' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+        JSON.stringify({ error: 'OpenAI API key not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Generating video prompts for:', productProfile.productName);
+    const body = await req.json();
+    const { product, marketing, videoStyle } = body;
 
-    let systemPrompt = '';
-    
+    console.log('Generating video prompts for:', { 
+      productName: product?.name, 
+      category: product?.category, 
+      style: videoStyle 
+    });
+
+    let systemPrompt: string;
+
     if (videoStyle === 'aspiration-cinematic') {
       systemPrompt = `You are a professional video marketing specialist creating VEO3 video prompts for a creative ad sequence.
 
-Generate exactly 5 video prompts that tell a cinematic, aspirational story in sequence (like a mini brand film). IMPORTANT: All spoken dialogue must be delivered in a perfect American English accent. CRITICAL: Do not include any captions, text overlays, or written text in the videos — all communication should be through speech and visuals only.
+Generate exactly 5 video prompts that tell a compelling, aspirational story in a cinematic style. IMPORTANT: All spoken dialogue must be delivered in a perfect American English accent. CRITICAL: Do not include any captions, text overlays, or written text in the videos — all communication should be through speech and visuals only.
 
-The story must focus on evoking emotions, building brand lifestyle appeal, and creating a strong desire for the product, without explicitly focusing on a problem.
+Video 1: "Dream State" — Open with an aspirational mood-setting scene (elegant environments, lifestyle moments). Tease the elevated lifestyle without showing the product yet. Set referenceImage to false.
 
-Video 1: "The Spark" — An atmospheric, visually rich opener. Show the moment of inspiration or an intriguing scenario where the viewer is drawn into the lifestyle or feeling associated with the product. No product shown yet. Set referenceImage to false.
+Video 2: "Aspiration Building" — Continue building the aspirational world, showing characters living their best life or pursuing goals, but still missing something to complete their vision. Set referenceImage to false.
 
-Video 2: "The Journey Begins" — Show characters in motion, moving toward a goal, dream, or experience. Subtly hint at the product's world (color palette, props, setting) without revealing it. Dialogue should build curiosity. Set referenceImage to false.
+Video 3: "The Encounter" — The first time the product is seen, but not yet explained. Make it feel like a natural part of this aspirational lifestyle. Set referenceImage to true. MUST include startingScene describing the initial scene/setting for product placement.
 
-Video 3: "The Encounter" — The first time the product is seen, but not yet explained. Make it feel like a natural part of this aspirational lifestyle. Set referenceImage to true. CRITICAL: DO NOT recreate the reference photo's scene, background, or setting. The reference image is ONLY for product identification — create an entirely new scene as described in your prompt. MUST include startingScene describing the initial scene/setting for product placement.
+Video 4: "Living the Dream" — Show characters fully immersed in their elevated lifestyle with the product seamlessly integrated. Focus on emotions, confidence, and aspirational visuals. Set referenceImage to true. MUST include startingScene.
 
-Video 4: "Living the Dream" — Show characters fully immersed in their elevated lifestyle with the product seamlessly integrated. Focus on emotions, confidence, and aspirational visuals. Set referenceImage to true. CRITICAL: DO NOT recreate the reference photo's scene, background, or setting. The reference image is ONLY for product identification — create an entirely new scene as described in your prompt. MUST include startingScene.
-
-Video 5: "The Brand Statement" — End with ONLY the product (no people) in a cinematic showcase scene. Use dynamic camera work and a short, poetic voice-over line that conveys the essence of the brand. Set referenceImage to true. CRITICAL: DO NOT recreate the reference photo's scene, background, or setting. The reference image is ONLY for product identification — create an entirely new scene as described in your prompt. MUST include startingScene.`;
+Video 5: "The Brand Statement" — End with ONLY the product (no people) in a cinematic showcase scene. Use dynamic camera work and longer, more engaging voice-over lines that convey the essence of the brand (avoid too much silence). Set referenceImage to true. MUST include startingScene.`;
     } else if (videoStyle === 'street-interview') {
       systemPrompt = `You are a professional video marketing specialist creating VEO3 video prompts for a creative ad sequence.
 
@@ -78,7 +62,7 @@ Video 3: "The Curious Build-Up" — Focus on the INTERVIEWER asking follow-up qu
 
 Video 4: "The Big Hint" — Focus on an INTERVIEWEE giving an answer that heavily foreshadows the product's key feature, creating anticipation. Show this person's enthusiastic response while the interviewer reacts in the background. The interviewee should be the main speaking person in this video. Set referenceImage to false.
 
-Video 5: "The Reveal" — Show ONLY the product, on its own, in a crisp, dynamic product showcase scene. Use a short, punchy voice-over line from the INTERVIEWER that connects all the previous answers to the product's benefit (e.g., "Looks like we found your answer."). Set referenceImage to true. CRITICAL: DO NOT recreate the reference photo's scene, background, or setting. The reference image is ONLY for product identification — create an entirely new scene as described in your prompt. MUST include startingScene field describing the initial scene/setting for product placement.`;
+Video 5: "The Reveal" — Show ONLY the product, on its own, in a crisp, dynamic product showcase scene. Use engaging, longer voice-over lines from the INTERVIEWER that connect all the previous answers to the product's benefit and avoid too much silence (e.g., "Looks like we found your answer. This is exactly what everyone's been looking for."). Set referenceImage to true. MUST include startingScene field describing the initial scene/setting for product placement.`;
     } else {
       // Default to problem-solution style
       systemPrompt = `You are a professional video marketing specialist creating VEO3 video prompts for a creative ad sequence.
@@ -89,11 +73,11 @@ Video 1: "The Hook" — A fast, visually striking attention-grabber that makes t
 
 Video 2: "The Problem" — Show someone experiencing frustration or difficulty due to the ABSENCE of this product. Highlight the pain point that the product solves. Set referenceImage to false.
 
-Video 3: "The Discovery" — Show someone discovering, trying, or using the product for the first time and having a positive reaction (the "aha moment"). Set referenceImage to true (product prominently featured). CRITICAL: DO NOT recreate the reference photo's scene, background, or setting. The reference image is ONLY for product identification - create an entirely new scene as described in your prompt. MUST include "startingScene" field describing the initial scene/setting for product placement.
+Video 3: "The Discovery" — Show someone discovering, trying, or using the product for the first time and having a positive reaction (the "aha moment"). Set referenceImage to true (product prominently featured). MUST include "startingScene" field describing the initial scene/setting for product placement.
 
-Video 4: "The Transformation" — Show how the product improves their life. Demonstrate ongoing benefits and a better lifestyle with the product. Set referenceImage to true (product shown in use). CRITICAL: DO NOT recreate the reference photo's scene, background, or setting. The reference image is ONLY for product identification - create an entirely new scene as described in your prompt. MUST include "startingScene" field describing the initial scene/setting for product placement.
+Video 4: "The Transformation" — Show how the product improves their life. Demonstrate ongoing benefits and a better lifestyle with the product. Set referenceImage to true (product shown in use). MUST include "startingScene" field describing the initial scene/setting for product placement.
 
-Video 5: "Product Showcase + VO" — Show ONLY the product (no person on screen) with dynamic camera movement around/toward the product. Use a voice-over narrator who speaks a concise, compelling line in a perfect American English accent that highlights the product's key benefit. Set referenceImage to true. CRITICAL: DO NOT recreate the reference photo's scene, background, or setting. The reference image is ONLY for product identification - create an entirely new scene as described in your prompt. MUST include "startingScene" field describing the initial scene/setting for product placement.`;
+Video 5: "Product Showcase + VO" — Show ONLY the product (no person on screen) with dynamic camera movement around/toward the product. Use a voice-over narrator who speaks longer, more engaging lines in a perfect American English accent that highlight the product's key benefit and avoid too much silence. Set referenceImage to true. MUST include "startingScene" field describing the initial scene/setting for product placement.`;
     }
 
     systemPrompt += `
@@ -121,42 +105,35 @@ Return your response strictly as a JSON array with exactly 5 objects, NO markdow
   }
 }
 
-For videos where referenceImage is true, you MUST include a "startingScene" field that describes the scene/setting where the product should be placed. This will be used to generate a reference image by placing the uploaded product into this described scene before video generation begins.
+CRITICAL RULES:
+1. For videos with referenceImage: false, do NOT include startingScene field
+2. For videos with referenceImage: true, ALWAYS include startingScene field
+3. For street-interview style, only Video 5 should have referenceImage: true
+4. All video prompts should create engaging, dynamic content with appropriate voice-over length
+5. Avoid overly short dialogue that results in too much silence
+6. Make sure voice-over lines are substantial enough to fill the 8-second scenes`;
 
-MANDATORY REQUIREMENTS - FOLLOW THE SPECIFIC STYLE REQUIREMENTS:
+    const userPrompt = `Product Details:
+Name: ${product?.name || 'Unknown Product'}
+Category: ${product?.category || 'General'}
+Description: ${product?.description || 'No description provided'}
+Key Features: ${product?.keyFeatures?.join(', ') || 'None specified'}
+Benefits: ${product?.benefits?.join(', ') || 'None specified'}
+Target Audiences: ${product?.targetAudiences?.join(', ') || 'General audience'}
 
-For problem-solution style:
-- Videos 1 & 2: referenceImage: false, NO startingScene field
-- Videos 3, 4 & 5: referenceImage: true, MUST include startingScene field with detailed scene description
+Marketing Details:
+${marketing?.tone ? `Tone: ${marketing.tone}` : ''}
+${marketing?.style ? `Style: ${marketing.style}` : ''}
+${marketing?.targetAudience ? `Target Audience: ${marketing.targetAudience}` : ''}
+${marketing?.keyMessage ? `Key Message: ${marketing.keyMessage}` : ''}
+${marketing?.callToAction ? `Call to Action: ${marketing.callToAction}` : ''}
 
-For aspiration-cinematic style:
-- Videos 1 & 2: referenceImage: false, NO startingScene field
-- Videos 3, 4 & 5: referenceImage: true, MUST include startingScene field with detailed scene description
+Create 5 video prompts following the ${videoStyle || 'problem-solution'} format described above.`;
 
-For street-interview style:
-- Videos 1, 2, 3 & 4: referenceImage: false, NO startingScene field (product not shown)
-- Video 5 ONLY: referenceImage: true, MUST include startingScene field for product showcase
+    console.log('Calling OpenAI with system prompt length:', systemPrompt.length);
+    console.log('User prompt preview:', userPrompt.substring(0, 200) + '...');
 
-Make the sequence emotionally compelling based on the selected style.
-
-Ensure each spoken line advances the narrative and feels natural for that stage of the customer journey.`;
-
-    const userPrompt = `Product: ${productProfile.productName}
-Category: ${productProfile.category || 'Unknown'}
-Features: ${productProfile.features?.join(', ') || 'None specified'}
-Materials: ${productProfile.materials?.join(', ') || 'None specified'}
-Colors: ${productProfile.colors?.join(', ') || 'None specified'}
-Emotional Appeal: ${productProfile.emotionalAppeal?.join(', ') || 'None specified'}
-Trend Fit: ${productProfile.trendFit || 'Not specified'}
-
-Marketing Angles: ${marketingAngles?.join(', ') || 'None specified'}
-Target Audiences: ${targetAudiences?.join(', ') || 'None specified'}
-
-Analysis: ${analysis || 'No additional analysis provided'}
-
-Create 5 distinct video prompts that showcase this product effectively for marketing purposes. Also ensure all spoken dialogue uses a perfect American English accent.`;
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openAIApiKey}`,
@@ -168,97 +145,96 @@ Create 5 distinct video prompts that showcase this product effectively for marke
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 0.8,
-        max_tokens: 2000,
+        temperature: 0.7,
+        max_tokens: 3000,
       }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
+    if (!openAIResponse.ok) {
+      const errorText = await openAIResponse.text();
       console.error('OpenAI API error:', errorText);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      return new Response(
+        JSON.stringify({ error: `OpenAI API error: ${openAIResponse.status}` }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    const data = await response.json();
-    const generatedContent = data.choices[0].message.content;
+    const openAIData = await openAIResponse.json();
+    console.log('OpenAI response received');
 
-    console.log('Generated content from OpenAI:', generatedContent);
+    if (!openAIData.choices?.[0]?.message?.content) {
+      console.error('Invalid OpenAI response structure');
+      return new Response(
+        JSON.stringify({ error: 'Invalid response from OpenAI' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Parse the JSON response
+    const content = openAIData.choices[0].message.content.trim();
+    console.log('OpenAI content preview:', content.substring(0, 200) + '...');
+
+    // Parse and validate the JSON response
     let videoPrompts;
     try {
-      videoPrompts = JSON.parse(generatedContent);
+      videoPrompts = JSON.parse(content);
     } catch (parseError) {
-      console.error('Failed to parse OpenAI response as JSON:', parseError);
-      // Try to extract JSON from the response if it's wrapped in markdown
-      const jsonMatch = generatedContent.match(/```json\s*([\s\S]*?)\s*```/);
-      if (jsonMatch) {
-        videoPrompts = JSON.parse(jsonMatch[1]);
-      } else {
-        throw new Error('Invalid JSON response from OpenAI');
-      }
+      console.error('Failed to parse OpenAI JSON response:', parseError);
+      console.error('Raw content:', content);
+      return new Response(
+        JSON.stringify({ error: 'Failed to parse video prompts from OpenAI' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Validate that we have exactly 5 prompts
+    // Validate structure
     if (!Array.isArray(videoPrompts) || videoPrompts.length !== 5) {
-      console.error('Invalid number of prompts:', videoPrompts?.length);
-      throw new Error('Expected exactly 5 video prompts');
+      console.error('Invalid video prompts structure - not array of 5 items');
+      return new Response(
+        JSON.stringify({ error: 'Invalid video prompts structure' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Validate structure of each prompt
-    for (let i = 0; i < videoPrompts.length; i++) {
-      const prompt = videoPrompts[i];
-      if (!prompt.person || !prompt.place || !prompt.additionalInstructions) {
-        console.error(`Invalid prompt structure at index ${i}:`, prompt);
-        throw new Error(`Invalid prompt structure at index ${i}`);
-      }
-    }
+    // Post-process to enforce style-specific rules and prevent model drift
+    videoPrompts.forEach((prompt, index) => {
+      console.log(`Processing video ${index + 1}:`, {
+        referenceImage: prompt.referenceImage,
+        hasStartingScene: !!prompt.startingScene,
+        style: videoStyle
+      });
 
-    console.log('Successfully generated and validated 5 video prompts');
-
-    // Enforce style-specific referenceImage rules to prevent model drift
-    try {
+      // For street-interview style, only Video 5 should have referenceImage: true
       if (videoStyle === 'street-interview') {
-        // Videos 1-4: no product, no startingScene
-        for (let i = 0; i < 4; i++) {
-          if (videoPrompts[i]) {
-            videoPrompts[i].referenceImage = false;
-            if (typeof videoPrompts[i].startingScene !== 'undefined') {
-              delete (videoPrompts[i] as any).startingScene;
-            }
-          }
-        }
-        // Video 5: product-only with startingScene
-        if (videoPrompts[4]) {
-          videoPrompts[4].referenceImage = true;
-          const defaultScene = `A crisp, cinematic product-only showcase set: seamless background, soft rim lighting, gentle 360° turntable feel. The product "${productProfile?.productName || 'the product'}" sits centered on a pedestal. Camera performs slow dolly-in and rotating hero angles.`;
-          if (!videoPrompts[4].startingScene || typeof videoPrompts[4].startingScene !== 'string' || !videoPrompts[4].startingScene.trim()) {
-            (videoPrompts[4] as any).startingScene = defaultScene;
+        if (index < 4) {
+          prompt.referenceImage = false;
+          delete prompt.startingScene; // Remove if accidentally added
+        } else if (index === 4) {
+          prompt.referenceImage = true;
+          if (!prompt.startingScene) {
+            prompt.startingScene = `Professional product showcase environment with elegant lighting setup`;
           }
         }
       }
-    } catch (safetyError) {
-      console.warn('Post-processing enforcement failed:', safetyError);
-    }
 
+      // For all styles: enforce startingScene rules
+      if (prompt.referenceImage && !prompt.startingScene) {
+        prompt.startingScene = `Cinematic product placement scene with professional lighting`;
+      } else if (!prompt.referenceImage && prompt.startingScene) {
+        delete prompt.startingScene;
+      }
+    });
+
+    console.log('Video prompts generated successfully');
     return new Response(
       JSON.stringify({ videoPrompts }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     console.error('Error in generate-video-prompts function:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error.message || 'Unknown error occurred',
-        details: error.toString()
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

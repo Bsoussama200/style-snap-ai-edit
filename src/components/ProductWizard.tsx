@@ -1291,48 +1291,64 @@ const ProductWizard: React.FC = () => {
                              <span className="text-sm font-medium">Generating videos...</span>
                            </div>
                            
-                           <div className="grid gap-3">
-                             {generatedVideos.map((video, index) => (
-                               <div key={video.id} className="flex items-center justify-between p-3 rounded-lg bg-background/30 border border-primary/10">
-                                 <span className="text-sm font-medium">Video {index + 1}</span>
-                                  <div className="flex items-center gap-2">
-                                     {video.status === 'pending' ? (
-                                       <>
-                                         <RefreshCw className="h-4 w-4 animate-spin text-primary" />
-                                         <span className="text-xs text-muted-foreground">starting</span>
-                                      </>
-                                    ) : video.status === 'generating-image' ? (
-                                      <>
-                                        <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
-                                        <span className="text-xs text-blue-600">generating image</span>
-                                      </>
-                                    ) : video.status === 'processing' ? (
-                                      <>
-                                        <RefreshCw className="h-4 w-4 animate-spin text-yellow-500" />
-                                        <span className="text-xs text-yellow-600">processing</span>
-                                      </>
-                                    ) : video.status === 'generating-video' ? (
-                                      <>
-                                        <RefreshCw className="h-4 w-4 animate-spin text-purple-500" />
-                                        <span className="text-xs text-purple-600">generating video</span>
-                                      </>
-                                    ) : video.status === 'success' ? (
-                                     <>
-                                       <CheckCircle className="h-4 w-4 text-green-500" />
-                                       <span className="text-xs text-green-600">Complete</span>
-                                     </>
-                                   ) : video.status === 'error' ? (
-                                     <>
-                                       <XCircle className="h-4 w-4 text-red-500" />
-                                       <span className="text-xs text-red-600">Failed</span>
-                                     </>
-                                   ) : (
-                                     <span className="text-xs text-muted-foreground">Waiting</span>
-                                   )}
-                                 </div>
-                               </div>
-                             ))}
-                           </div>
+                            <div className="grid gap-3">
+                              {generatedVideos.map((video, index) => (
+                                <div key={video.id} className="p-4 rounded-lg bg-background/50 border border-primary/10 space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm font-medium">Video {index + 1}</span>
+                                     <div className="flex items-center gap-2">
+                                        {video.status === 'pending' ? (
+                                          <>
+                                            <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                                            <span className="text-xs text-muted-foreground">starting</span>
+                                         </>
+                                       ) : video.status === 'generating-image' ? (
+                                         <>
+                                           <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
+                                           <span className="text-xs text-blue-600">generating image</span>
+                                         </>
+                                       ) : video.status === 'processing' ? (
+                                         <>
+                                           <RefreshCw className="h-4 w-4 animate-spin text-yellow-500" />
+                                           <span className="text-xs text-yellow-600">processing</span>
+                                         </>
+                                       ) : video.status === 'generating-video' ? (
+                                         <>
+                                           <RefreshCw className="h-4 w-4 animate-spin text-purple-500" />
+                                           <span className="text-xs text-purple-600">generating video</span>
+                                         </>
+                                       ) : video.status === 'success' ? (
+                                        <>
+                                          <CheckCircle className="h-4 w-4 text-green-500" />
+                                          <span className="text-xs text-green-600">Complete</span>
+                                        </>
+                                      ) : video.status === 'error' ? (
+                                        <>
+                                          <XCircle className="h-4 w-4 text-red-500" />
+                                          <span className="text-xs text-red-600">Failed</span>
+                                        </>
+                                      ) : (
+                                        <span className="text-xs text-muted-foreground">Waiting</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Show video as soon as it's ready, even during generation */}
+                                  {video.videoUrl && video.status === 'success' && (
+                                    <div className="relative w-full mx-auto" style={{ aspectRatio: '9/16', maxWidth: '400px' }}>
+                                      <video 
+                                        src={video.videoUrl}
+                                        controls 
+                                        className="w-full h-full rounded-lg object-cover"
+                                        style={{ aspectRatio: '9/16' }}
+                                      >
+                                        Your browser does not support the video tag.
+                                      </video>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
                          </div>
                        )}
                        
