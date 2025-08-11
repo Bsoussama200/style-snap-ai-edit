@@ -378,9 +378,9 @@ const ProductWizard: React.FC = () => {
           enableFallback: false,
         };
 
-        // If this prompt should include the product reference, add the uploaded image
         if (prompt.referenceImage && sourceImageUrl) {
-          veoBody.referenceImage = sourceImageUrl;
+          veoBody.imageUrl = sourceImageUrl;
+          veoBody.referenceImage = true;
           console.log(`Adding reference image for video ${i + 1}:`, sourceImageUrl);
         }
         
