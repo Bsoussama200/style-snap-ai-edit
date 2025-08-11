@@ -365,7 +365,7 @@ const ProductWizard: React.FC = () => {
         const prompt = analysis.videoPrompts[i];
         
         // Convert the structured prompt to a text description for VEO3
-        const textPrompt = `${prompt.person.description} ${prompt.person.actions.join(', ')}. Setting: ${prompt.place.description}. The person says: "${prompt.person.line}" in a ${prompt.person.tone} tone. Camera: ${prompt.additionalInstructions.cameraMovement}. Lighting: ${prompt.additionalInstructions.lighting}. Duration: ${prompt.sceneDurationSeconds} seconds.`;
+        const textPrompt = `${prompt.person.description} ${prompt.person.actions.join(', ')}. Setting: ${prompt.place.description}. The person says: "${prompt.person.line}" in a ${prompt.person.tone} tone with a perfect American English accent. Camera: ${prompt.additionalInstructions.cameraMovement}. Lighting: ${prompt.additionalInstructions.lighting}. Duration: ${prompt.sceneDurationSeconds} seconds.`;
         
         console.log(`Starting video generation ${i + 1} with prompt:`, textPrompt);
         console.log(`Video ${i + 1} includes product reference:`, prompt.referenceImage);
