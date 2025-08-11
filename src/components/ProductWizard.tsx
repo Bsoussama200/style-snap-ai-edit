@@ -394,38 +394,48 @@ const ProductWizard: React.FC = () => {
           updateVideo(entry.id, { status: 'generating-image' });
           console.log(`Generating starting scene image for video ${i + 1} with scene: ${(prompt as any).startingScene}`);
 
-          const imageResponse = await supabase.functions.invoke('kie-flux-kontext-generate', {
-            body: {
-              prompt: `Create a professional scene: ${(prompt as any).startingScene}. High quality, well-lit, perfect for video production.`,
-              inputImage: sourceImageUrl,
-            },
-          });
-          if (imageResponse.error) throw new Error(imageResponse.error.message || 'Failed to generate starting scene image');
-
-          const imageTaskId = imageResponse.data?.taskId as string | undefined;
-          if (!imageTaskId) throw new Error('No task ID received from image generation service');
-
-          const maxAttempts = 60;
-          let attempts = 0;
-          while (attempts < maxAttempts) {
-            try {
-              const statusResponse = await supabase.functions.invoke('kie-flux-kontext-status', { body: { taskId: imageTaskId } });
-              if (statusResponse.error) throw statusResponse.error;
-              const s = statusResponse.data as any;
-              console.log(`Image status for video ${i + 1}:`, s);
-              if (s?.successFlag === 1 && s?.response?.resultImageUrl) {
-                referenceImageUrl = s.response.resultImageUrl as string;
-                console.log(`Generated scene image for video ${i + 1}:`, referenceImageUrl);
-                break;
-              }
-              if (s?.successFlag === -1) throw new Error(s?.errorMessage || 'Image generation failed');
-            } catch (e) {
-              console.error('Image status check error:', e);
+          try {
+            const imageResponse = await supabase.functions.invoke('kie-flux-kontext-generate', {
+              body: {
+                prompt: `Create a professional scene: ${(prompt as any).startingScene}. High quality, well-lit, perfect for video production.`,
+                inputImage: sourceImageUrl,
+              },
+            });
+            
+            if (imageResponse.error) {
+              console.error(`Image generation failed for video ${i + 1}:`, imageResponse.error);
+              throw new Error('Image generation service temporarily unavailable');
             }
-            attempts++;
-            await new Promise(r => setTimeout(r, 2000));
+
+            const imageTaskId = imageResponse.data?.taskId as string | undefined;
+            if (!imageTaskId) throw new Error('No task ID received from image generation service');
+
+            const maxAttempts = 60;
+            let attempts = 0;
+            while (attempts < maxAttempts) {
+              try {
+                const statusResponse = await supabase.functions.invoke('kie-flux-kontext-status', { body: { taskId: imageTaskId } });
+                if (statusResponse.error) throw statusResponse.error;
+                const s = statusResponse.data as any;
+                console.log(`Image status for video ${i + 1}:`, s);
+                if (s?.successFlag === 1 && s?.response?.resultImageUrl) {
+                  referenceImageUrl = s.response.resultImageUrl as string;
+                  console.log(`Generated scene image for video ${i + 1}:`, referenceImageUrl);
+                  break;
+                }
+                if (s?.successFlag === -1) throw new Error(s?.errorMessage || 'Image generation failed');
+              } catch (e) {
+                console.error('Image status check error:', e);
+              }
+              attempts++;
+              await new Promise(r => setTimeout(r, 2000));
+            }
+            if (!referenceImageUrl) throw new Error('Image generation timed out');
+          } catch (imageError) {
+            console.error(`Image generation failed for video ${i + 1}, using source image as fallback:`, imageError);
+            // Fallback: use the source image as reference instead of failing completely
+            referenceImageUrl = sourceImageUrl;
           }
-          if (!referenceImageUrl) throw new Error('Image generation timed out');
         } else if (prompt.referenceImage) {
           if (!sourceImageUrl) throw new Error('Source image URL missing');
           referenceImageUrl = sourceImageUrl;
