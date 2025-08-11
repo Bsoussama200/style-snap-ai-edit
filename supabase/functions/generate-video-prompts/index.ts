@@ -51,11 +51,11 @@ Video 1: "The Hook" — A fast, visually striking attention-grabber that makes t
 
 Video 2: "The Problem" — Show someone experiencing frustration or difficulty due to the ABSENCE of this product. Highlight the pain point that the product solves. Set referenceImage to false.
 
-Video 3: "The Discovery" — Show someone discovering, trying, or using the product for the first time and having a positive reaction (the "aha moment"). Set referenceImage to true (product prominently featured).
+Video 3: "The Discovery" — Show someone discovering, trying, or using the product for the first time and having a positive reaction (the "aha moment"). Set referenceImage to true (product prominently featured). IMPORTANT: Use the reference image only to understand the product's appearance, but generate the scene described in the prompt, not the scene from the reference photo.
 
-Video 4: "The Transformation" — Show how the product improves their life. Demonstrate ongoing benefits and a better lifestyle with the product. Set referenceImage to true (product shown in use).
+Video 4: "The Transformation" — Show how the product improves their life. Demonstrate ongoing benefits and a better lifestyle with the product. Set referenceImage to true (product shown in use). IMPORTANT: Use the reference image only to understand the product's appearance, but generate the scene described in the prompt, not the scene from the reference photo.
 
-Video 5: "Product Showcase + VO" — Show ONLY the product (no person on screen) with dynamic camera movement around/toward the product. Use a voice-over narrator who speaks a concise, compelling line in a perfect American English accent that highlights the product's key benefit. Set referenceImage to true.
+Video 5: "Product Showcase + VO" — Show ONLY the product (no person on screen) with dynamic camera movement around/toward the product. Use a voice-over narrator who speaks a concise, compelling line in a perfect American English accent that highlights the product's key benefit. Set referenceImage to true. IMPORTANT: Use the reference image only to understand the product's appearance, but generate the scene described in the prompt, not the scene from the reference photo.
 
 Return your response strictly as a JSON array with exactly 5 objects, NO markdown, NO code fences, each following this exact structure:
 {
