@@ -25,42 +25,103 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Concatenating ${videoUrls.length} videos`);
+    console.log(`Concatenating ${videoUrls.length} videos using FFmpeg`);
 
-    // For now, since video concatenation requires complex processing,
-    // we'll create a simple playlist approach or return a combined reference
-    
-    // Create a simple JSON response that the frontend can use to play videos sequentially
-    const videoPlaylist = {
-      type: 'playlist',
-      videos: videoUrls.map((url, index) => ({
-        url: url,
-        duration: 8, // Each video is 8 seconds
-        order: index + 1,
-        title: `Scene ${index + 1}`
-      })),
-      totalDuration: videoUrls.length * 8,
-      aspectRatio: '9:16'
-    };
+    // Use FFmpeg to concatenate videos
+    const tempDir = await Deno.makeTempDir();
+    const fileListPath = `${tempDir}/filelist.txt`;
+    const outputPath = `${tempDir}/concatenated.mp4`;
 
-    // For now, return the first video URL as the primary video
-    // In a production setup, you would use FFmpeg or a video processing service like:
-    // - Cloudinary
-    // - AWS MediaConvert  
-    // - Google Cloud Video Intelligence
-    // - Azure Media Services
-    
-    return new Response(
-      JSON.stringify({ 
-        videoUrl: videoUrls[0], // Return first video as main
-        playlist: videoPlaylist,
-        message: `Successfully prepared ${videoUrls.length} videos for playback`,
-        note: 'Video concatenation service ready - showing first video'
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    try {
+      // Download all video files
+      const videoFiles: string[] = [];
+      for (let i = 0; i < videoUrls.length; i++) {
+        const videoPath = `${tempDir}/video_${i}.mp4`;
+        
+        console.log(`Downloading video ${i + 1}/${videoUrls.length}`);
+        const response = await fetch(videoUrls[i]);
+        if (!response.ok) {
+          throw new Error(`Failed to download video ${i + 1}: ${response.statusText}`);
+        }
+        
+        const videoData = await response.arrayBuffer();
+        await Deno.writeFile(videoPath, new Uint8Array(videoData));
+        videoFiles.push(videoPath);
       }
-    );
+
+      // Create file list for FFmpeg concat
+      const fileListContent = videoFiles.map(file => `file '${file}'`).join('\n');
+      await Deno.writeTextFile(fileListPath, fileListContent);
+
+      console.log('Running FFmpeg concatenation...');
+      
+      // Run FFmpeg to concatenate videos
+      const ffmpegProcess = new Deno.Command("ffmpeg", {
+        args: [
+          "-f", "concat",
+          "-safe", "0",
+          "-i", fileListPath,
+          "-c", "copy",
+          "-y", // Overwrite output file
+          outputPath
+        ],
+        stdout: "piped",
+        stderr: "piped"
+      });
+
+      const { code, stdout, stderr } = await ffmpegProcess.output();
+      
+      if (code !== 0) {
+        const errorText = new TextDecoder().decode(stderr);
+        console.error('FFmpeg error:', errorText);
+        throw new Error(`FFmpeg failed with code ${code}: ${errorText}`);
+      }
+
+      console.log('FFmpeg concatenation completed successfully');
+
+      // Read the concatenated video file
+      const concatenatedVideo = await Deno.readFile(outputPath);
+      
+      // Convert to base64 for response
+      const base64Video = btoa(String.fromCharCode(...concatenatedVideo));
+      
+      // Clean up temp files
+      await Deno.remove(tempDir, { recursive: true });
+
+      return new Response(
+        JSON.stringify({ 
+          videoData: base64Video,
+          mimeType: 'video/mp4',
+          message: `Successfully concatenated ${videoUrls.length} videos`,
+          totalDuration: videoUrls.length * 8
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+
+    } catch (ffmpegError) {
+      // Clean up temp files on error
+      try {
+        await Deno.remove(tempDir, { recursive: true });
+      } catch {}
+      
+      console.error('FFmpeg concatenation failed:', ffmpegError);
+      
+      // Fallback to playlist approach if FFmpeg fails
+      const videoPlaylist = videoUrls.map((url, index) => url);
+      
+      return new Response(
+        JSON.stringify({ 
+          playlist: videoPlaylist,
+          message: `FFmpeg unavailable, returning sequential playlist for ${videoUrls.length} videos`,
+          fallback: true
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
   } catch (error) {
     console.error('Error in concatenate-videos function:', error);

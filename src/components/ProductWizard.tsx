@@ -528,15 +528,38 @@ const ProductWizard: React.FC = () => {
     setIsCreatingFinalVideo(true);
     try {
       const videoUrls = successfulVideos.map(v => v.url);
+      console.log('Combining videos:', videoUrls);
       
-      // Instead of calling an external API, we'll create a sequential video player
-      setFinalVideoPlaylist(videoUrls);
-      setFinalVideoUrl(videoUrls[0]); // Start with first video
-      
-      toast({
-        title: 'Final video sequence ready!',
-        description: 'Your 5 videos will play sequentially as one continuous ad.'
+      const response = await supabase.functions.invoke('concatenate-videos', {
+        body: { videoUrls }
       });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      const { videoData, playlist, fallback } = response.data;
+      
+      if (videoData && !fallback) {
+        // We got a concatenated video as base64
+        const videoBlob = new Blob([Uint8Array.from(atob(videoData), c => c.charCodeAt(0))], { type: 'video/mp4' });
+        const videoUrl = URL.createObjectURL(videoBlob);
+        setFinalVideoUrl(videoUrl);
+        
+        toast({
+          title: "Video combined successfully!",
+          description: `Created single 40-second video from ${successfulVideos.length} clips`,
+        });
+      } else {
+        // Fallback to playlist
+        setFinalVideoPlaylist(playlist || videoUrls);
+        setFinalVideoUrl(videoUrls[0]);
+        
+        toast({
+          title: "Video sequence ready!",
+          description: `Combined ${successfulVideos.length} videos into a sequence`,
+        });
+      }
     } catch (err) {
       console.error('Error creating final video:', err);
       toast({
