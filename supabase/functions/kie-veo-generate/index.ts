@@ -33,6 +33,8 @@ serve(async (req) => {
     const model: string = (body?.model || 'veo3_fast').toString();
     const aspectRatio: string = (body?.aspectRatio || '9:16').toString();
     const enableFallback: boolean = Boolean(body?.enableFallback ?? false);
+    const imageUrl: string = (body?.image_url || body?.imageUrl || '').toString();
+    const referenceImage: boolean = Boolean(body?.referenceImage ?? false);
 
     if (!prompt) {
       return new Response(JSON.stringify({ error: 'prompt is required' }), {
@@ -41,7 +43,15 @@ serve(async (req) => {
       });
     }
 
-    const payload = { model, aspectRatio, enableFallback, prompt };
+    // Build payload - include imageUrl only if referenceImage is true and imageUrl is provided
+    const payload: any = { model, aspectRatio, enableFallback, prompt };
+    
+    if (referenceImage && imageUrl) {
+      payload.imageUrl = imageUrl;
+      console.log('Including reference image in VEO generation:', imageUrl);
+    } else if (referenceImage) {
+      console.warn('referenceImage is true but no imageUrl provided');
+    }
 
     const res = await fetch('https://api.kie.ai/api/v1/veo/generate', {
       method: 'POST',
