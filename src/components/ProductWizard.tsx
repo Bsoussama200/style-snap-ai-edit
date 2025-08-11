@@ -1053,7 +1053,7 @@ const ProductWizard: React.FC = () => {
                                {(prompt as any).startingScene && (
                                  <>
                                    <p className="font-medium text-muted-foreground mb-1">Starting Scene:</p>
-                                   <p className="text-xs mb-2 bg-blue-50 p-2 rounded border-l-2 border-blue-400">{(prompt as any).startingScene}</p>
+                                   <p className="text-xs mb-2">{(prompt as any).startingScene}</p>
                                  </>
                                )}
                                <p className="font-medium text-muted-foreground mb-1">Technical:</p>
