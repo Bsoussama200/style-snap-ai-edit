@@ -650,13 +650,22 @@ const ProductWizard: React.FC = () => {
       const promptToSend = `${base}\n${focus}`.trim();
 
       if (videoProvider === 'veo3') {
+        const veoBody: any = {
+          prompt: promptToSend,
+          model: 'veo3_fast',
+          aspectRatio: '9:16',
+          enableFallback: false,
+        };
+
+        // Include reference image if available
+        if (sourceImageUrl) {
+          veoBody.imageUrl = sourceImageUrl;
+          veoBody.referenceImage = true;
+          console.log('Adding reference image to VEO generation:', sourceImageUrl);
+        }
+
         const start = await supabase.functions.invoke('kie-veo-generate', {
-          body: {
-            prompt: promptToSend,
-            model: 'veo3_fast',
-            aspectRatio: '9:16',
-            enableFallback: false,
-          },
+          body: veoBody,
         });
         if (start.error) throw new Error(start.error.message);
         const taskId = start.data?.taskId as string | undefined;
