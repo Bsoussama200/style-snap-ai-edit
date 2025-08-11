@@ -29,6 +29,8 @@ serve(async (req) => {
     console.log('Generate video prompts function called');
     const body = await req.json();
     const { productProfile, analysis, marketingAngles, targetAudiences, videoStyle } = body;
+    
+    console.log('Video style received:', videoStyle);
 
     if (!productProfile) {
       console.error('Product profile is missing');
@@ -76,7 +78,7 @@ Video 3: "The Curious Build-Up" — Interviewees start giving answers that hint 
 
 Video 4: "The Big Hint" — One interviewee gives an answer that heavily foreshadows the product's key feature, creating anticipation. Show the interviewer reacting like they know what would solve this. End with a close-up of their smirk or "wait and see" look. Set referenceImage to false.
 
-Video 5: "The Reveal" — Show ONLY the product, on its own, in a crisp, dynamic product showcase scene. Use a short, punchy voice-over line from the interviewer that connects all the previous answers to the product's benefit (e.g., "Looks like we found your answer."). Set referenceImage to true.`;
+Video 5: "The Reveal" — Show ONLY the product, on its own, in a crisp, dynamic product showcase scene. Use a short, punchy voice-over line from the interviewer that connects all the previous answers to the product's benefit (e.g., "Looks like we found your answer."). Set referenceImage to true. CRITICAL: DO NOT recreate the reference photo's scene, background, or setting. The reference image is ONLY for product identification — create an entirely new scene as described in your prompt. MUST include startingScene field describing the initial scene/setting for product placement.`;
     } else {
       // Default to problem-solution style
       systemPrompt = `You are a professional video marketing specialist creating VEO3 video prompts for a creative ad sequence.
