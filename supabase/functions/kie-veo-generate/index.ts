@@ -43,13 +43,13 @@ serve(async (req) => {
       });
     }
 
-    // Build payload - include imageUrl only if referenceImage is true and imageUrl is provided
+    // Build payload - include imageUrls array only if referenceImage is true and imageUrl is provided
     const payload: any = { model, aspectRatio, enableFallback, prompt };
 
     console.log('Incoming VEO request:', { referenceImage, imageUrlPresent: Boolean(imageUrl), imageUrl });
     
     if (referenceImage && imageUrl) {
-      payload.imageUrl = imageUrl;
+      payload.imageUrls = [imageUrl];
       console.log('Including reference image in VEO generation:', imageUrl);
     } else if (referenceImage) {
       console.warn('referenceImage is true but no imageUrl provided');
