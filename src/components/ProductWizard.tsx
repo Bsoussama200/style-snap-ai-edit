@@ -892,7 +892,7 @@ const ProductWizard: React.FC = () => {
                              </Button>
                            </div>
                            
-                           <div className="grid md:grid-cols-3 gap-4">
+                           <div className="space-y-4">
                              {generatedVideos.map((video, index) => (
                                <div key={video.id} className="p-4 rounded-lg bg-background/50 border border-primary/10">
                                  <div className="flex items-center justify-between mb-3">
