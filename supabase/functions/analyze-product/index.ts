@@ -122,7 +122,23 @@ serve(async (req) => {
       });
     }
 
-    const systemPrompt = `You are a product analyst AI. Analyze the product image and the provided product name.\nReturn a concise analysis covering: key visual features, materials, primary use case, target audience, and notable selling points.\nFrom the provided categories, select the single best matching category ID. Output strict JSON only (no markdown, no code fences) with keys:\n{\n  "analysis": string,\n  "suggested_category_id": string,\n  "confidence": number // 0-1\n}\nMake sure suggested_category_id is one of the provided IDs.`;
+    const systemPrompt = `You are a senior e-commerce product strategist and TikTok creative director. Analyze the product image and provided product name, then return STRICT JSON (no markdown, no code fences) matching this schema:
+{
+  "analysis": string,                       // 1-2 short paragraphs: what it is, value, use case
+  "product_profile": {
+    "product_name": string,
+    "category": string,                     // human-readable category label
+    "materials": string[],
+    "colors": string[],
+    "features": string[],                  // tangible features
+    "emotional_appeal": string[],          // feelings it evokes
+    "trend_fit": string                    // short phrase e.g., "clean aesthetic", "cozy core"
+  },
+  "marketing_angles": string[],            // 3-6 short, punchy angles; no numbering; each under 90 chars
+  "target_audiences": string[],            // 3-6 audience segments; each under 80 chars
+  "suggested_category_id": string,         // one of provided IDs below
+  "confidence": number                     // 0-1
+}`;
 
     const categoriesSummary = (categories || [])
       .map((c: any) => `- ${c.id} | ${c.name}${c.description ? `: ${c.description}` : ''}`)
@@ -202,9 +218,27 @@ serve(async (req) => {
       suggestedId = (categories || [])[0]?.id || null;
     }
 
+    const suggested = (categories || []).find((c: any) => c.id === suggestedId) || null;
+
+    const prof = parsed.product_profile || {};
+    const productProfile = {
+      productName: typeof prof.product_name === 'string' && prof.product_name.trim() ? prof.product_name.trim() : (productName || ''),
+      category: typeof prof.category === 'string' ? prof.category : (suggested?.name || null),
+      materials: Array.isArray(prof.materials) ? prof.materials.filter((x: any) => typeof x === 'string' && x.trim()).slice(0, 10) : [],
+      colors: Array.isArray(prof.colors) ? prof.colors.filter((x: any) => typeof x === 'string' && x.trim()).slice(0, 10) : [],
+      features: Array.isArray(prof.features) ? prof.features.filter((x: any) => typeof x === 'string' && x.trim()).slice(0, 12) : [],
+      emotionalAppeal: Array.isArray(prof.emotional_appeal) ? prof.emotional_appeal.filter((x: any) => typeof x === 'string' && x.trim()).slice(0, 10) : [],
+      trendFit: typeof prof.trend_fit === 'string' ? prof.trend_fit : null,
+    } as const;
+
     const confidence = typeof parsed.confidence === 'number' ? parsed.confidence : null;
 
-    const suggested = (categories || []).find((c: any) => c.id === suggestedId) || null;
+    const marketingAngles: string[] = Array.isArray(parsed.marketing_angles)
+      ? parsed.marketing_angles.filter((x: any) => typeof x === 'string' && x.trim()).slice(0, 8)
+      : [];
+    const targetAudiences: string[] = Array.isArray(parsed.target_audiences)
+      ? parsed.target_audiences.filter((x: any) => typeof x === 'string' && x.trim()).slice(0, 8)
+      : [];
 
     return new Response(
       JSON.stringify({
@@ -212,6 +246,9 @@ serve(async (req) => {
         suggestedCategoryId: suggestedId,
         suggestedCategoryName: suggested?.name || null,
         confidence,
+        productProfile,
+        marketingAngles,
+        targetAudiences,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

@@ -14,6 +14,17 @@ interface AnalysisResult {
   suggestedCategoryId: string | null;
   suggestedCategoryName?: string | null;
   confidence?: number | null;
+  productProfile?: {
+    productName: string;
+    category: string | null;
+    materials: string[];
+    colors: string[];
+    features: string[];
+    emotionalAppeal: string[];
+    trendFit: string | null;
+  };
+  marketingAngles?: string[];
+  targetAudiences?: string[];
 }
 
 type Mode = 'photo' | 'photovideo';
@@ -433,23 +444,107 @@ const ProductWizard: React.FC = () => {
       )}
 
       {step === 'category' && analysis && (
-        <Card className="glass-card max-w-3xl mx-auto">
-          <CardContent className="p-6 space-y-4">
-            <h2 className="text-xl font-semibold">Review Analysis & Confirm Category</h2>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{analysis.analysis}</p>
-            <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">Suggested category</label>
-              <select
-                className="w-full rounded-md border border-border bg-background p-2"
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-              >
-                <option value="">Select category</option>
-                {categories?.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+        <Card className="glass-card max-w-4xl mx-auto">
+          <CardContent className="p-6 space-y-6">
+            <h2 className="text-xl font-semibold">Product Profile & Category</h2>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-3">
+                <h3 className="font-medium">Product Profile</h3>
+                <div className="space-y-2 text-sm">
+                  <div><span className="text-muted-foreground">Name:</span> <span className="font-medium">{analysis.productProfile?.productName || productName}</span></div>
+                  <div><span className="text-muted-foreground">Category:</span> <span className="font-medium">{analysis.productProfile?.category || analysis.suggestedCategoryName || '—'}</span></div>
+                  {analysis.productProfile?.materials?.length ? (
+                    <div>
+                      <span className="text-muted-foreground">Materials:</span>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {analysis.productProfile.materials.map((m, i) => (
+                          <span key={i} className="px-2 py-0.5 rounded-md bg-secondary text-secondary-foreground">{m}</span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  {analysis.productProfile?.colors?.length ? (
+                    <div>
+                      <span className="text-muted-foreground">Colors:</span>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {analysis.productProfile.colors.map((c, i) => (
+                          <span key={i} className="px-2 py-0.5 rounded-md bg-secondary text-secondary-foreground">{c}</span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  {analysis.productProfile?.features?.length ? (
+                    <div>
+                      <span className="text-muted-foreground">Features:</span>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {analysis.productProfile.features.map((f, i) => (
+                          <span key={i} className="px-2 py-0.5 rounded-md bg-secondary text-secondary-foreground">{f}</span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  {analysis.productProfile?.emotionalAppeal?.length ? (
+                    <div>
+                      <span className="text-muted-foreground">Emotional appeal:</span>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {analysis.productProfile.emotionalAppeal.map((e, i) => (
+                          <span key={i} className="px-2 py-0.5 rounded-md bg-secondary text-secondary-foreground">{e}</span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  {analysis.productProfile?.trendFit ? (
+                    <div><span className="text-muted-foreground">Trend fit:</span> <span className="font-medium">{analysis.productProfile.trendFit}</span></div>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="font-medium">Category</h3>
+                <select
+                  className="w-full rounded-md border border-border bg-background p-2"
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                >
+                  <option value="">Select category</option>
+                  {categories?.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                {typeof analysis.confidence === 'number' && (
+                  <p className="text-xs text-muted-foreground">AI confidence: {(analysis.confidence * 100).toFixed(0)}%</p>
+                )}
+              </div>
             </div>
+
+            <div className="grid gap-6 md:grid-cols-3">
+              <div className="md:col-span-3 space-y-2">
+                <label className="text-sm text-muted-foreground">Product summary (editable)</label>
+                <Textarea
+                  value={analysis.analysis}
+                  onChange={(e) => setAnalysis(prev => prev ? { ...prev, analysis: e.target.value } : prev)}
+                  className="w-full min-h-[88px] text-foreground"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground">Marketing angles (one per line)</label>
+                <Textarea
+                  value={(analysis.marketingAngles || []).join('\n')}
+                  onChange={(e) => setAnalysis(prev => prev ? { ...prev, marketingAngles: e.target.value.split('\n').map(v => v.trim()).filter(Boolean) } : prev)}
+                  className="w-full min-h-[120px] text-foreground"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground">Target audiences (one per line)</label>
+                <Textarea
+                  value={(analysis.targetAudiences || []).join('\n')}
+                  onChange={(e) => setAnalysis(prev => prev ? { ...prev, targetAudiences: e.target.value.split('\n').map(v => v.trim()).filter(Boolean) } : prev)}
+                  className="w-full min-h-[120px] text-foreground"
+                />
+              </div>
+            </div>
+
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setStep('upload')} className="gap-2"><ArrowLeft className="w-4 h-4" />Back</Button>
               <Button onClick={proceedAfterCategory} className="flex-1">Continue</Button>
