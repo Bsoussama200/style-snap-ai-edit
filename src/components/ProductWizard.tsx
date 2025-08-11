@@ -1040,22 +1040,28 @@ const ProductWizard: React.FC = () => {
                                {prompt.referenceImage ? '🖼️ With Product' : '❌ No Product'}
                              </span>
                            </div>
-                          <div className="grid md:grid-cols-2 gap-3 text-sm">
-                            <div>
-                              <p className="font-medium text-muted-foreground mb-1">Person:</p>
-                              <p className="text-xs mb-1">{prompt.person.name} - {prompt.person.description}</p>
-                              <p className="text-xs italic">"{prompt.person.line}" ({prompt.person.tone})</p>
-                              <p className="text-xs text-muted-foreground mt-1">Actions: {prompt.person.actions.join(', ')}</p>
-                            </div>
-                            <div>
-                              <p className="font-medium text-muted-foreground mb-1">Setting:</p>
-                              <p className="text-xs mb-2">{prompt.place.description}</p>
-                              <p className="font-medium text-muted-foreground mb-1">Technical:</p>
-                              <p className="text-xs">Camera: {prompt.additionalInstructions.cameraMovement}</p>
-                              <p className="text-xs">Lighting: {prompt.additionalInstructions.lighting}</p>
-                              <p className="text-xs">Music: {prompt.additionalInstructions.backgroundMusic}</p>
-                            </div>
-                          </div>
+                           <div className="grid md:grid-cols-2 gap-3 text-sm">
+                             <div>
+                               <p className="font-medium text-muted-foreground mb-1">Person:</p>
+                               <p className="text-xs mb-1">{prompt.person.name} - {prompt.person.description}</p>
+                               <p className="text-xs italic">"{prompt.person.line}" ({prompt.person.tone})</p>
+                               <p className="text-xs text-muted-foreground mt-1">Actions: {prompt.person.actions.join(', ')}</p>
+                             </div>
+                             <div>
+                               <p className="font-medium text-muted-foreground mb-1">Setting:</p>
+                               <p className="text-xs mb-2">{prompt.place.description}</p>
+                               {(prompt as any).startingScene && (
+                                 <>
+                                   <p className="font-medium text-muted-foreground mb-1">Starting Scene:</p>
+                                   <p className="text-xs mb-2 bg-blue-50 p-2 rounded border-l-2 border-blue-400">{(prompt as any).startingScene}</p>
+                                 </>
+                               )}
+                               <p className="font-medium text-muted-foreground mb-1">Technical:</p>
+                               <p className="text-xs">Camera: {prompt.additionalInstructions.cameraMovement}</p>
+                               <p className="text-xs">Lighting: {prompt.additionalInstructions.lighting}</p>
+                               <p className="text-xs">Music: {prompt.additionalInstructions.backgroundMusic}</p>
+                             </div>
+                           </div>
                         </div>
                        ))}
                      </div>
