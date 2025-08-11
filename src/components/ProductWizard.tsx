@@ -453,7 +453,7 @@ const ProductWizard: React.FC = () => {
         body: {
           prompt: prompt,
           imageUrl: imageUrl,
-          duration: 10, // 10 seconds as requested
+          duration: 8, // 8 seconds as corrected
           quality: '720p',
           aspectRatio: '9:16',
         },
@@ -478,7 +478,7 @@ const ProductWizard: React.FC = () => {
       }
 
       setRunwayVideoTaskId(taskId);
-      toast({ title: 'Video generation started', description: 'Your 10-second video is being created...' });
+      toast({ title: 'Video generation started', description: 'Your 8-second video is being created...' });
 
       // Monitor the video generation
       await monitorRunwayVideoGeneration(taskId);
@@ -496,7 +496,7 @@ const ProductWizard: React.FC = () => {
   };
 
   const monitorRunwayVideoGeneration = async (taskId: string) => {
-    const maxAttempts = 120; // ~4 minutes for 10s video
+    const maxAttempts = 100; // ~3.5 minutes for 8s video
     let attempts = 0;
     
     while (attempts < maxAttempts) {
@@ -522,7 +522,7 @@ const ProductWizard: React.FC = () => {
           setRunwayVideoUrl(videoUrl);
           toast({
             title: 'Video generation complete!',
-            description: 'Your 10-second video is ready to view.'
+            description: 'Your 8-second video is ready to view.'
           });
           break;
         } else if (state === 'failed' || state === 'error') {
@@ -1296,21 +1296,21 @@ const ProductWizard: React.FC = () => {
                                              size="lg"
                                            >
                                              <Video className="w-5 h-5" />
-                                             Generate 10s Video with Runway
+                                             Generate 8s Video with Runway
                                            </Button>
                                          ) : isGeneratingRunwayVideo ? (
                                            <div className="space-y-3">
                                              <div className="flex items-center justify-center gap-3 p-4 rounded-lg bg-background/50 border border-primary/20">
                                                <RefreshCw className="h-5 w-5 animate-spin text-primary" />
-                                               <span className="text-sm font-medium">Generating 10s video...</span>
+                                               <span className="text-sm font-medium">Generating 8s video...</span>
                                              </div>
                                              <p className="text-xs text-center text-muted-foreground">
-                                               Using {selectedCamera} movement • Runway AI • 10 seconds
+                                               Using {selectedCamera} movement • Runway AI • 8 seconds
                                              </p>
                                            </div>
                                          ) : runwayVideoUrl ? (
                                            <div className="space-y-4">
-                                             <h5 className="text-sm font-semibold text-center">Generated Video (10s)</h5>
+                                             <h5 className="text-sm font-semibold text-center">Generated Video (8s)</h5>
                                              <div className="relative w-full mx-auto" style={{ aspectRatio: '9/16', maxWidth: '300px' }}>
                                                <video 
                                                  src={runwayVideoUrl} 
