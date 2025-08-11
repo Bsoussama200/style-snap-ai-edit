@@ -389,14 +389,14 @@ const ProductWizard: React.FC = () => {
         let enhancedPrompt = `${prompt.person.description} ${prompt.person.actions.join(', ')}. Setting: ${prompt.place.description}. The person says: "${prompt.person.line}" in a ${prompt.person.tone} tone with a perfect American English accent. Camera: ${prompt.additionalInstructions.cameraMovement}. Lighting: ${prompt.additionalInstructions.lighting}. Duration: ${prompt.sceneDurationSeconds} seconds.`;
 
         // Step 1: Generate starting scene image if needed
-        if (prompt.referenceImage && (prompt as any).startingScene) {
+        if ((prompt as any).startingScene) {
           if (!sourceImageUrl) throw new Error('Source image URL missing');
           updateVideo(entry.id, { status: 'generating-image' });
-          console.log(`Generating starting scene image for video ${i + 1} with prompt:`, (prompt as any).startingScene);
+          console.log(`Generating starting scene image for video ${i + 1} with scene: ${(prompt as any).startingScene}`);
 
           const imageResponse = await supabase.functions.invoke('kie-flux-kontext-generate', {
             body: {
-              prompt: (prompt as any).startingScene,
+              prompt: `Create a professional scene: ${(prompt as any).startingScene}. High quality, well-lit, perfect for video production.`,
               inputImage: sourceImageUrl,
             },
           });
@@ -415,6 +415,7 @@ const ProductWizard: React.FC = () => {
               console.log(`Image status for video ${i + 1}:`, s);
               if (s?.successFlag === 1 && s?.response?.resultImageUrl) {
                 referenceImageUrl = s.response.resultImageUrl as string;
+                console.log(`Generated scene image for video ${i + 1}:`, referenceImageUrl);
                 break;
               }
               if (s?.successFlag === -1) throw new Error(s?.errorMessage || 'Image generation failed');
