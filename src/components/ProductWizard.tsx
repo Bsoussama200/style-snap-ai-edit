@@ -216,7 +216,7 @@ const ProductWizard: React.FC = () => {
     setVideoUrl('');
     setFinalImageUrl('');
     setIsGenerating(true);
-    setStep('generating');
+    // Remove setStep('generating') to keep the UI intact
     try {
       const selectedStyleOption = styles.find(s => s.id === selectedStyle);
       const basePrompt = customPrompt.trim() || selectedStyleOption?.prompt || '';
@@ -237,14 +237,14 @@ const ProductWizard: React.FC = () => {
         const blob = new Blob([new Uint8Array(byteNumbers)], { type: 'image/png' });
         const url = URL.createObjectURL(blob);
         setGeneratedImage(url);
-        setStep('confirm');
+        // Remove setStep('confirm') to keep the UI intact
       } else {
         throw new Error('No image data from server');
       }
     } catch (err) {
       console.error(err);
       toast({ title: 'Generation failed', description: err instanceof Error ? err.message : 'Try again.', variant: 'destructive' });
-      setStep('style');
+      // Remove setStep('style') to keep the UI intact
     } finally {
       setIsGenerating(false);
     }
