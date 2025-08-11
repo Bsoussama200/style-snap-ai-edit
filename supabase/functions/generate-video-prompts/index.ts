@@ -82,12 +82,16 @@ Return your response strictly as a JSON array with exactly 5 objects, NO markdow
 
 For videos where referenceImage is true (Videos 3, 4, and 5), you MUST include a "startingScene" field that describes the scene/setting where the product should be placed. This will be used to generate a reference image by placing the uploaded product into this described scene before video generation begins.
 
+MANDATORY REQUIREMENTS:
+- Videos 1 & 2: referenceImage: false, NO startingScene field
+- Videos 3, 4 & 5: referenceImage: true, MUST include startingScene field with detailed scene description
+
 Make the sequence emotionally compelling:
-- Video 1: Punchy hook, dynamic motion/edits, tease the pain point, referenceImage: false
-- Video 2: Frustrated/concerned tone, darker lighting, problems-focused camera work, referenceImage: false
-- Video 3: Curious/excited tone, brighter lighting, discovery-focused camera movement, referenceImage: true
-- Video 4: Confident/happy tone, warm lighting, celebration-focused cinematography, referenceImage: true
-- Video 5: Clear narrator delivery (perfect American English accent), product-only visuals with dynamic camera movement (360° rotation, dolly in/out, or dramatic angles), studio/hero-lighting, referenceImage: true
+- Video 1: Punchy hook, dynamic motion/edits, tease the pain point, referenceImage: false, NO startingScene
+- Video 2: Frustrated/concerned tone, darker lighting, problems-focused camera work, referenceImage: false, NO startingScene  
+- Video 3: Curious/excited tone, brighter lighting, discovery-focused camera movement, referenceImage: true, INCLUDE startingScene
+- Video 4: Confident/happy tone, warm lighting, celebration-focused cinematography, referenceImage: true, INCLUDE startingScene
+- Video 5: Clear narrator delivery (perfect American English accent), product-only visuals with dynamic camera movement (360° rotation, dolly in/out, or dramatic angles), studio/hero-lighting, referenceImage: true, INCLUDE startingScene
 
 Ensure each spoken line advances the narrative and feels natural for that stage of the customer journey.`;
 
