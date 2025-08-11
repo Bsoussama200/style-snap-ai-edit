@@ -618,7 +618,7 @@ const ProductWizard: React.FC = () => {
         const successCount = generatedVideos.filter(v => v.status === 'success').length;
         toast({
           title: 'Video generation complete!',
-          description: `${successCount} out of 3 videos generated successfully.`
+          description: `${successCount} out of ${generatedVideos.length} videos generated successfully.`
         });
         break;
       }
@@ -1000,8 +1000,8 @@ const ProductWizard: React.FC = () => {
                            className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 gap-2"
                            size="lg"
                          >
-                           <Video className="w-5 h-5" />
-                           Generate 3 Videos with VEO3
+                            <Video className="w-5 h-5" />
+                            Generate 5 Videos with VEO3
                          </Button>
                        )}
                        
