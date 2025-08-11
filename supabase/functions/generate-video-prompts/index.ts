@@ -216,6 +216,31 @@ Create 5 distinct video prompts that showcase this product effectively for marke
 
     console.log('Successfully generated and validated 5 video prompts');
 
+    // Enforce style-specific referenceImage rules to prevent model drift
+    try {
+      if (videoStyle === 'street-interview') {
+        // Videos 1-4: no product, no startingScene
+        for (let i = 0; i < 4; i++) {
+          if (videoPrompts[i]) {
+            videoPrompts[i].referenceImage = false;
+            if (typeof videoPrompts[i].startingScene !== 'undefined') {
+              delete (videoPrompts[i] as any).startingScene;
+            }
+          }
+        }
+        // Video 5: product-only with startingScene
+        if (videoPrompts[4]) {
+          videoPrompts[4].referenceImage = true;
+          const defaultScene = `A crisp, cinematic product-only showcase set: seamless background, soft rim lighting, gentle 360° turntable feel. The product "${productProfile?.productName || 'the product'}" sits centered on a pedestal. Camera performs slow dolly-in and rotating hero angles.`;
+          if (!videoPrompts[4].startingScene || typeof videoPrompts[4].startingScene !== 'string' || !videoPrompts[4].startingScene.trim()) {
+            (videoPrompts[4] as any).startingScene = defaultScene;
+          }
+        }
+      }
+    } catch (safetyError) {
+      console.warn('Post-processing enforcement failed:', safetyError);
+    }
+
     return new Response(
       JSON.stringify({ videoPrompts }),
       {
