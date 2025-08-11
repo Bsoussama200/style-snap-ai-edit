@@ -616,44 +616,116 @@ const ProductWizard: React.FC = () => {
             </Card>
 
             {/* Marketing Angles */}
-            <Card className="glass-card backdrop-blur-lg bg-gradient-to-br from-background/80 to-background/40 border-accent/20">
+            <Card className="glass-card backdrop-blur-lg bg-gradient-to-br from-accent/5 to-primary/5 border-accent/20">
               <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-accent/20 to-primary/20 grid place-items-center">
-                    <span className="text-accent font-bold text-sm">⚡</span>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-accent to-accent/80 grid place-items-center shadow-lg">
+                    <span className="text-white font-bold text-lg">⚡</span>
                   </div>
                   <div>
-                    <h3 className="font-semibold">Marketing Angles</h3>
-                    <p className="text-xs text-muted-foreground">One per line</p>
+                    <h3 className="font-semibold text-lg">Marketing Angles</h3>
+                    <p className="text-sm text-muted-foreground">Strategic selling points</p>
                   </div>
                 </div>
-                <Textarea
-                  value={(analysis.marketingAngles || []).join('\n')}
-                  onChange={(e) => setAnalysis(prev => prev ? { ...prev, marketingAngles: e.target.value.split('\n').map(v => v.trim()).filter(Boolean) } : prev)}
-                  className="w-full min-h-[120px] bg-background/50 backdrop-blur-sm border-accent/20 focus:border-accent/40 resize-none"
-                  placeholder="• Pain point solver&#10;• Time-saving solution&#10;• Premium quality..."
-                />
+                
+                <div className="space-y-4">
+                  <div className="flex flex-wrap gap-2 min-h-[120px] p-4 rounded-lg border-2 border-dashed border-accent/30 bg-accent/5">
+                    {(analysis.marketingAngles || []).map((angle, i) => (
+                      <div key={i} className="group relative">
+                        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-accent/20 to-primary/15 border border-accent/30 hover:from-accent/30 hover:to-primary/25 transition-all duration-200">
+                          <span className="text-sm font-medium text-accent">{angle}</span>
+                          <button
+                            onClick={() => setAnalysis(prev => prev ? { 
+                              ...prev, 
+                              marketingAngles: prev.marketingAngles?.filter((_, idx) => idx !== i) 
+                            } : prev)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity w-4 h-4 rounded-full bg-destructive/20 hover:bg-destructive/30 flex items-center justify-center"
+                          >
+                            <span className="text-xs text-destructive">×</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {(analysis.marketingAngles || []).length === 0 && (
+                      <div className="w-full text-center py-8 text-muted-foreground">
+                        <span className="text-2xl mb-2 block">💡</span>
+                        <p className="text-sm">AI will generate marketing angles here</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="relative">
+                    <Textarea
+                      value={(analysis.marketingAngles || []).join('\n')}
+                      onChange={(e) => setAnalysis(prev => prev ? { 
+                        ...prev, 
+                        marketingAngles: e.target.value.split('\n').map(v => v.trim()).filter(Boolean) 
+                      } : prev)}
+                      className="w-full min-h-[80px] bg-background/70 backdrop-blur-sm border-accent/20 focus:border-accent/40 resize-none text-sm"
+                      placeholder="• Premium quality that lasts&#10;• Saves 2+ hours daily&#10;• Instagram-worthy design&#10;• Solves common pain points"
+                    />
+                    <div className="absolute top-2 right-2">
+                      <span className="text-xs px-2 py-1 rounded bg-accent/20 text-accent font-medium">Edit Mode</span>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
             {/* Target Audiences */}
-            <Card className="glass-card backdrop-blur-lg bg-gradient-to-br from-background/80 to-background/40 border-primary/20">
+            <Card className="glass-card backdrop-blur-lg bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
               <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 grid place-items-center">
-                    <span className="text-primary font-bold text-sm">👥</span>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 grid place-items-center shadow-lg">
+                    <span className="text-white font-bold text-lg">👥</span>
                   </div>
                   <div>
-                    <h3 className="font-semibold">Target Audiences</h3>
-                    <p className="text-xs text-muted-foreground">One per line</p>
+                    <h3 className="font-semibold text-lg">Target Audiences</h3>
+                    <p className="text-sm text-muted-foreground">Key customer segments</p>
                   </div>
                 </div>
-                <Textarea
-                  value={(analysis.targetAudiences || []).join('\n')}
-                  onChange={(e) => setAnalysis(prev => prev ? { ...prev, targetAudiences: e.target.value.split('\n').map(v => v.trim()).filter(Boolean) } : prev)}
-                  className="w-full min-h-[120px] bg-background/50 backdrop-blur-sm border-primary/20 focus:border-primary/40 resize-none"
-                  placeholder="• Busy professionals&#10;• Tech enthusiasts&#10;• Budget-conscious shoppers..."
-                />
+                
+                <div className="space-y-4">
+                  <div className="flex flex-wrap gap-2 min-h-[120px] p-4 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5">
+                    {(analysis.targetAudiences || []).map((audience, i) => (
+                      <div key={i} className="group relative">
+                        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/20 to-accent/15 border border-primary/30 hover:from-primary/30 hover:to-accent/25 transition-all duration-200">
+                          <span className="text-sm font-medium text-primary">{audience}</span>
+                          <button
+                            onClick={() => setAnalysis(prev => prev ? { 
+                              ...prev, 
+                              targetAudiences: prev.targetAudiences?.filter((_, idx) => idx !== i) 
+                            } : prev)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity w-4 h-4 rounded-full bg-destructive/20 hover:bg-destructive/30 flex items-center justify-center"
+                          >
+                            <span className="text-xs text-destructive">×</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {(analysis.targetAudiences || []).length === 0 && (
+                      <div className="w-full text-center py-8 text-muted-foreground">
+                        <span className="text-2xl mb-2 block">🎯</span>
+                        <p className="text-sm">AI will identify target audiences here</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="relative">
+                    <Textarea
+                      value={(analysis.targetAudiences || []).join('\n')}
+                      onChange={(e) => setAnalysis(prev => prev ? { 
+                        ...prev, 
+                        targetAudiences: e.target.value.split('\n').map(v => v.trim()).filter(Boolean) 
+                      } : prev)}
+                      className="w-full min-h-[80px] bg-background/70 backdrop-blur-sm border-primary/20 focus:border-primary/40 resize-none text-sm"
+                      placeholder="• Busy professionals (25-40)&#10;• Tech enthusiasts&#10;• Budget-conscious millennials&#10;• Home improvement DIYers"
+                    />
+                    <div className="absolute top-2 right-2">
+                      <span className="text-xs px-2 py-1 rounded bg-primary/20 text-primary font-medium">Edit Mode</span>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
