@@ -457,15 +457,15 @@ const ProductWizard: React.FC = () => {
             <CardContent className="p-0">
               {/* Header */}
               <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-6 border-b border-primary/10">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-accent grid place-items-center shadow-lg">
-                    <Sparkles className="h-6 w-6 text-primary-foreground" />
+                <div className="flex items-center gap-4">
+                  <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary to-accent grid place-items-center shadow-lg">
+                    <Sparkles className="h-7 w-7 text-primary-foreground" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                    <h3 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                       Product Intelligence
                     </h3>
-                    <p className="text-sm text-muted-foreground">AI-powered comprehensive analysis</p>
+                    <p className="text-base text-muted-foreground font-medium">AI-powered comprehensive analysis</p>
                   </div>
                 </div>
               </div>
@@ -635,34 +635,45 @@ const ProductWizard: React.FC = () => {
                   />
                 </div>
 
-                {/* Category Selection Compact */}
-                <div className="flex items-center gap-4 p-4 rounded-lg bg-gradient-to-r from-secondary/5 to-primary/5 border border-secondary/20">
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <div className="h-6 w-6 rounded bg-secondary/20 grid place-items-center">
-                      <span className="text-xs">📂</span>
+                {/* CHOOSE CATEGORY - Prominent Section */}
+                <div className="border-2 border-primary/30 rounded-xl p-6 bg-gradient-to-r from-primary/5 to-accent/5 shadow-lg">
+                  <div className="text-center mb-4">
+                    <div className="flex items-center justify-center gap-3 mb-2">
+                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent grid place-items-center shadow-md">
+                        <span className="text-white font-bold text-lg">📂</span>
+                      </div>
+                      <h3 className="text-xl font-bold text-foreground">Choose Category</h3>
                     </div>
+                    <p className="text-sm text-muted-foreground">Select the best matching category for your product</p>
+                  </div>
+                  
+                  <div className="space-y-4">
                     <select
-                      className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none font-medium text-sm"
+                      className="w-full bg-background border-2 border-primary/20 rounded-lg p-4 font-semibold text-base focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
                       value={categoryId}
                       onChange={(e) => setCategoryId(e.target.value)}
                     >
-                      <option value="">Select category</option>
+                      <option value="" className="text-muted-foreground">🔍 Select a category...</option>
                       {categories?.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
+                        <option key={c.id} value={c.id} className="font-medium">{c.name}</option>
                       ))}
                     </select>
-                  </div>
-                  {typeof analysis.confidence === 'number' && (
-                    <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-16 bg-secondary/30 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500"
-                          style={{ width: `${analysis.confidence * 100}%` }}
-                        />
+                    
+                    {typeof analysis.confidence === 'number' && (
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-primary/10">
+                        <span className="text-sm font-medium text-muted-foreground">AI Confidence</span>
+                        <div className="flex items-center gap-3">
+                          <div className="h-2 w-24 bg-secondary/30 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500"
+                              style={{ width: `${analysis.confidence * 100}%` }}
+                            />
+                          </div>
+                          <span className="text-sm font-bold text-primary">{(analysis.confidence * 100).toFixed(0)}%</span>
+                        </div>
                       </div>
-                      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">{(analysis.confidence * 100).toFixed(0)}%</span>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             </CardContent>
