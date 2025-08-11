@@ -1427,6 +1427,22 @@ const ProductWizard: React.FC = () => {
             </CardContent>
           </Card>
 
+          {/* Product Summary */}
+          <Card className="glass-card backdrop-blur-lg bg-gradient-to-br from-background/80 to-background/40 border-primary/20">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <MessageSquare className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold">Product Summary</h3>
+                <span className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary font-medium">Editable</span>
+              </div>
+              <Textarea
+                value={analysis.analysis}
+                onChange={(e) => setAnalysis(prev => prev ? { ...prev, analysis: e.target.value } : prev)}
+                className="w-full min-h-[100px] bg-background/50 backdrop-blur-sm border-primary/20 focus:border-primary/40 resize-none"
+                placeholder="AI-generated product analysis..."
+              />
+            </CardContent>
+          </Card>
 
           {/* Action Buttons */}
           <div className="flex gap-4 justify-center pt-4">
