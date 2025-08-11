@@ -57,10 +57,41 @@ serve(async (req) => {
     openaiFormData.append('prompt', prompt);
     openaiFormData.append('size', '1024x1024');
     
-    // Add the uploaded image to the form data
+    // Convert image to PNG if needed (OpenAI only accepts PNG for edits)
     if (images.length > 0) {
-      openaiFormData.append('image', images[0]);
-      console.log(`Added image: ${images[0].name || 'unnamed'} (${images[0].size} bytes)`);
+      const originalImage = images[0];
+      console.log(`Processing image: ${originalImage.name || 'unnamed'} (${originalImage.size} bytes), type: ${originalImage.type}`);
+      
+      let imageToUpload = originalImage;
+      
+      // If the image is not PNG, convert it
+      if (originalImage.type !== 'image/png') {
+        console.log('Converting image to PNG format for OpenAI compatibility...');
+        
+        // Read the image data
+        const arrayBuffer = await originalImage.arrayBuffer();
+        const imageData = new Uint8Array(arrayBuffer);
+        
+        // Create a canvas to convert the image
+        const canvas = new OffscreenCanvas(1024, 1024);
+        const ctx = canvas.getContext('2d');
+        
+        // Create ImageBitmap from the original image
+        const imageBitmap = await createImageBitmap(originalImage);
+        
+        // Draw the image on canvas
+        ctx.drawImage(imageBitmap, 0, 0, 1024, 1024);
+        
+        // Convert to PNG blob
+        const pngBlob = await canvas.convertToBlob({ type: 'image/png' });
+        
+        // Create a new File object with PNG format
+        imageToUpload = new File([pngBlob], 'converted-image.png', { type: 'image/png' });
+        console.log(`Converted to PNG: ${imageToUpload.size} bytes`);
+      }
+      
+      openaiFormData.append('image', imageToUpload);
+      console.log(`Added image: ${imageToUpload.name} (${imageToUpload.size} bytes)`);
     }
 
     console.log('Sending request to OpenAI /images/edits endpoint...');
